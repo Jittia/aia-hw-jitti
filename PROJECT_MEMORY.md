@@ -7,15 +7,29 @@
 
 > กฎ 1 บรรทัด ที่ AI ต้องทำตามจากนี้ไป
 
-- [เช่น ใช้ปันผลจากงบกระแสเงินสด ไม่ใช้ตัวเลขจากข่าว เพราะข่าวปัดเศษ]
+- Use SEC EDGAR XBRL data for any number used in a backtest; never use a screener CSV, because it only shows today's values.
+- In a point-in-time run, use only facts whose *filing date* is on or before the as-of date (not the period end date).
+- GuruFocus / StockAnalysis exports and transcript text live only in `data/private/`; check `git status` before every commit.
+- A catalyst counts only when the numbers already show it; transcripts and management statements can confirm but never trigger.
+- Every backtest result must state that the 10-bagger list contains survivors only (survivorship bias).
+- Decide 10-K vs 20-F/40-F from SEC filing forms, never from the screener's country or currency column.
+- Fetch SEC data with parallel workers that share one ≤10 req/s throttle; one request at a time only reaches ~1.5 req/s.
+- Before re-running a long download, confirm the old process is gone with `pgrep -fl <script>`; on macOS `pkill -f "python x.py"` can miss it.
 
 ## บันทึกปัญหา
 
 > เพิ่มต่อท้าย ห้ามลบของเก่า
 
-### [วันที่] · [หัวข้อสั้น ๆ]
+### 2026-11-02 · A screener CSV cannot backtest 2019
 
-- **เจออะไร:** [เช่น yield ของหุ้น A สูงผิดปกติ 25%]
-- **สาเหตุ:** [เช่น รวมปันผลพิเศษปีเดียวเข้าไปด้วย]
-- **แก้อย่างไร:** [เช่น แยกปันผลพิเศษออก แล้วคำนวณใหม่]
-- **ลองวิธีไหนแล้วไม่เวิร์ก:** [ถ้ามี]
+- **เจออะไร:** The first plan used StockAnalysis/GuruFocus CSV exports for both the current screen and the 2019 backtest.
+- **สาเหตุ:** A screener export is a snapshot of today's numbers. It cannot show what a company looked like in 2019, and it mostly leaves out companies that were delisted or went bankrupt.
+- **แก้อย่างไร:** Switched the numeric backbone to the SEC EDGAR XBRL `companyfacts` API. It is free and public, gives a URL for every number, has filing dates for point-in-time cuts, and keeps delisted companies. The paid CSVs are now used only for the current universe and extra fields.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Nothing was run yet; this was caught during planning.
+
+### 2026-11-02 · SEC download too slow, then a crash on restart
+
+- **เจออะไร:** The submissions download ran at only ~1.5 requests/second (~35 min for 3,000 companies). After I restarted it with parallel workers, it crashed with `FileNotFoundError` on a `.tmp` cache file.
+- **สาเหตุ:** (1) Requests were sent one at a time, and each takes ~0.4 s, so we never got near SEC's 10/s limit. (2) `pkill -f "python universe.py"` did not stop the old run, because on macOS the process shows as `Python universe.py`. Both runs wrote the same `.tmp` file.
+- **แก้อย่างไร:** Added a thread-safe throttle in `src/sec_client.py`, so 6 workers share one ≤10 req/s limit (measured 7.6 req/s, 4.4 min). Temp file names now include the process and thread id. Killed the old process by PID after checking with `pgrep -fl`.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** `pkill -f "python universe.py"`.

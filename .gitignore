@@ -23,3 +23,9 @@ __pycache__/
 venv/
 node_modules/
 .claude/settings.local.json
+
+# SEC EDGAR download cache (large, re-downloadable)
+data/cache/
+
+# Template for .env is safe to commit
+!.env.example
