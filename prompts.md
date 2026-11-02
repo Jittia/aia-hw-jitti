@@ -212,3 +212,30 @@ Start Day 6
   - Charts kept to what answers a question: why most top-100 names were rejected (bar chart; structural types in full colour), and the size effect (two windows, legend + combined label). Everything else is a table. Colours are the dataviz skill's reference palette slots 1–2. I could not run its validator because Node is not installed; that pair is documented as passing in both themes.
   - Reported the backtest change honestly (holdout 4 → 3 hits) instead of re-tuning weights to win it back. Tuning again on the same two windows would overfit.
 - **ขั้นต่อไป:** Day 7: final review against `spec.md` success criteria. The one open item is hand-checking margins, cash flow and shares for 3 tickers against their filings. Then a short summary of results and limits, and `/save`. Optional: publish the dashboard as a shareable page.
+
+---
+
+## รอบ 7 · 2026-11-02
+
+- **ทำอะไร:** Day 7, final review. Hand-checked signal inputs for 3 tickers against their filings (`src/verify_filings.py`, regression test `tests/test_filing_values.py`). Went through every `spec.md` success criterion. Filled in the README header and results summary, added a dashboard screenshot, ticked the pre-submission checklist, and had the AI draft `help.md` for me to edit.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser for the screenshot
+- **Prompt ที่ใช้:**
+
+```text
+Start Day 7
+```
+
+(plus my answers: group number "G03"; help.md "Draft it for me to edit")
+
+- **ผลที่ได้:**
+  - **Hand-check:** DERM (small cap), TRT (fiscal year ends June; Q4 derived) and AAPL (mega cap) → **19/19** inputs found verbatim in the filing they came from: revenue, cost of revenue, gross profit, operating income, operating cash flow (YTD), capex and diluted shares. Caveat: very small numbers (e.g. 456) could in theory match by coincidence elsewhere in a filing. DERM reports no gross-profit or capex line, so gross profit is revenue − cost of revenue and capex counts as 0.
+  - **Test caught my own mistake:** writing the regression test, I typed a wrong CIK for DERM and the test failed. Corrected from the universe file. All 7 tests pass.
+  - **spec.md:** all 5 success criteria ticked, each with where the proof is. Criterion 1 updated to the final backtest numbers (2019: recall 20%, lift 3.4x; 2018: 13%, 2.3x).
+  - **Public check:** the repo opens without login (HTTP 200). Tracked data files are only the two SEC-derived CSVs. Licensed column names appear only in code/logs that read the private file, never as data.
+  - **README:** header filled (Jitti · G03), one-screen results summary with limits, dashboard screenshot (`output/dashboard.jpg`), because GitHub shows HTML as source.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - Checked filing values by searching the actual 10-Q/10-K text, not by re-reading XBRL. That checks the XBRL pipeline against what the company printed, which is the stronger test.
+  - Removed the one-time "how to use this template" section from the README, as the template itself says to.
+  - `help.md` was drafted by the AI from the real open problems of this week (half of 10-baggers not catchable by the numbers-first rule, survivorship bias, too few confirmed catalysts / small samples). It is marked as a draft and the checklist item stays unticked until I review it.
+  - The spec status stays `draft` and Phase 2 is not started; whether to continue (Taiwan monthly revenue was the idea) is my decision after the instructor's feedback.
+- **ขั้นต่อไป:** Edit `help.md` in my own words, submit the repo link via the class Google Form, and wait for instructor comments in Issues (5–6 Nov) and the Repair Clinic (7 Nov). Possible Phase 2: Taiwan (monthly revenue as an early signal) or forward-tracking this watchlist each quarter.

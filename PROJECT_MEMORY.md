@@ -26,6 +26,7 @@
 - Any new Layer 1 penalty must improve the backtest in both windows before it is kept.
 - Get share counts only through `quarters.shares_as_of()` (fallbacks + age limit); never use the latest `dei` value blindly.
 - Open every generated page in the browser (light, dark, narrow) before calling it done; the data can be right while the layout is broken.
+- Copy identifiers (CIK, ticker) into tests from the data files, never from memory; a wrong CIK silently points at another company.
 
 ## บันทึกปัญหา
 

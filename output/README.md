@@ -13,6 +13,7 @@
 | File | What it is |
 |---|---|
 | [`dashboard.html`](dashboard.html) | **Main result.** One self-contained page: screening funnel, the 20-name watchlist (tier A / B) with the filing quote and SEC link per company, what the AI found in the top 100, and the backtest. Download and open in a browser (GitHub shows HTML as source). |
+| [`dashboard.jpg`](dashboard.jpg) | Screenshot of the dashboard (funnel and the top of the watchlist) |
 | [`shortlist.csv`](shortlist.csv) | The watchlist as data: tier, catalyst type, driver, verbatim evidence + SEC URL, Layer 1 numbers |
 | [`layer2_review.csv`](layer2_review.csv) | All 100 companies the AI reviewed, including the rejects and why |
 | [`backtest_report.md`](backtest_report.md) | Backtest method, every variant, every 10-bagger and why it was or was not caught |
