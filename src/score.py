@@ -78,6 +78,10 @@ def score(sig: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     df.loc[diluted, "score"] *= pen["dilution_multiplier"]
     df.loc[lumpy, "score"] *= pen["lumpy_multiplier"]
     df["dilution_penalty"], df["lumpy_penalty"] = diluted, lumpy
+    acquisitive = ((df["acq_ratio"].astype(float) > pen["acquisitive_cash_above"])
+                   | (df["gw_added_ratio"].astype(float) > pen["acquisitive_goodwill_above"]))
+    df.loc[acquisitive, "score"] *= pen["acquisitive_multiplier"]
+    df["acquisitive_penalty"] = acquisitive
 
     df = df.sort_values("score", ascending=False)
     df["rank"] = range(1, len(df) + 1)
@@ -100,7 +104,8 @@ def main() -> None:
 
     ranked = score(sig, cfg)
     out = DATA_PRIVATE / f"layer1_scores_{date}.csv"
-    sig.merge(ranked[["cik", "required_cagr", "score", "rank", "mega_penalty", "dilution_penalty", "lumpy_penalty"] +
+    sig.merge(ranked[["cik", "required_cagr", "score", "rank", "mega_penalty", "dilution_penalty", "lumpy_penalty",
+                      "acquisitive_penalty"] +
                      [c for c in ranked if c.startswith("r_")]], on="cik", how="left") \
        .sort_values("rank").to_csv(out, index=False)
 
@@ -111,6 +116,7 @@ def main() -> None:
     print(f"mega-cap penalty applied: {int(ranked['mega_penalty'].sum())}")
     print(f"dilution penalty applied: {int(ranked['dilution_penalty'].sum())}")
     print(f"lumpy penalty applied   : {int(ranked['lumpy_penalty'].sum())}")
+    print(f"acquisitive penalty     : {int(ranked['acquisitive_penalty'].sum())}")
     print(f"output                  : {out.relative_to(ROOT)}")
 
 

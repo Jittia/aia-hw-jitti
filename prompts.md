@@ -150,3 +150,39 @@ Start Day 4
   - `rev_new_high` stays at 0 and turnarounds stay in. The test helped one window and hurt the other, so the rebound question is undecided.
   - **Honesty note:** weights were chosen by looking at both windows, so no untouched test period is left. The next real check is forward tracking of the live shortlist.
 - **ขั้นต่อไป:** Day 5, Layer 2: take today's top 100 and have the AI read each company's latest 10-K / 10-Q / 8-K on EDGAR, classify the catalyst (new TAM / new S-curve / turnaround / new market / cyclical-none) with a short quote and filing link, and cut to a 10–20 name shortlist.
+
+---
+
+## รอบ 5 · 2026-11-02
+
+- **ทำอะไร:** Day 5, Layer 2. Built a reading pack per top-100 company from SEC filings (`src/layer2_prep.py`): the MD&A of the latest 10-Q/10-K, the paragraphs explaining revenue changes, the latest earnings release (8-K exhibit 99.1) and the Layer 1 numbers. Wrote one instruction file for the AI readers (`src/layer2_instructions.md`). Ran 5 parallel reader agents (Claude Sonnet) to classify each catalyst. Verified every result mechanically (`src/layer2_merge.py`). Then, on my choice, added an acquisition flag to Layer 1, re-reviewed the new entrants, and published a two-tier watchlist.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 (main), 7 reader agents on Sonnet 5.5
+- **Prompt ที่ใช้:**
+
+```text
+Start Day 5
+```
+
+(plus my answer to the AI's question after the first pass: "Fix Layer 1, then 2 tiers (Recommended)")
+
+- **ผลที่ได้:**
+  - **First pass (top 100):** 1 shortlist (DERM), 15 watch, 84 reject. The reasons were mostly sound: 26 cyclical rebounds (refiners, semiconductor equipment), 16 acquisitions (e.g. SANM via ZT Systems), 9 one-offs (e.g. PBF insurance proceeds).
+  - **Verification:** all quotes matched the filing text word for word and all URLs are the pack's own SEC sources (100/100).
+  - **Bug found:** 29 were "insufficient", and about 12 of them because my 9,000-character MD&A trim cut off the part that explains revenue. Added a "revenue drivers" section and re-reviewed 10 → 3 moved to watch (TRT, CALX, TLYS).
+  - **Acquisition flag in Layer 1:** cash paid for acquisitions (cash-flow XBRL) caught only 8/21 inorganic companies, because stock-financed mergers pay no cash. Adding goodwill growth caught 15/21 with 2 false flags (both already rejects).
+    - In the backtest, the 0.6 penalty raised 5x+ names from 10 → 13 (2019) and 13 → 15 (2018); 10-baggers 4 → 5 (2019).
+    - It pushed 17 companies out of today's top 100, and 15 of those were ones the agents had labelled acquisition-driven. No shortlist or watch name was lost.
+  - **17 new entrants reviewed:** 2 watch (INGM, SPHR), 15 reject.
+  - **Final watchlist (`output/shortlist.csv`, 20 names):**
+    - Tier A: DERM (new product Emrosi).
+    - Tier B, medium confidence: TRT (AI-chip test, Malaysia), TLYS, CLOV, APPS, STAA (China), STLN, KVHI (LEO satellite airtime), CTRN, ARW.
+    - Tier B, low confidence: SEDG, TLS, EVC, ANIK, CALX, TPC, MTRX, SONO, KODK, INGM.
+    - SPHR missed the 20-name cap.
+  - **Still weak:** only 1 name passed as a confirmed shortlist. Most Tier B names are turnarounds with low confidence. 2 packs have no MD&A (ANIK, PODC) and 24 have no earnings release.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - Readers may use **only** the pack text, and every quote must match the filing word for word. This keeps each label traceable to an SEC document (AGENTS.md rule: every fact needs a source). The code checks it rather than trusting the agent.
+  - Sonnet for the 7 reader agents (~1.3M tokens total): classification from short text does not need the larger model. Spot checks of SANM, PBF, KLIC, RILY and DERM matched the filings.
+  - **Fix Layer 1 first, then two tiers. I chose this** over "two tiers now" and "widen Layer 2 to top 300". Reason: 45% of the top 100 were cyclical or acquisition-driven, so it is cheaper to stop them at Layer 1 than to pay agents to reject them.
+  - A watchlist is the goal, so Tier B (watch) is a valid part of it. Tier A means "act on research now"; Tier B means "monitor next quarter".
+  - The acquisition thresholds (10% cash, 10% goodwill) were calibrated on the agents' labels and then checked in both backtest windows before being kept.
+- **ขั้นต่อไป:** Day 6: build `output/dashboard.html`: a ranked table with tiers, catalyst, quote and filing link, Layer 1 numbers, and the backtest summary. Market cap from Yahoo price × SEC shares (not the licensed screener).

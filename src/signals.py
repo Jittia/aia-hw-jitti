@@ -9,6 +9,8 @@ Signals use the latest quarter whose TTM is visible on `as_of` (Q0), compared wi
   share_growth   diluted weighted shares vs a year earlier, from the same filing (dilution, split-safe)
   rev_vs_peak    TTM revenue vs the highest earlier TTM        (> 0 = new high, < 0 = still recovering)
   max_q_share    largest single quarter as a share of TTM      (lumpy revenue, e.g. milestone payments)
+  acq_ratio      cash paid for acquisitions, last 8 quarters ÷ TTM revenue a year ago (inorganic growth)
+  gw_added_ratio goodwill added over ~2 years ÷ TTM revenue a year ago (catches stock-financed mergers)
 Every value comes from SEC companyfacts; `rev_url` points to the filing behind the latest revenue quarter.
 """
 from __future__ import annotations
@@ -16,7 +18,7 @@ from __future__ import annotations
 import pandas as pd
 
 from edgar import load_companyfacts
-from quarters import quarterly, ttm
+from quarters import instant_series, quarterly, ttm
 
 MAX_STALENESS_DAYS = 200  # latest quarter must end within ~2 quarters of as_of
 
@@ -73,6 +75,21 @@ def company_signals(cik: str, as_of: str) -> dict:
 
     share_growth = diluted_share_growth(cik, as_of)
 
+    # Inorganic growth: cash paid for acquisitions over the 8 quarters behind the YoY comparison,
+    # relative to revenue a year ago. No acquisition facts = nothing paid.
+    acq_q = quarterly(cik, "acquisitions", as_of)
+    start8 = _back(ends, e0, 7)
+    acq_paid = float(acq_q[(acq_q["end"] <= e0) & (acq_q["end"] >= (start8 or "0000"))]["val"].sum()) if not acq_q.empty else 0.0
+    acq_ratio = acq_paid / r4
+    # Stock-financed mergers pay no cash but add goodwill: goodwill now vs ~2 years earlier ÷ prior TTM revenue.
+    gw = instant_series(cik, "goodwill", as_of)
+    gw = gw[gw["end"] <= e0]
+    gw_added_ratio = 0.0
+    if not gw.empty:
+        old = gw[pd.to_datetime(gw["end"]) <= pd.Timestamp(e0) - pd.Timedelta(days=700)]
+        base = float(old.iloc[-1]["val"]) if not old.empty else 0.0
+        gw_added_ratio = max(float(gw.iloc[-1]["val"]) - base, 0.0) / r4
+
     # Rebound vs new growth: is TTM revenue above every earlier TTM (prior peak)?
     prior_ttm = [rev[e] for e in ends[:-1]]
     rev_vs_peak = (r0 / max(prior_ttm) - 1) if prior_ttm and max(prior_ttm) > 0 else None
@@ -92,6 +109,8 @@ def company_signals(cik: str, as_of: str) -> dict:
         "turnaround": bool(turn_oi or turn_fcf),
         "turnaround_type": "+".join(t for t, ok in (("op_income", turn_oi), ("fcf", turn_fcf)) if ok),
         "share_growth": share_growth,
+        "acq_ratio": acq_ratio,
+        "gw_added_ratio": gw_added_ratio,
         "rev_vs_peak": rev_vs_peak,
         "max_q_share": max_q_share,
         "rev_filed": latest_q["filed"], "rev_url": latest_q["url"],

@@ -32,6 +32,11 @@ penalties:
   dilution_multiplier: 0.7
   lumpy_q_share_above: 0.5     # one quarter > 50% of TTM revenue (milestone / one-off) ...
   lumpy_multiplier: 0.7
+  # Acquisition-driven growth (Day 5): cash paid for acquisitions (8 quarters) OR goodwill added (~2 years),
+  # each as a share of revenue a year ago. Calibrated on Layer 2 labels: catches 15/21 inorganic, 2 false flags.
+  acquisitive_cash_above: 0.10
+  acquisitive_goodwill_above: 0.10
+  acquisitive_multiplier: 0.6  # ASSUMPTION, checked in the backtest
 
 # 10x plausibility (soft size penalty, spec.md material question 3).
 # Required 5-year revenue CAGR so that revenue × exit P/S = 10 × today's market cap.

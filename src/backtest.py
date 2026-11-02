@@ -161,8 +161,13 @@ def write_report(res: pd.DataFrame, gate: pd.DataFrame, pops: dict, ranked_by: d
         "> **Small sample:** only ~25 ten-baggers per window. A difference of 1–2 hits between variants is noise, "
         "so the 5x+, median and halved columns (100 names each) matter more than the hit count.", "",
         "## Findings (2026-11-02)", "",
-        "1. **The score beats random, modestly.** With the chosen weights the top 100 holds 4 ten-baggers in both "
-        "windows against ~1.5 expected by chance (lift ≈ 2.7–2.9x). Most 10-baggers are still missed.",
+        "1. **The score beats random, modestly.** With the current config the top 100 holds "
+        + " / ".join(f"{int(r.hits_top100)} ({r.window})" for r in res[res.variant == cur].itertuples())
+        + " ten-baggers against ~1.5 expected by chance (lift "
+        + " / ".join(f"{r.lift:.1f}x" for r in res[res.variant == cur].itertuples())
+        + "). Most 10-baggers are still missed.",
+        "2b. **The acquisition penalty (Day 5) helped in both windows** (more 5x+ names): growth bought through "
+        "acquisitions is not the organic catalyst we are looking for.",
         "2. **Size is the strongest single signal.** Companies under $300M became 10-baggers ~10x more often than "
         "$1–10B companies, in both windows (table below). Removing the plausibility/size terms gave the worst results.",
         "3. **About half of all 10-baggers could not be caught on the as-of date.** Their revenue was still shrinking "

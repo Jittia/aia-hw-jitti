@@ -49,6 +49,11 @@ METRICS: dict[str, tuple[str, str, list[str]]] = {
     "operating_income": ("us-gaap", "USD", ["OperatingIncomeLoss"]),
     "cfo": ("us-gaap", "USD", ["NetCashProvidedByUsedInOperatingActivities"]),
     "capex": ("us-gaap", "USD", ["PaymentsToAcquirePropertyPlantAndEquipment"]),
+    "acquisitions": ("us-gaap", "USD", [
+        "PaymentsToAcquireBusinessesNetOfCashAcquired",
+        "PaymentsToAcquireBusinessesGross",
+    ]),
+    "goodwill": ("us-gaap", "USD", ["Goodwill"]),  # instant; jumps when a company is bought, even for stock
     "shares_outstanding": ("dei", "shares", ["EntityCommonStockSharesOutstanding"]),
 }
 

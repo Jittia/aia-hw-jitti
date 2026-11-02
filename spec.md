@@ -48,5 +48,5 @@ Files: `output/dashboard.html` (ranked table, signal scores, catalyst type, clic
 - [x] Backtest as of 2019-12-31: report recall (share of 2019→2024 10-baggers that land in the top ~100) and precision among survivors, with survivorship bias stated openly. → `output/backtest_report.md` (recall 16%, precision 4%, lift 2.7x; holdout 2018 window 17% / 4% / 2.9x)
 - [x] Point-in-time check: the 2019 run uses no fact filed after 2019-12-31. → `tests/test_edgar_asof.py`
 - [ ] For 3 sample tickers, every signal value matches the cited EDGAR filing. (Revenue checked for AAPL, NVDA, LWAY; margins, cash flow and shares not yet hand-checked.)
-- [ ] Current run produces a shortlist of 10–20 names, each with catalyst type + linked evidence.
+- [x] Current run produces a shortlist of 10–20 names, each with catalyst type + linked evidence. → `output/shortlist.csv`: 20 names in two tiers (A = 1 confirmed, B = 19 watch); every quote verified verbatim against the SEC filing.
 - [ ] No paid data, transcript text or token in the public repo.
