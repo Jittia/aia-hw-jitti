@@ -18,6 +18,8 @@
 - Never compare share counts across filings (not split-adjusted); take current and year-ago diluted shares from the same filing.
 - Cash-flow quarters must be derived from year-to-date differences; 10-Qs never report a 3-month cash-flow figure.
 - After any change to quarter or TTM logic, re-check TTM revenue against Stock Analysis (baseline: 96.5% within 1%).
+- Never multiply a yfinance `Close` by SEC shares; undo later splits first (raw = Close × product of later splits).
+- Judge weight variants on 5x+ count, median return and share halved, and require both windows to agree; ~25 ten-baggers per window is too few to rank variants by hits.
 
 ## บันทึกปัญหา
 
@@ -49,4 +51,18 @@
 - **เจออะไร:** 134 companies looked "stale" (no recent TTM), but 52 of them do have recent quarters.
 - **สาเหตุ:** They changed their fiscal year end and filed a short transition period (e.g. a 4-month period), so 4 contiguous quarters cannot be formed.
 - **แก้อย่างไร:** Labelled them `quarter_gap` instead of `stale`, so they are visible and not silently dropped. Not fixed for the MVP (~2% of companies).
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** —
+
+### 2026-11-02 · "Plausibility" measured cheapness, not size
+
+- **เจออะไร:** After raising the plausibility weight to 0.45, 53 of today's top 100 were still above $1B market cap, although the backtest said small companies were ~10x more likely to 10x.
+- **สาเหตุ:** Required CAGR = (10 × market cap ÷ exit P/S ÷ revenue)^(1/5) − 1, which depends on price-to-sales, not size. A $38B-revenue refiner trading at a low P/S looks very "plausible".
+- **แก้อย่างไร:** Added an explicit `small_size` rank (−market cap) and tested it in both windows. Chose size .15 / plausibility .30 (see prompts.md round 4).
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Relying on plausibility alone to capture size.
+
+### 2026-11-02 · yfinance `Close` is split-adjusted
+
+- **เจออะไร:** AAPL's 2019-12-31 `Close` from yfinance was $73.41, but it actually traded at $293.65.
+- **สาเหตุ:** yfinance adjusts `Close` for later splits (AAPL 4:1 in 2020). Multiplying it by SEC share counts from 2019, which are not split-adjusted, would understate market cap 4x.
+- **แก้อย่างไร:** Raw price = `Close` × product of all splits after that day (from yfinance `Stock Splits`). Checked against AAPL $293.65 and NVDA $235.30.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** —

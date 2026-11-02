@@ -59,8 +59,9 @@ def score(sig: pd.DataFrame, cfg: dict) -> pd.DataFrame:
         "low_dilution": rank(-df["share_growth"].astype(float)),
         "plausibility": rank(-df["required_cagr"]),
         "rev_new_high": rank(df["rev_vs_peak"]),
+        "small_size": rank(-df["market_cap_usd"].astype(float)),
     }
-    w = cfg["weights"]
+    w = {k: 0.0 for k in comp} | cfg["weights"]
     assert abs(sum(w.values()) - 1) < 1e-9, "weights must sum to 1"
     df["score"] = sum(w[k] * comp[k] for k in w)
     for k, v in comp.items():

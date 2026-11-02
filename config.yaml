@@ -10,15 +10,21 @@ gate:
   min_rev_ttm_usd: 5_000_000   # below this, % changes are noise
 
 # Weights on percentile ranks (0–1). Missing value = 0.5 (neutral). Must sum to 1.
+# Day 4 backtest (output/backtest_report.md). Companies under $300M were ~10x more likely to 10x.
+# "plausibility" (required CAGR at an exit P/S) mostly rewards cheap stocks, not small ones, so an
+# explicit small_size rank was added. Chosen by Jitti: size .15 / plausibility .30 = balanced
+# (+1 ten-bagger in both windows vs no size tilt, at the cost of a few more halved stocks).
+# Day 3 weights were 0.20/0.20/0.10/0.15/0.10/0.05/0.20 (growth/accel/gm/om/turn/dilution/plaus).
 weights:
-  rev_growth: 0.20
-  rev_accel: 0.20
-  gm_delta: 0.10
-  om_delta: 0.15
-  turnaround: 0.10             # binary 0/1, not ranked
+  rev_growth: 0.15
+  rev_accel: 0.15
+  gm_delta: 0.05
+  om_delta: 0.10
+  turnaround: 0.05             # binary 0/1, not ranked
   low_dilution: 0.05           # rank of −share_growth
-  plausibility: 0.20           # rank of −required revenue CAGR
-  rev_new_high: 0.0            # rank of rev_vs_peak; 0 until the Day 4 backtest shows if it helps
+  plausibility: 0.30           # rank of −required revenue CAGR (cheapness vs sector exit P/S)
+  small_size: 0.15             # rank of −market cap
+  rev_new_high: 0.0            # rank of rev_vs_peak; backtest inconclusive (helped holdout, hurt tune)
 
 # Score multipliers for red flags (ASSUMPTION thresholds, tune on Day 4).
 penalties:

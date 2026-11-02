@@ -120,3 +120,33 @@ Start Day 3
   - Analyst count (under-followed, question 4) is kept as a display column only. There is no 2019 value for it, so it cannot be backtested.
   - Scores file stays in `data/private/` because it includes licensed market-cap columns.
 - **ขั้นต่อไป:** Day 4: backtest as of 2019-12-31. Build the 2019→2024 10-bagger list with `yfinance`, get 2019 market cap (price × shares), run Layer 1 on 2019 data, measure recall and precision on survivors, and tune the weights. Includes deciding rebounds vs new highs.
+
+---
+
+## รอบ 4 · 2026-11-02
+
+- **ทำอะไร:** Day 4, backtest. Pulled prices from Yahoo (`src/prices.py`), ran the Layer 1 score point-in-time as of 2019-12-31 (tune window) and 2018-12-31 (holdout window), compared 8 weight variants against the stocks that went ≥10x in the next 5 years (`src/backtest.py`), chose new weights, and wrote the public report `output/backtest_report.md`.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5
+- **Prompt ที่ใช้:**
+
+```text
+Start Day 4
+```
+
+(plus my answer to the AI's size-tilt question: "Size .15 / plaus .30 (Recommended)")
+
+- **ผลที่ได้:**
+  - **Data:** 2,499 tickers priced; 1,841 had a price on 2019-12-31. Market cap then = actual traded price (split-adjustment undone with Yahoo's split history) × SEC shares on that date. Spot checks: AAPL $293.65 and NVDA $235.30 match the real 2019-12-31 closes; NVDA 2019→2024 = 22.9x, LWAY = 12.5x.
+  - **Population:** about 1,800 priced survivors per window, with only **25 (tune) and 23 (holdout) ten-baggers**, a base rate of ~1.5%.
+  - **Chosen weights:** **4 ten-baggers in the top 100 in both windows** (recall 16% / 17%, precision 4%, **lift 2.7x / 2.9x** vs random), 10 and 13 names ≥5x. The Day 3 weights scored 4 / 2.
+  - **Size is the strongest signal.** Under $300M market cap: 4.6–4.8% became 10-baggers, vs 0.3–0.5% for $1–10B.
+  - **About half the 10-baggers could not be caught on the as-of date.** Revenue was still shrinking (NVDA −19% in 2019, GME, MSTR, INOD) or there was no revenue yet (biotech: AXSM, SMMT). Switching the gate off changed results by at most one hit.
+  - **Public report:** `output/backtest_report.md` lists every 10-bagger, where it ranked, and why it was missed. It contains only SEC- and Yahoo-derived values, with sources.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - With only ~25 ten-baggers, a 1–2 hit difference is noise, so variants were judged mainly on 5x+ count, median return and share halved (100 names each). Both windows had to agree.
+  - **Removed nothing, added a `small_size` rank.** The backtest showed plausibility (required CAGR at an exit P/S) mostly rewards *cheap* stocks, not *small* ones, while size was the strongest signal.
+  - **Size tilt = .15, plausibility .30. I chose this** from 3 options the AI showed me. It gives +1 ten-bagger in both windows vs no tilt, while the share of halved stocks rises only modestly (14% / 8%). The more aggressive `size_heavy` (lift up to 3.4x) also picked more blow-ups. I prefer a balanced hit rate over maximum hits.
+  - Kept the "quant proof first" gate: turning it off barely helps, and it matches how I want to invest.
+  - `rev_new_high` stays at 0 and turnarounds stay in. The test helped one window and hurt the other, so the rebound question is undecided.
+  - **Honesty note:** weights were chosen by looking at both windows, so no untouched test period is left. The next real check is forward tracking of the live shortlist.
+- **ขั้นต่อไป:** Day 5, Layer 2: take today's top 100 and have the AI read each company's latest 10-K / 10-Q / 8-K on EDGAR, classify the catalyst (new TAM / new S-curve / turnaround / new market / cyclical-none) with a short quote and filing link, and cut to a 10–20 name shortlist.
