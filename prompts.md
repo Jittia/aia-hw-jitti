@@ -83,3 +83,40 @@ Task C — log round 2 in prompts.md and lessons in PROJECT_MEMORY.md.
   - Shares outstanding sums the cover-page values per filing, because multi-class companies report one value per class.
   - Cache stored as gzip (430 MB instead of several GB). The SEC User-Agent is read from a local `.env` (gitignored); `.env.example` is committed as a template.
 - **ขั้นต่อไป:** Day 3: build quarterly series from the facts (derive Q4 = annual − 9-month YTD), then compute Layer 1 signals: revenue acceleration, margin inflection, turnaround, and a dilution penalty. Add the 10x plausibility penalty and a score. First, widen the revenue aliases so the 187 companies without revenue are covered.
+
+---
+
+## รอบ 3 · 2026-11-02
+
+- **ทำอะไร:** Day 3, Layer 1 quant scoring. Widened the revenue concept list, built quarterly + TTM series from SEC facts (`src/quarters.py`), computed per-company signals (`src/signals.py`), and added the 10x plausibility penalty and weighted score (`src/score.py`, settings in `config.yaml`). Validated against Stock Analysis and added tests.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5
+- **Prompt ที่ใช้:**
+
+```text
+Start Day 3
+```
+
+- **ผลที่ได้:**
+  - **Quarters:** a discrete quarter = a 3-month fact, or the difference of two year-to-date facts with the same fiscal start (12M − 9M = Q4). Needed because 10-Q cash-flow statements are year-to-date only and Q4 never appears directly. Test: Apple Q4 FY2019 = $64,040M, and TTM at 2019-09-28 = the reported annual $260,174M (`tests/test_quarters.py`; 6/6 tests pass).
+  - **Validation vs Stock Analysis:** our TTM revenue is within 1% of the site's figure for **96.5%** of 2,097 USD reporters (97.3% within 5%; 29 off by more than 20%). This is an independent check that the quarter derivation works.
+  - **Coverage of 2,499 companies:**
+
+    | Status | Count | Meaning |
+    |---|---|---|
+    | ok | 2,100 | scored |
+    | no_revenue_ttm | 230 | mostly pre-revenue biotech and recent IPOs without 4 quarters yet |
+    | stale | 82 | no quarter in the last ~200 days |
+    | quarter_gap | 52 | quarters exist, but a fiscal-year change leaves a gap |
+    | no_revenue_history | 35 | no revenue a year earlier to compare with |
+
+    1,680 passed the gate (growing, or just turned profitable / FCF-positive).
+  - **Signals:** TTM revenue growth, acceleration, gross and operating margin change, turnaround, dilution, and two new red-flag signals (revenue vs prior peak, lumpy quarter). The score = weighted percentile ranks × penalties (mega-cap, dilution > 25%, one quarter > 50% of TTM).
+  - **Still open:** 58 of the top 100 are below their earlier revenue peak, i.e. cyclical rebounds (refiners PBF, CVI, DK; SEDG) rather than new S-curves. Weights are not tuned yet; that is Day 4.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - Dilution uses diluted weighted shares for now vs a year earlier **from the same filing**. Raw share counts across filings are not split-adjusted, so a reverse split looked like an 88% buyback (OESX). Filings restate comparatives for splits, so taking both numbers from one filing is split-safe. After the fix, OESX shows its real +25% and DVLT (+968% shares) fell from rank 13 to 1,058.
+  - Quarter chains keep concept consistency first and the earliest filing second. Mixing a subset revenue concept with a total would corrupt the year-to-date differences. Point-in-time is still respected, because every fact used was filed before the as-of date.
+  - Exit P/S by sector (Tech 6x … Energy 1.5x) and all penalty thresholds are marked ASSUMPTION in `config.yaml`. There is no source for them, so the backtest has to tune them.
+  - `rev_new_high` weight is set to 0 for now. Whether rebounds or new highs produced more 10-baggers is an empirical question for Day 4.
+  - Analyst count (under-followed, question 4) is kept as a display column only. There is no 2019 value for it, so it cannot be backtested.
+  - Scores file stays in `data/private/` because it includes licensed market-cap columns.
+- **ขั้นต่อไป:** Day 4: backtest as of 2019-12-31. Build the 2019→2024 10-bagger list with `yfinance`, get 2019 market cap (price × shares), run Layer 1 on 2019 data, measure recall and precision on survivors, and tune the weights. Includes deciding rebounds vs new highs.
