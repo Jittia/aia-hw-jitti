@@ -4,7 +4,8 @@
   holdout window as of 2018-12-31 → 2023-12-31   (checks the chosen weights are not fitted to one period)
 
 Ground truth = total return (Yahoo adjusted close) ≥ 10x. Market cap on the as-of date
-= raw traded price × SEC cover-page shares visible on that date.
+= raw traded price × SEC shares visible on that date (quarters.shares_as_of: cover page, balance sheet,
+then diluted weighted shares; nothing older than ~13 months).
 
 SURVIVORSHIP BIAS: the universe is today's listed companies (2026-11-02). Companies that went
 bankrupt, were acquired or delisted are missing, so absolute hit rates are optimistic. The test
@@ -20,7 +21,7 @@ from pathlib import Path
 import pandas as pd
 
 from prices import OUT as PRICES, yahoo_ticker
-from quarters import instant_series
+from quarters import shares_as_of
 from score import compute_signals, load_config, score
 from sec_client import DATA_CACHE, DATA_PRIVATE, ROOT
 
@@ -47,11 +48,6 @@ VARIANTS = {
 }
 
 
-def shares_as_of(cik: str, as_of: str) -> float | None:
-    s = instant_series(cik, "shares_outstanding", as_of)
-    return float(s.iloc[-1]["val"]) if not s.empty else None
-
-
 def build_population(as_of: str, end: str) -> pd.DataFrame:
     """Signals as of `as_of` + market cap + forward return. Signals are cached per date."""
     uni = pd.read_csv(DATA_PRIVATE / "universe_with_cik_2026-11-02.csv", dtype={"cik": str})
@@ -62,8 +58,9 @@ def build_population(as_of: str, end: str) -> pd.DataFrame:
         sig = pd.read_csv(cache, dtype={"cik": str})
     else:
         sig = compute_signals(uni["cik"].tolist(), as_of)
-        sig["shares_asof"] = [shares_as_of(c, as_of) for c in sig["cik"]]
         sig.to_csv(cache, index=False)
+    # Shares are recomputed every run (cheap) so a fix in shares_as_of reaches the backtest without a full re-run.
+    sig["shares_asof"] = [shares_as_of(c, as_of)[0] for c in sig["cik"]]
     df = sig.merge(uni, on="cik", how="left")
 
     px = pd.read_csv(PRICES)

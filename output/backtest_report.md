@@ -30,7 +30,7 @@ status: draft
 
 ## Findings (2026-11-02)
 
-1. **The score beats random, modestly.** With the current config the top 100 holds 5 (tune) / 4 (holdout) ten-baggers against ~1.5 expected by chance (lift 3.4x / 2.9x). Most 10-baggers are still missed.
+1. **The score beats random, modestly.** With the current config the top 100 holds 5 (tune) / 3 (holdout) ten-baggers against ~1.5 expected by chance (lift 3.5x / 2.3x). Most 10-baggers are still missed.
 2b. **The acquisition penalty (Day 5) helped in both windows** (more 5x+ names): growth bought through acquisitions is not the organic catalyst we are looking for.
 2. **Size is the strongest single signal.** Companies under $300M became 10-baggers ~10x more often than $1–10B companies, in both windows (table below). Removing the plausibility/size terms gave the worst results.
 3. **About half of all 10-baggers could not be caught on the as-of date.** Their revenue was still shrinking (e.g. NVDA 2019) or they had no revenue yet (biotech). This is the accepted cost of the "quant proof first" rule. Switching the gate off barely changes results, because those companies rank low anyway.
@@ -43,22 +43,22 @@ status: draft
 
 | Variant | Window | Hits | 10-baggers | Recall | Precision | Base rate | Lift | 5x+ | Median top 100 | Median all | Halved |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| config.yaml (current) | tune | 5 | 25 | 20.0% | 5.0% | 1.5% | 3.41 | 13 | 1.77x | 1.39x | 13.0% |
-| config.yaml (current) | holdout | 4 | 23 | 17.4% | 4.0% | 1.4% | 2.93 | 15 | 1.78x | 1.62x | 6.0% |
-| day3_baseline | tune | 4 | 25 | 16.0% | 4.0% | 1.5% | 2.73 | 11 | 1.57x | 1.39x | 17.0% |
-| day3_baseline | holdout | 2 | 23 | 8.7% | 2.0% | 1.4% | 1.47 | 7 | 1.64x | 1.62x | 8.0% |
-| new_high | tune | 4 | 25 | 16.0% | 4.0% | 1.5% | 2.73 | 11 | 1.51x | 1.39x | 16.0% |
-| new_high | holdout | 4 | 23 | 17.4% | 4.0% | 1.4% | 2.93 | 10 | 1.88x | 1.62x | 9.0% |
-| growth_heavy | tune | 4 | 25 | 16.0% | 4.0% | 1.5% | 2.73 | 13 | 1.57x | 1.39x | 13.0% |
-| growth_heavy | holdout | 2 | 23 | 8.7% | 2.0% | 1.4% | 1.47 | 9 | 1.87x | 1.62x | 7.0% |
-| no_plausibility | tune | 3 | 25 | 12.0% | 3.0% | 1.5% | 2.05 | 9 | 1.37x | 1.39x | 19.0% |
-| no_plausibility | holdout | 2 | 23 | 8.7% | 2.0% | 1.4% | 1.47 | 4 | 1.48x | 1.62x | 11.0% |
-| growth_only | tune | 4 | 25 | 16.0% | 4.0% | 1.5% | 2.73 | 10 | 1.36x | 1.39x | 20.0% |
-| growth_only | holdout | 5 | 23 | 21.7% | 5.0% | 1.4% | 3.67 | 10 | 1.65x | 1.62x | 18.0% |
-| plausibility_heavy | tune | 3 | 25 | 12.0% | 3.0% | 1.5% | 2.05 | 12 | 1.77x | 1.39x | 12.0% |
-| plausibility_heavy | holdout | 4 | 23 | 17.4% | 4.0% | 1.4% | 2.93 | 14 | 2.20x | 1.62x | 3.0% |
-| size_heavy | tune | 5 | 25 | 20.0% | 5.0% | 1.5% | 3.41 | 13 | 1.70x | 1.39x | 16.0% |
-| size_heavy | holdout | 3 | 23 | 13.0% | 3.0% | 1.4% | 2.20 | 13 | 1.85x | 1.62x | 6.0% |
+| config.yaml (current) | tune | 5 | 25 | 20.0% | 5.0% | 1.4% | 3.45 | 13 | 1.77x | 1.39x | 12.0% |
+| config.yaml (current) | holdout | 3 | 23 | 13.0% | 3.0% | 1.3% | 2.34 | 15 | 1.80x | 1.60x | 7.0% |
+| day3_baseline | tune | 4 | 25 | 16.0% | 4.0% | 1.4% | 2.76 | 11 | 1.53x | 1.39x | 16.0% |
+| day3_baseline | holdout | 2 | 23 | 8.7% | 2.0% | 1.3% | 1.56 | 8 | 1.59x | 1.60x | 8.0% |
+| new_high | tune | 4 | 25 | 16.0% | 4.0% | 1.4% | 2.76 | 10 | 1.43x | 1.39x | 16.0% |
+| new_high | holdout | 4 | 23 | 17.4% | 4.0% | 1.3% | 3.12 | 10 | 1.95x | 1.60x | 7.0% |
+| growth_heavy | tune | 4 | 25 | 16.0% | 4.0% | 1.4% | 2.76 | 12 | 1.47x | 1.39x | 14.0% |
+| growth_heavy | holdout | 2 | 23 | 8.7% | 2.0% | 1.3% | 1.56 | 9 | 1.82x | 1.60x | 7.0% |
+| no_plausibility | tune | 3 | 25 | 12.0% | 3.0% | 1.4% | 2.07 | 9 | 1.32x | 1.39x | 18.0% |
+| no_plausibility | holdout | 2 | 23 | 8.7% | 2.0% | 1.3% | 1.56 | 4 | 1.47x | 1.60x | 11.0% |
+| growth_only | tune | 4 | 25 | 16.0% | 4.0% | 1.4% | 2.76 | 10 | 1.34x | 1.39x | 19.0% |
+| growth_only | holdout | 5 | 23 | 21.7% | 5.0% | 1.3% | 3.90 | 9 | 1.53x | 1.60x | 19.0% |
+| plausibility_heavy | tune | 3 | 25 | 12.0% | 3.0% | 1.4% | 2.07 | 11 | 1.90x | 1.39x | 10.0% |
+| plausibility_heavy | holdout | 4 | 23 | 17.4% | 4.0% | 1.3% | 3.12 | 14 | 2.33x | 1.60x | 3.0% |
+| size_heavy | tune | 5 | 25 | 20.0% | 5.0% | 1.4% | 3.45 | 12 | 1.70x | 1.39x | 14.0% |
+| size_heavy | holdout | 3 | 23 | 13.0% | 3.0% | 1.3% | 2.34 | 13 | 1.80x | 1.60x | 7.0% |
 
 Variant weights are listed in `src/backtest.py` (`VARIANTS`); the current choice is in `config.yaml`.
 
@@ -68,21 +68,21 @@ Same current weights, gate switched off (declining-revenue companies also ranked
 
 | Window | Hits | 5x+ | Median top 100 | Halved | Lift |
 |---|---|---|---|---|---|
-| tune | 6 | 15 | 1.74x | 13.0% | 4.09 |
-| holdout | 4 | 16 | 1.85x | 6.0% | 2.93 |
+| tune | 6 | 14 | 1.77x | 11.0% | 4.14 |
+| holdout | 4 | 15 | 1.88x | 7.0% | 3.12 |
 
 ## 10-baggers by market cap on the as-of date
 
 | Window | Market cap | 10-baggers | Companies | Rate |
 |---|---|---|---|---|
-| tune | < $300M | 10 | 218 | 4.6% |
-| tune | $300M–1B | 6 | 243 | 2.5% |
-| tune | $1–10B | 3 | 610 | 0.5% |
-| tune | > $10B | 2 | 359 | 0.6% |
-| holdout | < $300M | 10 | 210 | 4.8% |
-| holdout | $300M–1B | 4 | 239 | 1.7% |
-| holdout | $1–10B | 2 | 573 | 0.3% |
-| holdout | > $10B | 2 | 295 | 0.7% |
+| tune | < $300M | 10 | 219 | 4.6% |
+| tune | $300M–1B | 6 | 262 | 2.3% |
+| tune | $1–10B | 4 | 660 | 0.6% |
+| tune | > $10B | 2 | 377 | 0.5% |
+| holdout | < $300M | 10 | 214 | 4.7% |
+| holdout | $300M–1B | 4 | 259 | 1.5% |
+| holdout | $1–10B | 2 | 621 | 0.3% |
+| holdout | > $10B | 2 | 310 | 0.6% |
 
 ## Every 10-bagger and where the current score ranked it
 
@@ -90,20 +90,20 @@ Same current weights, gate switched off (declining-revenue companies also ranked
 
 | Ticker | 5y return | Rank | Market cap then | TTM rev growth then | Note |
 |---|---|---|---|---|---|
-| PMTS | 33.2x | 3 | $10M | 10.0% | ranked |
-| ESOA | 17.0x | 10 | $11M | 28.8% | ranked |
-| LMB | 22.6x | 17 | $29M | 7.5% | ranked |
-| TGLS | 10.2x | 63 | $376M | 19.6% | ranked |
-| LWAY | 12.5x | 91 | $31M | -12.2% | ranked |
-| FTAI | 11.3x | 231 | $1,659M | 92.4% | ranked |
-| AR | 12.3x | 249 | $867M | 9.4% | ranked |
-| CELH | 16.4x | 377 | $333M | 39.6% | ranked |
-| TSLA | 14.5x | 556 | $75,402M | 39.4% | ranked |
-| CHRD | 54.4x | 689 | $1,047M | 11.8% | ranked |
+| PMTS | 33.2x | 2 | $10M | 10.0% | ranked |
+| ESOA | 17.0x | 9 | $11M | 28.8% | ranked |
+| LMB | 22.6x | 16 | $29M | 7.5% | ranked |
+| TGLS | 10.2x | 65 | $376M | 19.6% | ranked |
+| LWAY | 12.5x | 93 | $31M | -12.2% | ranked |
+| FTAI | 11.3x | 239 | $1,659M | 92.4% | ranked |
+| AR | 12.3x | 260 | $867M | 9.4% | ranked |
+| CELH | 16.4x | 394 | $333M | 39.6% | ranked |
+| TSLA | 14.5x | 595 | $75,402M | 39.4% | ranked |
+| CHRD | 54.4x | 734 | $1,047M | 11.8% | ranked |
 | INOD | 34.7x | — | $29M | -3.3% | failed gate: revenue shrinking |
 | NVDA | 22.9x | — | $144,004M | -19.4% | failed gate: revenue shrinking |
 | GME | 20.6x | — | $401M | -15.9% | failed gate: revenue shrinking |
-| MSTR | 20.3x | — | — | -3.8% | failed gate: revenue shrinking |
+| MSTR | 20.3x | — | $1,470M | -3.8% | failed gate: revenue shrinking |
 | BBW | 16.5x | — | $49M | -6.8% | failed gate: revenue shrinking |
 | BYRN | 15.2x | — | $20M | 50.0% | failed gate: TTM revenue < $5M |
 | MOD | 15.1x | — | $425M | -3.1% | failed gate: revenue shrinking |
@@ -121,22 +121,22 @@ Same current weights, gate switched off (declining-revenue companies also ranked
 | Ticker | 5y return | Rank | Market cap then | TTM rev growth then | Note |
 |---|---|---|---|---|---|
 | LFMD | 11.8x | 8 | $6M | 66.6% | ranked |
-| AEHR | 18.8x | 20 | $31M | 33.0% | ranked |
-| QXO | 10.5x | 66 | $10M | 13.7% | ranked |
-| LMB | 12.4x | 98 | $28M | 7.9% | ranked |
-| BLDR | 15.3x | 112 | $1,252M | 13.0% | ranked |
+| AEHR | 18.8x | 18 | $31M | 33.0% | ranked |
+| QXO | 10.5x | 65 | $10M | 13.7% | ranked |
+| LMB | 12.4x | 103 | $28M | 7.9% | ranked |
+| BLDR | 15.3x | 120 | $1,252M | 13.0% | ranked |
 | ENPH | 27.9x | 218 | $503M | 2.2% | ranked |
-| HDSN | 15.2x | 538 | $38M | 33.9% | ranked |
-| SMTI | 13.7x | 554 | $7M | 17.9% | ranked |
-| NVDA | 15.0x | 633 | $81,435M | 38.4% | ranked |
-| CELH | 47.1x | 810 | $177M | 41.4% | ranked |
-| TSLA | 11.2x | 874 | $57,153M | 62.9% | ranked |
-| ELF | 16.7x | 880 | $418M | 2.2% | ranked |
-| CHRD | 42.7x | 972 | $1,761M | 76.4% | ranked |
+| HDSN | 15.2x | 569 | $38M | 33.9% | ranked |
+| SMTI | 13.7x | 578 | $7M | 17.9% | ranked |
+| NVDA | 15.0x | 664 | $81,435M | 38.4% | ranked |
+| CELH | 47.1x | 855 | $177M | 41.4% | ranked |
+| TSLA | 11.2x | 916 | $57,153M | 62.9% | ranked |
+| ELF | 16.7x | 921 | $418M | 2.2% | ranked |
+| CHRD | 42.7x | 1026 | $1,761M | 76.4% | ranked |
 | ATLX | 41.7x | — | $165M | 29.6% | failed gate: TTM revenue < $5M |
 | LEU | 32.2x | — | $15M | -5.0% | failed gate: revenue shrinking |
 | AXSM | 28.2x | — | $84M | — | not scorable: no_revenue_ttm |
-| SMCI | 20.6x | — | $672M | — | not scorable: stale |
+| SMCI | 20.6x | — | — | — | not scorable: stale |
 | EU | 14.6x | — | — | — | not scorable: no_revenue_ttm |
 | LPG | 13.4x | — | $322M | -4.4% | failed gate: revenue shrinking |
 | CLDX | 13.2x | — | $34M | — | not scorable: quarter_gap |

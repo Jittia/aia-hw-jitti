@@ -24,6 +24,8 @@
 - Before blaming the AI for "insufficient", check whether the input text was trimmed or extracted from the wrong section.
 - Detect acquisitions with both cash paid and goodwill added; cash alone misses stock-financed mergers.
 - Any new Layer 1 penalty must improve the backtest in both windows before it is kept.
+- Get share counts only through `quarters.shares_as_of()` (fallbacks + age limit); never use the latest `dei` value blindly.
+- Open every generated page in the browser (light, dark, narrow) before calling it done; the data can be right while the layout is broken.
 
 ## บันทึกปัญหา
 
@@ -91,3 +93,10 @@
 - **สาเหตุ:** Stock-financed mergers (e.g. RJET, MAGN, CAL) pay little or no cash, so nothing shows in the cash-flow tag.
 - **แก้อย่างไร:** Also flag when goodwill added over ~2 years exceeds 10% of prior-year revenue → 15/21 caught, 2 false flags.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Cash paid alone.
+
+### 2026-11-02 · Missing and stale cover-page share counts
+
+- **เจออะไร:** 10 of 100 dashboard companies had no market cap (incl. DERM, CLOV, EVC, PBF), and TLYS used a share count from 2015.
+- **สาเหตุ:** `dei:EntityCommonStockSharesOutstanding` is missing from companyfacts for many filers (often multi-class companies), or was last tagged years ago. The code took the latest value without checking its age. The Day 4 backtest used the same lookup.
+- **แก้อย่างไร:** `quarters.shares_as_of()`: cover page → `CommonStockSharesOutstanding` → quarterly diluted weighted shares, nothing older than 400 days. Result: market caps 100/100, all within 25% of the screener. Backtest rerun (holdout 10x hits 4 → 3).
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Cover-page shares only.

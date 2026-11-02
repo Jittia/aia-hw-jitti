@@ -186,3 +186,29 @@ Start Day 5
   - A watchlist is the goal, so Tier B (watch) is a valid part of it. Tier A means "act on research now"; Tier B means "monitor next quarter".
   - The acquisition thresholds (10% cash, 10% goodwill) were calibrated on the agents' labels and then checked in both backtest windows before being kept.
 - **ขั้นต่อไป:** Day 6: build `output/dashboard.html`: a ranked table with tiers, catalyst, quote and filing link, Layer 1 numbers, and the backtest summary. Market cap from Yahoo price × SEC shares (not the licensed screener).
+
+---
+
+## รอบ 6 · 2026-11-02
+
+- **ทำอะไร:** Day 6, the dashboard. Wrote `src/build_dashboard.py` and `src/dashboard_template.html`, which produce `output/dashboard.html`: one self-contained page (no external scripts) with the screening funnel, the 20-name watchlist (click a row for the filing quote, SEC link and red flags), a chart of what the AI found in the top 100, and the backtest summary. Light/dark theme, works at phone width. Also fixed a share-count bug that affected the backtest, and filled in `output/README.md`.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser to check the page
+- **Prompt ที่ใช้:**
+
+```text
+Start Day 6
+```
+
+- **ผลที่ได้:**
+  - **Page:** the dashboard opens with no console errors and no sideways page scroll, and was checked in both light and dark themes. Fixed two layout problems found by looking at it: the evidence text ran past the edge of the screen, and two chart labels overlapped.
+  - **Market cap = Yahoo close × SEC share count** (not the licensed screener, because the repo is public). Cross-check against the screener: 93/100 within 10%, 100/100 within 25%.
+  - **Bug found while building it:** 10 of 100 companies had no market cap (incl. DERM, the only Tier A), and TLYS was using a 2015 share count.
+    - Cause: many companies have no `dei` cover-page share fact in companyfacts, or only a years-old one.
+    - Fix: one shared `shares_as_of()` that tries cover page → balance sheet → diluted weighted shares and rejects anything older than ~13 months.
+    - The backtest used the same lookup, so it was rerun. 2019 window: 5 ten-baggers (unchanged), lift 3.45x. 2018 window: 4 → **3** ten-baggers, lift 2.34x. 5x+ names 13 / 15. The current weights still have the most 5x+ names in both windows, so they stay.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - One HTML file with the data embedded. It opens offline and anyone can download it from GitHub without a server.
+  - Only SEC- and Yahoo-derived values are written into the page, because the repo is Public and AGENTS.md forbids licensed data.
+  - Charts kept to what answers a question: why most top-100 names were rejected (bar chart; structural types in full colour), and the size effect (two windows, legend + combined label). Everything else is a table. Colours are the dataviz skill's reference palette slots 1–2. I could not run its validator because Node is not installed; that pair is documented as passing in both themes.
+  - Reported the backtest change honestly (holdout 4 → 3 hits) instead of re-tuning weights to win it back. Tuning again on the same two windows would overfit.
+- **ขั้นต่อไป:** Day 7: final review against `spec.md` success criteria. The one open item is hand-checking margins, cash flow and shares for 3 tickers against their filings. Then a short summary of results and limits, and `/save`. Optional: publish the dashboard as a shareable page.

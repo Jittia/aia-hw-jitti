@@ -60,6 +60,34 @@ def ttm(q: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["end", "ttm"])
 
 
+SHARE_SOURCES = [("shares_outstanding", None),                                   # dei cover page
+                 ("CommonStockSharesOutstanding", "us-gaap"),                     # balance sheet
+                 ("WeightedAverageNumberOfDilutedSharesOutstanding", "us-gaap")]  # income statement
+MAX_SHARE_AGE_DAYS = 400
+
+
+def shares_as_of(cik: str, as_of: str) -> tuple[float | None, str | None]:
+    """Latest share count visible on `as_of`, no older than ~13 months. Many filers have no (or a
+    years-old) dei cover-page fact in companyfacts, so fall back to balance-sheet, then diluted shares.
+    Returns (shares, source concept)."""
+    for concept, taxonomy in SHARE_SOURCES:
+        if taxonomy:
+            f = facts_as_of(cik, concept, as_of, taxonomy=taxonomy, unit="shares")
+            if f.empty:
+                continue
+            if concept.startswith("WeightedAverage"):
+                f = f[f["period_days"].between(80, 100)]  # a quarter's average, not a year's
+            s = f[["end", "val"]].sort_values("end")
+        else:
+            s = instant_series(cik, concept, as_of)
+        if s.empty:
+            continue
+        last = s.iloc[-1]
+        if (pd.Timestamp(as_of) - pd.Timestamp(last["end"])).days <= MAX_SHARE_AGE_DAYS and last["val"] > 0:
+            return float(last["val"]), concept
+    return None, None
+
+
 def instant_series(cik: str, metric: str, as_of: str) -> pd.DataFrame:
     """Point-in-time instant values (e.g. shares outstanding). Columns: end, val, filed, url."""
     f = facts_as_of(cik, metric, as_of)
