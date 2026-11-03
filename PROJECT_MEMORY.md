@@ -36,6 +36,11 @@
 - Keep "infinite" risk values (e.g. net debt with EBITDA ≤ 0) as a breach in every output; never let them turn into "not tested" when exported.
 - When the web page re-implements a Python calculation, check that both give the same score for every company before calling it done.
 - Serve the web page through a local server (.claude/launch.json "moat-site") to preview it; the browser pane opens a file without its data/*.js files.
+- Search filing values in the visible text (hidden XBRL removed), most precise format first; a short number counts only with its line label nearby.
+- Never subtract a "gain" from operating income without checking it sits inside operating income; business-sale gains usually do not.
+- Cross-check the OperatingIncomeLoss tag against revenue − CostsAndExpenses; some filers tag a segment total.
+- Fingerprint settings and scoring code before a validation run, and report every variant tried, including results against the hypothesis.
+- Test a "momentum" signal against companies with the same starting level, not only against the industry median; otherwise picking already-strong companies looks like skill.
 
 ## บันทึกปัญหา
 
@@ -159,3 +164,24 @@
 - **สาเหตุ:** The cache is git-ignored (correct, it is large), so a fresh clone has none.
 - **แก้อย่างไร:** Downloaded SEC's two bulk files once (1.4 GB + 1.6 GB, ~6 minutes) and extracted all companies in ~2 minutes with 8 processes. No per-company requests, no rate limits. `edgar.py` falls back to the bulk zip, so the old tests still run.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** —
+
+### 2026-11-03 · XBRL operating income was a segment total (TechnipFMC)
+
+- **เจออะไร:** In the 10-K spot-check, TechnipFMC's OperatingIncomeLoss was $1,157.3M (FY2024), but its income statement has no operating-income line and revenue − total costs is $956.8M.
+- **สาเหตุ:** Some filers tag the segment-profit total as OperatingIncomeLoss. 48 of 1,870 universe companies differ from revenue − CostsAndExpenses by more than 10% of operating income.
+- **แก้อย่างไร:** Kept the reported value, lowered data confidence one level, added a Risk observation. A regression test covers FTI. My first threshold (3% of revenue) missed FTI itself (2.2%), and the test caught it; the gap is now measured as a share of operating income.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Gap as a share of revenue.
+
+### 2026-11-03 · Business-sale gains were removed from operating income
+
+- **เจออะไร:** FTI's $71.3M gain on disposal of Measurement Solutions is printed below total costs, but the clean-up subtracted it from operating income.
+- **สาเหตุ:** The gain tags (GainLossOnSaleOfBusiness, DisposalGroup…) were treated like asset-sale gains. XBRL facts do not say which line an item sits on.
+- **แก้อย่างไร:** Only gains on assets and equipment are removed; business-sale gains are shown as "not removed". Shortlist unchanged.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** —
+
+### 2026-11-03 · Validation: "strengthening" did not predict further strengthening
+
+- **เจออะไร:** Over 2013–2023 only 26.9% of shortlist picks improved their industry rank over 3 years (base 48.6%) and 38.0% fell by more than 10 points (base 21.8%). The result was the same in all 17 variants.
+- **สาเหตุ:** Mean reversion. The screen rewards recent improvement and picks companies near the top of it; improvements tend to fade. The picks were still above their industry 3 years later (+8.3 rank points), but no better than companies that started at the same rank (−3.4).
+- **แก้อย่างไร:** Reported as found (Proof tab). Any v1.1 must be designed in advance and tested on years not used to build it.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Changing weights, blend, risk gate or the confirmation rule (all 17 variants show the same pattern).

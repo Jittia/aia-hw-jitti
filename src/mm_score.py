@@ -256,8 +256,10 @@ def risk_gate(d: pd.DataFrame, latest: pd.DataFrame, settings: dict) -> pd.DataF
 def confidence(d: pd.DataFrame, latest: pd.DataFrame) -> pd.Series:
     cov = np.mean([np.isfinite(_window(d, latest, c, 5)).mean(axis=1) for c in CORE], axis=0)
     big_adj = (latest["one_offs"].abs() > 0.5 * latest["op_income"].abs()).to_numpy()
+    oi_gap = (latest["oi_check_gap"] > 0.10).to_numpy()
     lvl = np.where(cov >= 0.9, "High", np.where(cov >= 0.7, "Medium", "Low"))
     lvl = np.where(big_adj & (lvl == "High"), "Medium", lvl)
+    lvl = np.where(oi_gap, np.where(lvl == "High", "Medium", "Low"), lvl)  # one level down
     return pd.Series(lvl, index=latest.index), pd.Series(cov, index=latest.index)
 
 

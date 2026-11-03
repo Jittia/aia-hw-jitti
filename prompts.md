@@ -390,3 +390,65 @@ I still want to use this Repo to be my homework submission.  To replace the prev
   - **Sheet gets data by `IMPORTDATA` from CSVs in this repo.** Sending 1,870 rows cell by cell through the connector is slow. Importing makes the Sheet refresh after every push and keeps it the same as the web page.
   - **Not tuned yet, on purpose:** the risk gate removes 44% (interest cover 562, Altman Z'' 511, which also hits buyback companies with negative equity). Some shortlist names may be post-COVID rebounds (LVS, HXL). Step 5 validation and robustness tests decide; defaults are locked before the final test.
 - **ขั้นต่อไป:** Step 4 ★: spot-check cleaned figures for 3 years against the actual 10-Ks of 10 companies in different sectors. Then step 5 ★: fundamental validation 2013–2023 (hit rate, false-alarm rate, lead time) and robustness.
+
+---
+
+## รอบ 10 · 2026-11-03 · Moat Momentum steps 4–5: 10-K spot-check and fundamental validation
+
+- **ทำอะไร:**
+  - **Step 4 ★: spot-check vs 10-Ks.**
+    - `src/mm_spotcheck.py`, `src/mm_spotcheck_report.py` → `output/spotcheck.html`, `output/data/spotcheck.csv`.
+    - Fixed two clean-up rules the check exposed. Added regression tests.
+    - Moved the filing-text helper to `src/filing_text.py`; archived `layer2_prep.py` and `verify_filings.py` (they depended on archived code).
+  - **Step 5 ★: fundamental validation 2013–2023 and robustness.**
+    - `src/mm_validate.py` and `src/mm_proof.py`.
+    - Outputs: `output/data/validation.json`, the Proof tab in the web page, `output/proof.html`, and the Validation Results tab in the Sheet (`output/sheet/validation.csv`).
+  - Checked that the Sheet imports work after I clicked "Allow access".
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser · Google Sheets connector
+- **Prompt ที่ใช้:**
+
+```text
+กดแล้ว ไปขั้น 4
+```
+
+```text
+Approve, start step 5
+```
+
+- **ผลที่ได้:**
+  - **Sheet:**
+    - All data tabs fill from GitHub (1,870 rows on Universe).
+    - The Settings-driven Moat Score formula gives the same value as the engine (LVS 86.5).
+  - **Spot-check (step 4):**
+    - 10 companies from 10 different industries: PROP, SEZL, HXL, MU, HNRG, FTI, COCO, FSS, SMTI, GSAT. Chosen by a rule set before looking: the highest-ranked company in each of the 10 largest SIC divisions.
+    - 3 fiscal years each.
+    - **331 of 333 non-zero inputs** were found in the visible 10-K text; 2 are short numbers with no label nearby.
+    - **60 of 60** hand recalculations of clean OI and NOPAT match the engine.
+  - **Two problems found and fixed:**
+    1. TechnipFMC's operating-income tag ($1,157.3M) is a segment total. Its statement shows revenue − total costs = $956.8M. 48 universe companies have a gap above 10% of operating income; their data confidence now drops one level, with a Risk observation.
+    2. Gains on selling a whole business ($71.3M at FTI) are printed below operating income. They are no longer subtracted, but are shown in the bridge.
+
+    The shortlist stayed the same 25 names.
+  - **Validation (step 5):**
+    - Settings and scoring code were fingerprinted before the run: `settings.yaml` b2e1fdf4…, `mm_fundamentals.py` 48cf5ecc…, `mm_score.py` 2975b2bc….
+    - Each year re-run as of 30 June using only filings made by then, including later-delisted companies.
+    - 275 shortlist picks (212 companies) over 11 years; 17 variants.
+
+    | 3 years later | Shortlist | Moat Strengthening | Rest |
+    |---|---|---|---|
+    | Peer rank kept improving (hit) | 26.9% | 39.9% | 48.6% |
+    | Peer rank fell > 10 points (false alarm) | 38.0% | 27.6% | 21.8% |
+    | Reached industry top 20% on ROIC | 29.2% | 32.1% | 24.0% |
+
+  - **What the numbers say:**
+    - On the brief's test, flagged companies were better later: shortlist peer rank +8.3 points vs the industry median after 3 years, ROIC +5.4 pp.
+    - But against companies that started at the same rank, shortlist rank ended 3.4 points lower; ROIC was only +2.2 pp higher.
+    - The same pattern holds in every variant (weights ±10, Proven Leaders, Strict Risk, no gate, Altman as flag, 2 or 4 themes), every sub-period (hit 33% / 26% / 14%) and with energy or tech excluded.
+    - **Conclusion:** v1.0 finds strong, improving companies, but "strengthening" does not predict further strengthening (mean reversion). The pitch claim "visible 1–3 years before recognition" is not supported yet.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Approved step 4 and step 5 (my choice)**, following the ★ stops in my brief.
+  - **Spot-check found → keep the reported operating-income value, but lower confidence.** Replacing it with revenue − total costs could be wrong for companies whose "total costs" include interest, and only 48 companies are affected. Lowering confidence keeps it visible without guessing.
+  - **Stop removing business-sale gains.** In the filing they sit below operating income, so subtracting them understated clean profit.
+  - **Lock first, then report everything.** The defaults were fingerprinted before the final run and every variant is shown. This is the brief's rule against over-fitting, and the result is reported even though it goes against the brief's main insight.
+  - **Added "same starting rank" comparison next to the brief's test.** The brief's level test alone would show a pass that comes only from picking already-strong companies. This was added after seeing the first results, and the report says so.
+- **ขั้นต่อไป:** I decide: (a) design v1.1 with 2–3 changes declared in advance, tuned only on 2013–2017 and confirmed on 2018–2023; or (b) accept v1.0, reposition it as a "quality and improving" screen, and go to step 6 (price-data options for market validation).

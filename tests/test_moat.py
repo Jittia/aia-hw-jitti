@@ -132,5 +132,33 @@ class AppleFY2025(unittest.TestCase):
         self.assertEqual(d["fy"].max(), 2019)
 
 
+@unittest.skipUnless(FACTS.exists(), "needs data/cache/mm/facts.pkl")
+class SpotCheckValues(unittest.TestCase):
+    """Values found printed in the 10-K text by src/mm_spotcheck.py (step 4, 2026-11-03). CIKs copied from
+    data/cache/mm/run_latest.pkl, not typed from memory (PROJECT_MEMORY rule)."""
+    CASES = [  # (ticker, cik, fy, column, value as printed × unit)
+        ("MU", 723125, 2026, "revenue", 133_188_000_000), ("MU", 723125, 2026, "op_income", 99_340_000_000),
+        ("HXL", 717605, 2025, "revenue", 1_893_900_000), ("HXL", 717605, 2025, "op_income", 171_600_000),
+        ("FSS", 277509, 2025, "revenue", 2_180_500_000), ("FSS", 277509, 2025, "op_income", 340_900_000),
+        ("COCO", 1482981, 2025, "revenue", 609_780_000), ("COCO", 1482981, 2025, "op_income", 82_532_000),
+        ("GSAT", 1366868, 2025, "revenue", 272_986_000), ("GSAT", 1366868, 2025, "op_income", 7_430_000),
+    ]
+
+    def test_values_match_10k(self):
+        f = pd.read_pickle(FACTS)
+        for t, cik, fy, col, expected in self.CASES:
+            with self.subTest(ticker=t, column=col):
+                d = annual_table(f[f.cik == cik], None).set_index("fy")
+                self.assertAlmostEqual(d.loc[fy, col], expected, delta=1)
+
+    def test_business_sale_gain_not_removed(self):
+        # TechnipFMC FY2024: $71.3M gain on disposal of Measurement Solutions is printed below operating income
+        f = pd.read_pickle(FACTS)
+        d = annual_table(f[f.cik == 1681459], None).set_index("fy")
+        self.assertAlmostEqual(d.loc[2024, "gains_business"], 71_300_000, delta=1)
+        self.assertAlmostEqual(d.loc[2024, "clean_oi"], d.loc[2024, "op_income"] + d.loc[2024, "one_offs"], delta=1)
+        self.assertGreater(d.loc[2024, "oi_check_gap"], 0.10)  # (1,157.3 − 956.8) ÷ 1,157.3 = 17%
+
+
 if __name__ == "__main__":
     unittest.main()

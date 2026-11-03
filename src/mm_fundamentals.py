@@ -38,8 +38,11 @@ TAG_PRIORITY: dict[str, list[str]] = {
     "restructuring": ["RestructuringCharges", "RestructuringSettlementAndImpairmentProvisions"],
     "litigation": ["LitigationSettlementExpense", "LossContingencyLossInPeriod"],
     "acq_costs": ["BusinessCombinationAcquisitionRelatedCosts"],
-    "gains": ["GainLossOnDispositionOfAssets", "GainLossOnDispositionOfAssets1", "GainLossOnSaleOfPropertyPlantEquipment",
-              "GainLossOnSaleOfBusiness", "DisposalGroupNotDiscontinuedOperationGainLossOnDisposal"],
+    # gains on assets/equipment usually sit inside operating income and are removed; gains on selling a whole business
+    # usually sit below it (spot-check, TechnipFMC FY2024), so they are shown but not removed
+    "gains": ["GainLossOnDispositionOfAssets", "GainLossOnDispositionOfAssets1", "GainLossOnSaleOfPropertyPlantEquipment"],
+    "gains_business": ["GainLossOnSaleOfBusiness", "DisposalGroupNotDiscontinuedOperationGainLossOnDisposal"],
+    "costs_total": ["CostsAndExpenses"],
     "assets": ["Assets"],
     "assets_cur": ["AssetsCurrent"],
     "liab_tag": ["Liabilities"],
@@ -142,6 +145,10 @@ def annual_table(facts: pd.DataFrame, as_of: str | pd.Timestamp | None = None,
                                 axis=1).max(axis=1)
     d["one_offs"] = _sum_any(d["impairment"], d["restructuring"], d["litigation"], d["acq_costs"], -d["gains"]).fillna(0.0)
     d["clean_oi"] = d["op_income"] + d["one_offs"]
+    # cross-check: some filers tag a segment total as operating income (spot-check, TechnipFMC)
+    gap = (d["op_income"] - (d["revenue"] - d["costs_total"])).abs()
+    d["oi_check_gap"] = gap / d["op_income"].abs()  # share of operating income ...
+    d.loc[gap < 0.01 * d["revenue"], "oi_check_gap"] = 0.0  # ... ignored when under 1% of revenue
     d["nopat"] = d["clean_oi"] * (1 - tax_rate)
     d["clean_ni"] = d["net_income"] + d["one_offs"] * (1 - tax_rate)
 

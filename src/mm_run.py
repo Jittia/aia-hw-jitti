@@ -29,7 +29,7 @@ SERIES = ["revenue", "gross_profit", "op_income", "one_offs", "clean_oi", "clean
           "roic", "roic_ex_gw", "incr_roic", "gross_margin", "gp_assets", "gm_stability", "op_margin", "incr_margin",
           "sga_rev", "asset_turnover", "rev_growth", "rev_excess", "peer_level_rank", "fcf_conv", "accruals",
           "reinvest_rate", "nd_ebitda", "interest_cover", "altman_z", "shares", "sbc_rev", "gw_assets",
-          "impairment", "restructuring", "litigation", "acq_costs", "gains"]
+          "impairment", "restructuring", "litigation", "acq_costs", "gains", "gains_business"]
 MEDIAN_SERIES = ["roic", "gross_margin", "gp_assets", "op_margin", "sga_rev", "asset_turnover", "rev_growth",
                  "fcf_conv", "accruals", "nd_ebitda", "interest_cover", "altman_z", "sbc_rev"]
 IND_LABEL = {
@@ -103,6 +103,9 @@ def observations(row: pd.Series, h: pd.DataFrame, med: pd.DataFrame, settings: d
     oi = row.get("op_income")
     if pd.notna(oi) and oi != 0 and abs(row["one_offs"]) > 0.25 * abs(oi):
         add("RISK", f"One-off items of {usd(row['one_offs'])} were added back in FY{fy} ({pct(row['one_offs'] / abs(oi), 0)} of reported operating income); check them in the filing.")
+    gap = row.get("oi_check_gap")
+    if pd.notna(gap) and gap > 0.10:
+        add("RISK", f"Tagged operating income ({usd(oi)}) differs from revenue minus total costs ({usd(row['revenue'] - row['costs_total'])}) by {pct(gap, 0)} of operating income in FY{fy}; the tag may be a segment total. Data confidence lowered.")
     if row["confidence"] == "Low":
         add("RISK", f"Data confidence is Low: only {pct(row['coverage'], 0)} of core items are tagged over the last 5 years.")
 
