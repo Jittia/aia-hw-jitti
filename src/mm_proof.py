@@ -83,6 +83,93 @@ def market_html() -> str:
 <h3>By sector (most-picked SIC groups)</h3><div class="tbl"><table class="num"><thead><tr><th>Sector</th><th class="r">Picks</th><th class="r">Median 12-month return vs S&amp;P 500</th></tr></thead><tbody>{srows}</tbody></table></div>"""
 
 
+def gate_html() -> str:
+    """Methodology v1.1: the risk-gate study behind switching Altman Z'' and Beneish off (chosen after seeing results)."""
+    path = ROOT / "output" / "data" / "gate_study.json"
+    if not path.exists():
+        return ""
+    g = json.loads(path.read_text())
+    HL = ' style="background:var(--card);font-weight:600"'
+    rows = "".join(
+        f"<tr{HL if k.startswith('G.') else ''}><td>{html.escape(k)}</td>"
+        f"<td class='r'>{pct(v['shortlist']['hit_rate_3y'])}</td><td class='r'>{pct(v['shortlist']['false_alarm_3y'])}</td>"
+        f"<td class='r'>{pct(v['strengthening']['false_alarm_3y'])}</td><td class='r'>{pct(v['removed_share_universe'], 0)}</td>"
+        f"<td class='r'>{v['live_removed_top100']}</td></tr>" for k, v in g.items() if not k.startswith("_"))
+    return f"""<h2>Methodology v1.1: Altman Z'' and Beneish switched off</h2>
+<p>On 3 November 2026 a check of the 100 largest US companies found that the v1.0 risk gate removed 20 of them, including NVIDIA, Micron, AbbVie and Oracle. Beneish M-Score counts fast sales growth as a warning sign, and Altman Z'' (book equity) scores companies with large buybacks or regulated debt as distressed. The variants below were written down before running and tested on the same 2013–2023 back-test. Every variant moved false alarms by about one point or less, within the ±3-point sampling error, while removing far more large, healthy companies. Jitti chose G (both rules off; values still shown in each Deep-Dive). <b>This choice was made after seeing results</b>, on reasonableness rather than better back-test numbers; the v1.0 results on this page remain the pre-locked test.</p>
+<div class="tbl"><table class="num"><thead><tr><th>Variant</th><th class="r">Shortlist hit</th><th class="r">Shortlist false alarm</th><th class="r">Strengthening false alarm</th><th class="r">Removed (back-test)</th><th class="r">Top-100 removed today</th></tr></thead><tbody>{rows}</tbody></table></div>
+<p class="small">Source: output/data/gate_study.json. Top 100 by market cap = Yahoo month-end price × SEC diluted shares, October 2026.</p>"""
+
+
+def same_yardstick(kept: dict) -> dict:
+    """v1.1 Moat Score vs v2.0 Compounder Signal on the same quarterly screens and winner label (2026-11-04)."""
+    import yaml
+    from mm_discover import combine, rows_path
+    settings = yaml.safe_load((ROOT / "settings.yaml").read_text())
+    out = {}
+    for per in ("train", "test"):
+        r = pd.read_pickle(rows_path(settings, per))
+        r["cs"] = combine(r, kept)
+        base = r.loc[r["winner"].notna(), "winner"].astype(bool).mean()
+        el = r[~r["gate_removed"].astype(bool)]
+        res = {"base": float(base)}
+        for name, col in (("v11", "moat_score"), ("v20", "cs")):
+            top10 = pd.concat([g.dropna(subset=[col]).nlargest(round(0.1 * g[col].notna().sum()), col) for _, g in r.groupby("screen")])
+            top25 = el.dropna(subset=[col]).sort_values(col, ascending=False).groupby("screen").head(25)
+            for k, t in (("top10", top10), ("top25", top25)):
+                t = t[t["winner"].notna()]
+                res[f"{name}_{k}"] = float(t["winner"].astype(bool).mean() / base)
+                res[f"{name}_{k}_winners"] = int(t["winner"].astype(bool).sum())
+        out[per] = res
+    return out
+
+
+def v2_html() -> str:
+    path = ROOT / "output" / "data" / "discovery.json"
+    if not path.exists() or "test" not in json.loads(path.read_text()):
+        return ""
+    D = json.loads(path.read_text())
+    t, kept = D["test"], D["kept"]
+    y = same_yardstick(kept)
+    label = {"s01_roic_chg": "ROIC change", "s02_incr_roic": "Incremental ROIC", "s03_gm_chg": "Gross-margin change",
+             "s04_gm_accel": "Gross-margin acceleration", "s05_om_chg": "Operating-margin change",
+             "s08_rev_excess": "Revenue growth vs industry", "s09_rev_accel": "Revenue-growth acceleration",
+             "s10_peer_rank_chg": "Peer-rank change", "s11_fcf_margin_chg": "FCF-margin change", "s14_roic_rank": "ROIC rank in industry"}
+    trows = ""
+    KEPT, DROPPED = '<span class="badge b-good">kept</span>', '<span class="badge b-neutral">dropped</span>'
+    for n, yr in D["train"]["by_year"].items():
+        beat = sum(v["top_rate"] > v["base_rate"] for v in yr.values())
+        wt, nt = sum(v["winners_top"] for v in yr.values()), sum(v["n_top"] for v in yr.values())
+        w, nn = sum(v["winners"] for v in yr.values()), sum(v["n"] for v in yr.values())
+        trows += (f"<tr><td>{label[n]}</td><td class='r'>{beat} of 7</td><td class='r'>{wt / nt / (w / nn):.1f}×</td>"
+                  f"<td>{KEPT if n in kept else DROPPED}</td></tr>")
+    m = json.loads((ROOT / "output" / "data" / "market.json").read_text()).get("compounder", {}).get("windows", {})
+    def cg(w, k):
+        return pct(m[w][k]["cagr"]) if w in m and k in m[w] else "–"
+    tr, te = y["train"], y["test"]
+    e = t.get("excl_rebound") or {}
+    lf = D.get("label_fix")
+    fixline = (f"A review on 2026-11-04 found that companies with one missing quarter in the 3-year window were counted as "
+               f"losers instead of 'no outcome'. Corrected (same signals, labels only): 2020–2023 {lf['test']['multiple']:.2f}×, "
+               f"2013–2019 {lf['train']['multiple']:.2f}×; the conclusion is unchanged. The table below uses corrected labels."
+               if lf else "")
+    return f"""<h2>v2.0 Compounder Signal (experimental): failed its test</h2>
+<div class="card" style="border-left:4px solid var(--risk)"><p style="margin-top:0"><b>Goal:</b> find companies in the year or two before they become moat compounders (within 3 years: revenue +20% a year, at least 10 points above the industry, up every year, ROIC above 9%, gross margin held, little bought growth). <b>Method:</b> 10 quarterly signals fixed in advance; kept if their top 10% beat the base rate in at least 5 of 7 years on 2013–2019; equal-weighted; tested once on 2020–2023 (pass = top 10% wins at least 2× the base rate).</p>
+<p><b>Result:</b> top 10% {pct(t['top_rate'], 2)} vs {pct(t['base_rate'], 2)} for all companies = <b>{t['multiple']:.2f}×</b> (needed 2×) → <b>failed</b>. Without COVID rebounds (12-month revenue more than 20% below its best of the previous 2 years; rule fixed before the test): {e.get('multiple', float('nan')):.2f}×. {fixline} The list is shown in the Screener as experimental only.</p></div>
+<h3>All versions on the same yardstick (moat-compounder rate vs all companies)</h3>
+<div class="tbl"><table class="num"><thead><tr><th></th><th class="r">v1.1 Moat Score</th><th class="r">v2.0 Compounder Signal</th></tr></thead><tbody>
+<tr><td>Top 10%, 2013–2019 (years used to choose v2.0)</td><td class="r">{tr['v11_top10']:.2f}×</td><td class="r">{tr['v20_top10']:.2f}×</td></tr>
+<tr><td><b>Top 10%, 2020–2023 (unseen)</b></td><td class="r"><b>{te['v11_top10']:.2f}×</b></td><td class="r"><b>{te['v20_top10']:.2f}×</b></td></tr>
+<tr><td>Top 25 after risk gate, 2020–2023</td><td class="r">{te['v11_top25']:.2f}× ({te['v11_top25_winners']} winners)</td><td class="r">{te['v20_top25']:.2f}× ({te['v20_top25_winners']} winners)</td></tr>
+<tr><td>Price, quarterly top 25, Apr 2020 – Feb 2024 (neutral case)</td><td class="r">{cg('test 2020-2023', 'v11_shortlist')} (annual list)</td><td class="r">{cg('test 2020-2023', 'compounder_neutral')}</td></tr>
+<tr><td>Price, May 2013 – Feb 2024</td><td class="r">{cg('all 2013-2023', 'v11_shortlist')}</td><td class="r">{cg('all 2013-2023', 'compounder_neutral')}</td></tr></tbody></table></div>
+<p class="small">S&amp;P 500 over the same windows: {cg('test 2020-2023', 'sp500')} and {cg('all 2013-2023', 'sp500')} a year. v1.0 differs from v1.1 only in the risk gate (under 1 point of difference in the gate study). Top 25 counts are small (about 350 company-screens each), so treat that row with care. Sources: output/data/discovery.json, market.json; SEC EDGAR bulk data retrieved 2026-11-03; Yahoo Finance prices retrieved 2026-11-03.</p>
+<details><summary>Training: each signal on 2013–2019</summary><div class="tbl"><table class="num"><thead><tr><th>Signal</th><th class="r">Years top 10% beat base</th><th class="r">Top-10% rate ÷ base</th><th></th></tr></thead><tbody>{trows}</tbody></table></div>
+<p class="small">"ROIC rank in industry" was allowed either direction: high ROIC won, so the hypothesis that compounders start mid-table was not supported. Gross-margin changes from quarter to quarter were noise.</p></details>
+<h3>Also tried and not adopted: v1.2 trailing-12-month scoring</h3>
+<p class="small">Scoring on the latest 10-Q (TTM) instead of fiscal years first looked better (shortlist hit 36% vs 27%), but that came from the TTM point already covering part of the outcome period. Measured on outcomes after all data used: 34.8% vs 39.0% for fiscal years; market return 12.2% vs 15.6% a year (2013–2026). Source: output/data/ttm_study.json.</p>"""
+
+
 def bar(label: str, value: float, scale: float, kind: str) -> str:
     w = max(1.0, value / scale * 100)
     color = {"good": "var(--good)", "risk": "var(--risk)", "co": "var(--navy)", "med": "var(--neutral)"}[kind]
@@ -92,7 +179,7 @@ def bar(label: str, value: float, scale: float, kind: str) -> str:
 
 def main() -> None:
     V = json.loads((ROOT / "output" / "data" / "validation.json").read_text())["variants"]
-    D = V["Default (locked v1.0)"]
+    D = V["Default (locked settings)"]
     rows = pd.read_pickle(CACHE / "validation_rows.pkl")
     cmp_ = comparisons(rows)
     sl, st = D["shortlist"], D["strengthening"]
@@ -131,7 +218,9 @@ def main() -> None:
                         for r in names.sort_values(["year", "moat_score"], ascending=[True, False]).itertuples())
 
     body = f"""<h1>Proof</h1>
-<p class="muted">Fundamental validation, 2013–2023, Methodology v1.0 locked before the run (settings fingerprint in prompts.md round 10). Each year the screen was re-run as of 30 June using only filings made by then, including companies that later delisted. Outcomes are read from later 10-Ks. No price data is used.</p>
+{v2_html()}
+<h2>v1.0 / v1.1: did a strengthening moat keep strengthening?</h2>
+<p class="muted">Fundamental validation, 2013–2023. Settings were locked before the first run (v1.0, fingerprint in prompts.md round 10); the figures below are re-run with the current v1.1 risk gate (Altman Z'' and Beneish off). v1.0 figures: output/data/archive_v1.0/. Each year the screen was re-run as of 30 June using only filings made by then, including companies that later delisted. Outcomes are read from later 10-Ks. No price data is used.</p>
 <div class="card" style="border-left:4px solid var(--risk)"><h3 style="margin-top:0">Main finding: the signal picks strong companies, but it does not yet predict further strengthening</h3>
 <ul><li>Three years after being flagged, shortlist companies still rank <b>{pts(cmp_['Shortlist']['L_rank3'])} points</b> above their industry median on returns, margins and turnover, and their clean ROIC is <b>{pct(cmp_['Shortlist']['L_roic3'])}</b> higher. On the brief's test, they did have higher ROIC and peer rank later.</li>
 <li>But they were already strong when flagged (median starting rank {cmp_['Shortlist']['start_rank']:.0f} of 100). Against companies that started at the <b>same rank</b>, their peer rank ended <b>{pts(cmp_['Shortlist']['M_rank3'])} points</b> lower after 3 years; ROIC was {pct(cmp_['Shortlist']['M_roic3'])} higher.</li>
@@ -139,6 +228,7 @@ def main() -> None:
 <li>The result holds in every variant tried (weights ±10 points, level-heavy blend, stricter or no risk gate, 2 or 4 themes), in each sub-period and with energy or tech excluded. It is a property of the signal, not of one setting.</li></ul>
 <p><b>Market test (prices, 2013–2026):</b> the shortlist returned about the same as the S&amp;P 500 and the equal-weight universe, with more volatility. There is no evidence of excess return. Details below.</p>
 <p><b>What this means for the product:</b> the claim "a strengthening moat shows up in the numbers 1–3 years before it is recognised" is <b>not supported</b> by Methodology v1.0. The shortlist is a list of high-quality, improving businesses, and should not be described as predicting further improvement until a revised method passes a test on years it was not built on.</p></div>
+{gate_html()}
 <h2>Did the shortlist keep improving? (3 years later)</h2>
 <div class="grid g3"><div class="card"><p class="ctitle">Kept improving (hit rate)</p><p class="csub">Peer rank higher after 3 years</p>{hit_bars}</div>
 <div class="card"><p class="ctitle">Deteriorated (false-alarm rate)</p><p class="csub">Peer rank more than 10 points lower</p>{fa_bars}</div>
@@ -189,7 +279,7 @@ def main() -> None:
     (ROOT / "output" / "proof.html").write_text(
         f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Moat Momentum Proof</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet"><style>{css}</style></head>
-<body><div class="wrap"><header class="bar"><span class="wordmark"><span>Moat Momentum</span></span><span class="tagline">Proof · Methodology v1.0</span></header>{body}
+<body><div class="wrap"><header class="bar"><span class="wordmark"><span>Moat Momentum</span></span><span class="tagline">Proof · v1.0 – v2.0</span></header>{body}
 <div class="disclaimer">Research tool, not investment advice. Past results do not guarantee future results. Source: SEC EDGAR.</div></div></body></html>""", encoding="utf-8")
     with open(ROOT / "output" / "sheet" / "validation.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)

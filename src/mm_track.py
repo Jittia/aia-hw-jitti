@@ -6,7 +6,8 @@ freeze:  writes track_record/<as_of>.json with the shortlist, settings, methodol
 verify:  recomputes every fingerprint.
 page:    writes output/data/track_data.js for the Track Record tab (performance since each freeze is added once
          a month-end price exists after the freeze date).
-Run:     .venv/bin/python src/mm_track.py freeze | verify | page
+freeze_compounder: the same for the experimental v2.0 Compounder candidates (top 25 by Compounder Signal).
+Run:     .venv/bin/python src/mm_track.py freeze | freeze_compounder | verify | page
 """
 from __future__ import annotations
 
@@ -34,11 +35,34 @@ def freeze() -> None:
         "as_of": M["meta"]["as_of"], "methodology": settings["methodology_version"],
         "sec_data_retrieved": settings["data"]["sec_retrieved"], "settings": settings,
         "shortlist": [{"rank_in_universe": int(c["rank"]), "ticker": c["ticker"], "cik": c["cik"], "name": c["name"],
-                       "moat_score": round(c["moat_score"], 2), "fiscal_year": c["fy"], "latest_10k": c["accn"]} for c in sl],
+                       "moat_score": round(c["moat_score"], 2), "fiscal_year": c["fy"], "latest_10k": c["accn"]}
+                      | ({"period": c["period"], "filing_used": c["accn"]} if "period" in c else {}) for c in sl],  # v1.2: 10-Q TTM
     }
     fp = hashlib.sha256(canonical(record)).hexdigest()
     DIR.mkdir(exist_ok=True)
-    path = DIR / f"{record['as_of']}.json"
+    path = DIR / f"{record['as_of']}_v{record['methodology']}.json"
+    if path.exists():
+        raise SystemExit(f"{path.name} already frozen; a frozen record is never overwritten")
+    path.write_text(json.dumps({"fingerprint_sha256": fp, "record": record}, indent=1, ensure_ascii=False), encoding="utf-8")
+    print(f"frozen {path.name}: {len(sl)} names, fingerprint {fp}")
+
+
+def freeze_compounder() -> None:
+    s = (ROOT / "output" / "data" / "site_data.js").read_text(encoding="utf-8")
+    M = json.loads(s[len("window.MM = "):s.rindex(";")])
+    settings = yaml.safe_load((ROOT / "settings.yaml").read_text())
+    disc = json.loads((ROOT / "output" / "data" / "discovery.json").read_text())
+    sl = sorted([c for c in M["companies"] if c.get("cs_short")], key=lambda c: c["cs_rank"])
+    record = {
+        "as_of": M["meta"]["as_of"], "methodology": "2.0-experimental", "list": "Compounder candidates",
+        "sec_data_retrieved": settings["data"]["sec_retrieved"], "settings": settings["compounder"],
+        "kept_signals": disc["kept"], "test_2020_2023": disc["test"]["multiple"], "test_passed": disc["test"]["passed"],
+        "shortlist": [{"rank_in_universe": int(c["cs_rank"]), "ticker": c["ticker"], "cik": c["cik"], "name": c["name"],
+                       "compounder_signal": round(c["cs"], 2), "moat_score": round(c["moat_score"], 2),
+                       "filing_used": c["accn"]} for c in sl],
+    }
+    fp = hashlib.sha256(canonical(record)).hexdigest()
+    path = DIR / f"{record['as_of']}_v2.0-experimental.json"
     if path.exists():
         raise SystemExit(f"{path.name} already frozen; a frozen record is never overwritten")
     path.write_text(json.dumps({"fingerprint_sha256": fp, "record": record}, indent=1, ensure_ascii=False), encoding="utf-8")
@@ -64,7 +88,7 @@ def page() -> None:
                     f"<td><code style='font-size:11px;word-break:break-all'>{d['fingerprint_sha256']}</code></td>"
                     f"<td>{check}</td>"
                     f"<td class='small'>Pending: first month-end after {r['as_of']}</td></tr>")
-        lists.append(f"<div class='card'><h3>{r['as_of']}</h3><p class='small'>" +
+        lists.append(f"<div class='card'><h3>{r['as_of']} · v{r['methodology']}</h3><p class='small'>" +
                      ", ".join(html.escape(x['ticker']) for x in r['shortlist']) + "</p></div>")
     body = f"""<h1>Track record</h1>
 <p class="muted">Every official run freezes its shortlist, settings and data date in <code>track_record/</code> of the public GitHub repository, with a SHA-256 fingerprint of that content. Git history shows when each file was added; changing a frozen list afterwards would break its fingerprint. Performance is measured from the first month-end after each freeze, against the S&amp;P 500 total return.</p>
@@ -85,4 +109,4 @@ def page() -> None:
 
 
 if __name__ == "__main__":
-    {"freeze": freeze, "verify": verify, "page": page}[sys.argv[1] if len(sys.argv) > 1 else "verify"]()
+    {"freeze": freeze, "freeze_compounder": freeze_compounder, "verify": verify, "page": page}[sys.argv[1] if len(sys.argv) > 1 else "verify"]()

@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from mm_fundamentals import annual_table
+from mm_fundamentals import annual_table, scoring_table
 from mm_score import add_panel_columns, score_as_of
 
 warnings.filterwarnings("ignore")
@@ -36,7 +36,8 @@ CACHE = ROOT / "data" / "cache" / "mm"
 
 
 def variants(base: dict) -> dict[str, dict]:
-    v = {"Default (locked v1.0)": copy.deepcopy(base)}
+    v = {"Default (locked settings)": copy.deepcopy(base)}
+    s = copy.deepcopy(base); s["data"]["ttm"] = False; v["Fiscal years only (v1.1 method)"] = s
     s = copy.deepcopy(base); s["scoring"]["blend"] = {"level": 70, "trend": 20, "consistency": 10}; v["Proven Leaders (70% level)"] = s
     s = copy.deepcopy(base)
     for k in s["risk_gate"]:
@@ -123,9 +124,10 @@ def main() -> None:
     rows_by_variant = {k: [] for k in V}
     for y in settings["validation"]["years"]:
         as_of = f"{y}-{md}"
-        d = annual_table(facts, as_of, settings["data"]["tax_rate"], settings["data"]["excess_cash_pct_revenue"])
+        tables = {t: scoring_table(facts, as_of, settings["data"]["tax_rate"], settings["data"]["excess_cash_pct_revenue"], ttm=t)
+                  for t in {bool(s["data"].get("ttm")) for s in V.values()}}
         for name, s in V.items():
-            res = score_as_of(d, companies, as_of, s, live=False)["results"]
+            res = score_as_of(tables[bool(s["data"].get("ttm"))], companies, as_of, s, live=False)["results"]
             u = res[res["in_universe"]].copy()
             u["year"] = y
             o = attach_outcomes(u.assign(industry_group=u["industry_group"]), out)
@@ -141,7 +143,7 @@ def main() -> None:
         rows["strong"] = rows["moat_strengthening"] & ~rows["gate_removed"]
         rows["mid"] = rows["revenue"] >= rows.groupby("year")["revenue"].transform("median")
         rep = {"shortlist": summarise(rows.copy(), "shortlist"), "strengthening": summarise(rows.copy(), "strong")}
-        if name == "Default (locked v1.0)":
+        if name == "Default (locked settings)":
             rows.to_pickle(CACHE / "validation_rows.pkl")
             rep["by_year"] = {int(y): summarise(g.copy(), "shortlist")["flagged"] for y, g in rows.groupby("year")}
             per = {"2013–2017": rows["year"].between(2013, 2017), "2018–2021": rows["year"].between(2018, 2021),
@@ -160,7 +162,7 @@ def main() -> None:
                                          "roic0", "roic3", "outcome"]].round(4).to_dict("records")
         report["variants"][name] = rep
     (ROOT / "output" / "data" / "validation.json").write_text(json.dumps(report, indent=1, default=str), encoding="utf-8")
-    d = report["variants"]["Default (locked v1.0)"]
+    d = report["variants"]["Default (locked settings)"]
     for k in ("shortlist", "strengthening"):
         print(k, json.dumps(d[k], indent=0)[:900])
 

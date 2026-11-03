@@ -15,7 +15,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from mm_fundamentals import annual_table, known_as_of  # noqa: E402
+from mm_fundamentals import annual_table, known_as_of, scoring_table  # noqa: E402
 from mm_score import combine, industry_groups, rank_in_groups, _consistency, _slope, INDICATORS  # noqa: E402
 
 SETTINGS = yaml.safe_load((ROOT / "settings.yaml").read_text())
@@ -111,6 +111,43 @@ class Scoring(unittest.TestCase):
         self.assertAlmostEqual(out["moat_score"].item(), 55.0)
         self.assertEqual(out["themes_improving"].item(), 5)
         self.assertTrue(out["moat_strengthening"].item())
+
+
+class SyntheticTTM(unittest.TestCase):
+    """v1.2: 12-month figures = last fiscal year + year to date − same period a year earlier."""
+
+    def facts(self):
+        rows = synthetic()
+        q = [fact("Revenues", "2022-01-01", "2022-06-30", 580, "2022-08-01", form="10-Q", kind="YTD", accn="Q1"),
+             fact("Revenues", "2023-01-01", "2023-06-30", 700, "2023-08-01", form="10-Q", kind="YTD", accn="Q2"),
+             fact("OperatingIncomeLoss", "2022-01-01", "2022-06-30", 70, "2022-08-01", form="10-Q", kind="YTD", accn="Q1"),
+             fact("OperatingIncomeLoss", "2023-01-01", "2023-06-30", 90, "2023-08-01", form="10-Q", kind="YTD", accn="Q2"),
+             fact("StockholdersEquity", None, "2023-06-30", 650, "2023-08-01", form="10-Q", kind="I", accn="Q2")]
+        return pd.concat([rows, pd.DataFrame(q).astype(rows.dtypes.to_dict())], ignore_index=True).astype({"tag": "category", "kind": "category", "form": "category"})
+
+    def test_ttm_row(self):
+        d = scoring_table(self.facts(), None).set_index("period")
+        r = d.loc["TTM Jun 2023"]
+        self.assertAlmostEqual(r["revenue"], 1210 + 700 - 580)
+        self.assertAlmostEqual(r["op_income"], 150 + 90 - 70)
+        self.assertAlmostEqual(r["equity"], 650)  # balance sheet at the quarter end
+        self.assertEqual(r["accn"], "Q2")
+
+    def test_point_in_time(self):
+        # before the 10-Q was filed, the latest point is the fiscal year
+        d = scoring_table(self.facts(), "2023-07-31")
+        self.assertFalse(d["is_ttm"].any())
+
+    def test_off_still_returns_quarters(self):
+        # v1.1 scoring with the 12-quarter chart: fiscal-year series, but TTM rows still returned for display
+        d, cand = scoring_table(self.facts(), None, ttm=False, with_quarters=True)
+        self.assertFalse(d["is_ttm"].any())
+        self.assertIn("TTM Jun 2023", set(cand.loc[cand["is_ttm"], "end"].dt.strftime("TTM %b %Y")))
+
+    def test_off_equals_fiscal_years(self):
+        a = annual_table(synthetic(), None)
+        b = scoring_table(synthetic(), None, ttm=False)
+        self.assertEqual(list(a["revenue"]), list(b["revenue"]))
 
 
 @unittest.skipUnless(FACTS.exists(), "needs data/cache/mm/facts.pkl")

@@ -209,6 +209,9 @@ def risk_gate(d: pd.DataFrame, latest: pd.DataFrame, settings: dict) -> pd.DataF
     r["net_debt_ebitda"] = latest["nd_ebitda"]
     r["altman_z"] = latest["altman_z"]
     r["beneish_m"] = latest["beneish_m"].where(latest["beneish_n"] >= 6)
+    if rg["beneish_m"].get("growth_neutral"):
+        # sales growth alone (SGI) can push fast-growing companies over the line; score as if sales were flat
+        r["beneish_m"] = r["beneish_m"] - 0.892 * (latest["beneish_sgi"] - 1)
     r["dilution"] = latest["dilution"]
     r["sbc_revenue"] = latest["sbc_rev"]
     r["goodwill_jump"] = latest["goodwill_jump"]
@@ -228,6 +231,9 @@ def risk_gate(d: pd.DataFrame, latest: pd.DataFrame, settings: dict) -> pd.DataF
         v = r[rule]
         breach = (v < th) if side == "below" else (v > th)
         breach &= v.notna()
+        if rule == "altman_z" and cfg.get("only_if_weak_cover"):
+            # low Z'' from buybacks or regulated leverage matters only when the company also struggles to pay interest
+            breach &= (latest["interest_cover"] < rg["interest_cover"]["below"]).fillna(False)
         r[f"{rule}_breach"] = breach
         worse = pd.Series(False, index=latest.index)
         if rule in trend:

@@ -50,7 +50,7 @@ def table(sid, x, y, w, rows, widths, align):
 
 
 def slides() -> list[dict]:
-    v = json.loads((ROOT / "output" / "data" / "validation.json").read_text())["variants"]["Default (locked v1.0)"]
+    v = json.loads((ROOT / "output" / "data" / "validation.json").read_text())["variants"]["Default (locked settings)"]
     m = json.loads((ROOT / "output" / "data" / "market.json").read_text())
     pf = json.loads((ROOT / "output" / "pitch" / "facts.json").read_text())
     s = (ROOT / "output" / "data" / "site_data.js").read_text(encoding="utf-8")

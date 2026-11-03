@@ -38,6 +38,11 @@
 - Serve the web page through a local server (.claude/launch.json "moat-site") to preview it; the browser pane opens a file without its data/*.js files.
 - Search filing values in the visible text (hidden XBRL removed), most precise format first; a short number counts only with its line label nearby.
 - Never subtract a "gain" from operating income without checking it sits inside operating income; business-sale gains usually do not.
+- When a back-test screen uses data newer than the fiscal year its outcome starts from (e.g. a 10-Q TTM point), measure outcomes from the next year too; otherwise the screen has seen part of the outcome.
+- Missing data inside an outcome window means "no outcome", never a failed company.
+- For market value, use the cover-page share count (dei) with a sanity check (market value 0.2%–200× revenue); XBRL diluted shares are sometimes filed in thousands or millions.
+- A "run the test once" guard must also stop re-training and settings changes from erasing or redoing the test.
+- Fix the success test and its definitions before looking at test-period results; any later check is reported as a second result, not a new pass rule.
 - Cross-check the OperatingIncomeLoss tag against revenue − CostsAndExpenses; some filers tag a segment total.
 - Fingerprint settings and scoring code before a validation run, and report every variant tried, including results against the hypothesis.
 - Test a "momentum" signal against companies with the same starting level, not only against the industry median; otherwise picking already-strong companies looks like skill.
@@ -214,3 +219,32 @@
 - **สาเหตุ:** The number in the summary was counted by eye from a printed table instead of read from the data. The Proof page, which computes it, was right.
 - **แก้อย่างไร:** Corrected round 11 with a note. Pitch numbers are now generated from the outputs, not typed.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Counting from a printed table.
+
+### 2026-11-03 · TTM scores looked better only because of look-ahead
+
+- **เจออะไร:** Scoring on 10-Q TTM figures raised the shortlist hit rate from 27% to 36% in the back-test.
+- **สาเหตุ:** The outcome was measured from the fiscal year t, but the TTM point (e.g. March of year t+1) already contained part of the outcome period.
+- **แก้อย่างไร:** Measured both methods from year t+1. TTM was then worse: 34.8% vs 39.0%, and the market return was lower (12.2% vs 15.6%). Not adopted; results kept in `output/data/ttm_study.json`.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Comparing methods on an outcome window that overlaps the newest data one of them uses.
+
+### 2026-11-04 · The v2.0 Compounder Signal failed its one-time test
+
+- **เจออะไร:** 8 signals chosen on 2013–2019 reached 2.3× the base rate in training, but only 1.19× on 2020–2023 (2× was needed).
+- **สาเหตุ:** Most of the training edge was fitting the past. Winners are about 1–2% of companies, so a few lucky years move the numbers.
+- **แก้อย่างไร:** Published as failed. Shown as an experimental second list; v1.1 stays the main ranking. Both lists are frozen so that live results from 2026 can test them.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Gross-margin change and acceleration from quarter to quarter (noise in training). "Winners start mid-table on ROIC" (high ROIC won).
+
+### 2026-11-04 · SEC share counts filed in thousands or millions
+
+- **เจออะไร:** Market value came out at $41.7 trillion for Waters and tiny for McDonald's (diluted shares tagged as 712.3). Guessing a ×1,000 fix also went wrong (Nutanix $20M, Karyopharm $17B).
+- **สาเหตุ:** Some filers tag the weighted diluted share count in thousands or millions.
+- **แก้อย่างไร:** Use the share count from the filing cover page (dei:EntityCommonStockSharesOutstanding), else diluted shares, and hide values below 0.2% or above 200× of revenue (5 companies shown as "check").
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Rescaling diluted shares by powers of 1,000.
+
+### 2026-11-04 · Code review found a label bias and a weak test guard
+
+- **เจออะไร:** (1) A company with one untagged quarter inside its 3-year window counted as a loser. (2) Re-running training erased the recorded test result, so the test could be run again. (3) On the web page, changing a risk rule put unranked companies at the top of the experimental list.
+- **สาเหตุ:** Only the start and end points were checked for missing data; training rewrote `discovery.json` from scratch; the page recomputed a filter that only Python can set.
+- **แก้อย่างไร:** Each fixed with a test that failed first. Labels recomputed with the same signals: 1.18× (was 1.19×), same conclusion; the original result stays on record.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** —
+

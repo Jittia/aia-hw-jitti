@@ -41,13 +41,24 @@ def main() -> None:
     status = lambda c: "Shortlist" if c["shortlist"] else "Removed" if c["removed"] else "Strengthening" if c["strengthening"] else ""  # noqa: E731
     tabs = {}
 
-    tabs["universe"] = [["Rank", "Ticker", "Company", "Industry (SIC)", "Peer group", "Fiscal year", "Revenue ($M)",
-                         "Moat Score", "Themes improving", "Status", "Risk flags", "Data confidence", "Top reason", "Latest 10-K"]]
+    tabs["universe"] = [["Rank", "Ticker", "Company", "Industry (SIC)", "Peer group", "Period scored", "Revenue ($M)",
+                         "Moat Score", "Themes improving", "Status", "Risk flags", "Data confidence", "Top reason", "Filing used (10-K or 10-Q)",
+                         "Market value ($M)", "Clean P/E (12 months)", "Compounder Signal (experimental)", "Candidate rank"]]
     for c in comp:
-        tabs["universe"].append([int(c["rank"]), c["ticker"], c["name"], c["sic_desc"], c["group"], c["fy"],
+        tabs["universe"].append([int(c["rank"]), c["ticker"], c["name"], c["sic_desc"], c["group"], c.get("period", c["fy"]),
                                  round(c["revenue"] / 1e6), r(c["moat_score"]),
                                  sum(1 for t in themes if (c["improving"][t] or 0) >= imp_rank), status(c), c["flags"],
-                                 c["confidence"], c["reasons"][0] if c["reasons"] else "", sec_url(c["cik"], c["accn"])])
+                                 c["confidence"], c["reasons"][0] if c["reasons"] else "", sec_url(c["cik"], c["accn"]),
+                                 round(c["mcap"] / 1e6) if c.get("mcap") else "", r(c.get("pe")) if c.get("pe") else "",
+                                 r(c.get("cs")) if c.get("cs") is not None else "", int(c["cs_rank"]) if c.get("cs_rank") else ""])
+
+    kept = meta["compounder"]["kept"]
+    tabs["compounder"] = [["Candidate rank", "Ticker", "Company", "Industry (SIC)", "Compounder Signal", "Market value ($M)",
+                           "Clean P/E (12 months)", "Moat Score", "On Moat shortlist"] + [k["label"] + " (rank)" for k in kept]]
+    for c in sorted([c for c in comp if c.get("cs_short")], key=lambda c: c["cs_rank"]):
+        tabs["compounder"].append([int(c["cs_rank"]), c["ticker"], c["name"], c["sic_desc"], r(c["cs"]),
+                                   round(c["mcap"] / 1e6) if c.get("mcap") else "", r(c.get("pe")) if c.get("pe") else "",
+                                   r(c["moat_score"]), "yes" if c["shortlist"] else "", *[r(v) if v is not None else "" for v in c["sig"]]])
 
     tabs["shortlist"] = [tabs["universe"][0]] + [row for row, c in zip(tabs["universe"][1:], comp) if c["shortlist"]]
 
@@ -61,7 +72,7 @@ def main() -> None:
     for c in sl:
         tabs["risk_gate"].append([c["ticker"]] + [r(c["risk"][k], 4) for k, _ in RULES])
 
-    tabs["clean_data"] = [["Ticker", "Fiscal year", "Revenue ($M)", "Reported operating income ($M)", "One-offs added back ($M)",
+    tabs["clean_data"] = [["Ticker", "Period (12 months)", "Revenue ($M)", "Reported operating income ($M)", "One-offs added back ($M)",
                            "Clean operating income ($M)", "Clean ROIC", "Gross margin", "SG&A / revenue", "FCF ($M)",
                            "Clean net income ($M)", "10-K filing"]]
     for c in sl:
@@ -70,7 +81,7 @@ def main() -> None:
         for j in range(max(0, len(dd["years"]) - 10), len(dd["years"])):
             m = lambda k: "" if s[k][j] is None else round(s[k][j] / 1e6, 1)  # noqa: E731
             q = lambda k: "" if s[k][j] is None else round(s[k][j], 4)  # noqa: E731
-            tabs["clean_data"].append([c["ticker"], dd["years"][j], m("revenue"), m("op_income"), m("one_offs"), m("clean_oi"),
+            tabs["clean_data"].append([c["ticker"], (dd.get("periods") or dd["years"])[j], m("revenue"), m("op_income"), m("one_offs"), m("clean_oi"),
                                        q("roic"), q("gross_margin"), q("sga_rev"), m("fcf"), m("clean_ni"),
                                        sec_url(c["cik"], dd["accn"][j])])
 

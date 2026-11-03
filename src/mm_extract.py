@@ -12,10 +12,10 @@ Point-in-time store: for each tag and period we keep the FIRST filing and every 
 earlier value are dropped, which keeps the store small without losing any information.
 
 Kept: forms 10-K, 10-KT, 10-Q and their amendments; annual (350–380 days), quarterly (80–100 days) and year-to-date
-(170–290 days) durations, and instants. Quarter / YTD rows only from 2020 on (needed for the latest 12 quarters).
+(170–290 days) durations, and instants. Quarter / YTD rows from 2011 on (v1.2: needed for point-in-time TTM in the back-test).
 Coarse filter here (finer rules in mm_universe): SIC outside 6000–6799 and annual revenue ≥ $50M at least once.
 
-Run:  .venv/bin/python src/mm_extract.py
+Run:  .venv/bin/python src/mm_extract.py          (cover-page share counts only: ... mm_extract.py cover)
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ BULK = ROOT / "data" / "cache" / "bulk"
 OUT = ROOT / "data" / "cache" / "mm"
 
 FORMS = {"10-K", "10-K/A", "10-KT", "10-KT/A", "10-Q", "10-Q/A"}
-SHORT_FROM = "2020-01-01"
+SHORT_FROM = "2011-01-01"   # v1.2: back to 2011 so TTM can be rebuilt for every back-test date (2013–2023)
 
 # Raw us-gaap tags pulled from companyfacts. Mapping to canonical metrics is done in mm_fundamentals.py.
 TAGS = [
@@ -196,5 +196,35 @@ def main() -> None:
     print(f"done · companies {len(comp):,} · fact rows {len(facts):,}", flush=True)
 
 
+def _cover_work(ciks: list[int]) -> list[tuple]:
+    out = []
+    with zipfile.ZipFile(BULK / "companyfacts.zip") as cz:
+        for cik in ciks:
+            try:
+                cf = json.loads(cz.read(f"CIK{cik:010d}.json"))
+            except KeyError:
+                continue
+            for f in cf.get("facts", {}).get("dei", {}).get("EntityCommonStockSharesOutstanding", {}) \
+                    .get("units", {}).get("shares", []):
+                out.append((cik, f["end"], float(f["val"]), f["filed"], f.get("form"), f.get("accn")))
+    return out
+
+
+def cover_shares() -> None:
+    """Shares outstanding from filing cover pages (dei) → data/cache/mm/cover_shares.pkl (added 2026-11-04 for the
+    Screener's market value; the diluted weighted-average count is sometimes tagged in thousands or millions)."""
+    ciks = pd.read_pickle(OUT / "companies.pkl")["cik"].tolist()
+    rows = []
+    with Pool(8) as pool:
+        for r in pool.imap_unordered(_cover_work, [ciks[i::32] for i in range(32)]):
+            rows.extend(r)
+    df = pd.DataFrame(rows, columns=["cik", "end", "val", "filed", "form", "accn"])
+    for c in ("end", "filed"):
+        df[c] = pd.to_datetime(df[c])
+    df.to_pickle(OUT / "cover_shares.pkl")
+    print(f"cover shares: {len(df):,} rows, {df['cik'].nunique():,} companies", flush=True)
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    cover_shares() if sys.argv[1:] == ["cover"] else main()

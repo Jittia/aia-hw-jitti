@@ -55,7 +55,7 @@ def load() -> dict:
     inp = sc[~sc["item"].str.startswith("check")]
     nz = inp[inp["status"] != "zero (printed as a dash)"]
     chk = sc[sc["item"].str.startswith("check")]
-    return {"v": v, "d": v["Default (locked v1.0)"], "m": m, "track": track, "meta": meta, "cmp": comparisons(rows),
+    return {"v": v, "d": v["Default (locked settings)"], "m": m, "track": track, "meta": meta, "cmp": comparisons(rows),
             "spot": {"found": int((nz["status"] == "matched").sum()), "n": len(nz), "chk_ok": int((chk["status"] == "matched").sum()),
                      "chk_n": len(chk), "companies": sc["ticker"].nunique()},
             "inc": incumbents()}

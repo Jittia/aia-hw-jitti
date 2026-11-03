@@ -65,6 +65,12 @@ th,td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--grid); v
 th { font-weight:600; color:var(--ink-2); font-size:12px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; }
 td.r, th.r { text-align:right; }
 .tbl { overflow-x:auto; }
+th.sort { cursor:pointer; user-select:none; }
+th.sort:hover { color:var(--ink); }
+th.sort[aria-sort="ascending"] button::after { content:" ▲"; }
+th.sort[aria-sort="descending"] button::after { content:" ▼"; }
+th.sort button { all:inherit; cursor:pointer; }
+.note-exp { border-left:4px solid var(--risk); }
 tr.click { cursor:pointer; }
 tr.click:hover td { background:var(--hover); }
 .layout { display:grid; grid-template-columns:290px 1fr; gap:18px; align-items:start; margin-top:14px; }
@@ -215,7 +221,7 @@ const f1 = v => v === null || v === undefined || !isFinite(v) ? "–" : v.toFixe
 const f0 = v => v === null || v === undefined || !isFinite(v) ? "–" : Math.round(v).toString();
 const fp = (v, d = 1) => v === null || v === undefined || !isFinite(v) ? "–" : (v * 100).toFixed(d) + "%";
 const fx = (v, d = 1) => v === null || v === undefined || !isFinite(v) ? "–" : v.toFixed(d) + "x";
-const fusd = v => v === null || v === undefined || !isFinite(v) ? "–" : (Math.abs(v) >= 1e9 ? "$" + (v / 1e9).toFixed(1) + "B" : "$" + (v / 1e6).toFixed(0) + "M");
+const fusd = v => v === null || v === undefined || !isFinite(v) ? "–" : (Math.abs(v) >= 1e12 ? "$" + (v / 1e12).toFixed(2) + "T" : Math.abs(v) >= 1e9 ? "$" + (v / 1e9).toFixed(1) + "B" : "$" + (v / 1e6).toFixed(0) + "M");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 function fmtRule(r, v) { if (v === null || v === undefined) return "not tested"; if (r.key === "net_debt_ebitda" && v >= 999) return "EBITDA ≤ 0"; return r.unit === "%" ? fp(v) : r.unit === "x" ? fx(v) : v.toFixed(2); }
 function badge(kind, text, dot = true) { const cls = {GOOD:"b-good", NEUTRAL:"b-neutral", RISK:"b-risk", MOAT:"b-moat", CONF:"b-conf"}[kind]; return `<span class="badge ${cls}${dot && kind !== "MOAT" && kind !== "CONF" ? " dot" : ""}">${esc(text)}</span>`; }
@@ -224,7 +230,11 @@ const filingUrl = (cik, accn) => `https://www.sec.gov/Archives/edgar/data/${cik}
 
 // ---------- state ----------
 let saved = {}; try { saved = JSON.parse(localStorage.getItem("mm-scenarios") || "{}"); } catch (e) {}
-const state = { s: clone(DEFAULT), view: "screener", filter: "shortlist", q: "", base: null, res: null, cik: null };
+const state = { s: clone(DEFAULT), view: "screener", filter: "shortlist", q: "", base: null, res: null, cik: null,
+  list: "moat", ind: "", cap: "all", sort: {key: "pos", dir: 1} };
+const CAPS = [["all", "All sizes", 0, Infinity], ["mega", "Mega ≥ $200B", 2e11, Infinity], ["large", "Large $10–200B", 1e10, 2e11],
+  ["mid", "Mid $2–10B", 2e9, 1e10], ["small", "Small $300M–2B", 3e8, 2e9], ["micro", "Micro < $300M", 0, 3e8], ["na", "Market value not available", null, null]];
+const fpe = v => v === null || v === undefined || !isFinite(v) ? "–" : v >= 100 ? Math.round(v).toString() : v.toFixed(1);
 state.base = compute(DEFAULT);
 function recompute() { state.res = compute(state.s); }
 recompute();
@@ -284,49 +294,101 @@ function bindControls() {
 }
 function update() { recompute(); renderTable(); }
 function viewScreener(m) {
+  const inds = {}; COMP.forEach(c => { inds[c.sic_desc] = (inds[c.sic_desc] || 0) + 1; });
+  const indOpts = Object.keys(inds).filter(Boolean).sort().map(k => `<option value="${esc(k)}" ${state.ind === k ? "selected" : ""}>${esc(k)} (${inds[k]})</option>`).join("");
+  const V2 = META.compounder;
   m.innerHTML = `<h1>Screener</h1>
-  <p class="muted">Companies whose moat is strengthening, from audited SEC numbers. Move any setting and the list re-ranks at once. Click a company for its Deep-Dive.</p>
+  <p class="muted">Two lists from the same SEC data. <b>Moat Score</b> (Methodology ${META.methodology}): companies whose moat is strengthening; move any setting and it re-ranks at once. <b>Compounder candidates</b> (v2.0, experimental): quarterly signals chosen on 2013–2019. Click a company for its Deep-Dive; click a column header to sort.</p>
   <div class="layout">${controlsHtml()}<div>
+    <div class="toolbar"><span class="seg" id="lst">${[["moat", "Moat Score list"], ["comp", "Compounder candidates (experimental)"]].map(([k, n]) => `<button type="button" data-l="${k}" class="${state.list === k ? "on" : ""}">${n}</button>`).join("")}</span></div>
+    <div id="expnote"></div>
     <div class="kpis" id="kpis"></div>
     <div class="card" id="chg" style="margin-bottom:12px"></div>
     <div class="toolbar">
-      <span class="seg" id="flt">${[["shortlist","Shortlist"],["strong","Strengthening"],["all","All companies"]].map(([k, n]) => `<button type="button" data-f="${k}" class="${state.filter === k ? "on" : ""}">${n}</button>`).join("")}</span>
-      <input type="search" id="q" placeholder="Search ticker, name or industry" value="${esc(state.q)}" aria-label="Search" style="flex:1;min-width:180px">
+      <span class="seg" id="flt"></span>
+      <select id="ind" aria-label="Industry" style="max-width:260px"><option value="">All industries</option>${indOpts}</select>
+      <select id="cap" aria-label="Market value">${CAPS.map(([k, n]) => `<option value="${k}" ${state.cap === k ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <input type="search" id="q" placeholder="Search ticker, name or industry" value="${esc(state.q)}" aria-label="Search" style="flex:1;min-width:160px">
     </div>
     <div class="tbl"><table class="num" id="tbl"></table></div>
-    <p class="small">#: position in this list. Overall rank: Moat Score rank among all scored companies; gaps on the shortlist are companies removed by the risk gate or not confirmed as Moat Strengthening.</p>
+    <p class="small" id="tblnote"></p>
   </div></div>`;
   bindControls();
-  document.getElementById("flt").addEventListener("click", e => { const b = e.target.closest("[data-f]"); if (!b) return; state.filter = b.dataset.f; document.querySelectorAll("#flt button").forEach(x => x.classList.toggle("on", x === b)); renderTable(); });
+  document.getElementById("lst").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (!b) return; state.list = b.dataset.l; state.filter = state.list === "comp" ? "top" : "shortlist"; state.sort = {key: "pos", dir: 1}; document.querySelectorAll("#lst button").forEach(x => x.classList.toggle("on", x === b)); renderTable(); });
+  document.getElementById("flt").addEventListener("click", e => { const b = e.target.closest("[data-f]"); if (!b) return; state.filter = b.dataset.f; renderTable(); });
+  document.getElementById("ind").addEventListener("change", e => { state.ind = e.target.value; renderTable(); });
+  document.getElementById("cap").addEventListener("change", e => { state.cap = e.target.value; renderTable(); });
   document.getElementById("q").addEventListener("input", e => { state.q = e.target.value.toLowerCase(); renderTable(); });
+  document.getElementById("tbl").addEventListener("click", e => {
+    const h = e.target.closest("th[data-k]");
+    if (h) { const k = h.dataset.k; state.sort = state.sort.key === k ? {key: k, dir: -state.sort.dir} : {key: k, dir: ["ticker", "industry", "pos", "rank", "csrank"].includes(k) ? 1 : -1}; renderTable(); return; }
+    const tr = e.target.closest("tr[data-cik]"); if (tr) go("deepdive", +tr.dataset.cik);
+  });
   renderTable();
 }
+function capOk(c) {
+  const b = CAPS.find(x => x[0] === state.cap);
+  if (!b || b[0] === "all") return true;
+  if (b[0] === "na") return c.mcap === null || c.mcap === undefined;
+  return c.mcap !== null && c.mcap !== undefined && c.mcap >= b[2] && c.mcap < b[3];
+}
+const SORTV = {pos: x => x._pos, rank: x => x.rank, csrank: x => x.c.cs_rank, ticker: x => x.c.ticker || "", industry: x => x.c.sic_desc || "",
+  moat: x => x.moat, nimp: x => x.nImp, cs: x => x.c.cs, mcap: x => x.c.mcap, pe: x => x.c.pe};
 function renderTable() {
-  const R = state.res, s = state.s;
+  const R = state.res, comp = state.list === "comp", V2 = META.compounder;
+  const fl = comp ? [["top", `Top ${V2.shortlist_size}`], ["all", "All with a signal"]] : [["shortlist", "Shortlist"], ["strong", "Strengthening"], ["all", "All companies"]];
+  if (!fl.some(f => f[0] === state.filter)) state.filter = fl[0][0];
+  document.getElementById("flt").innerHTML = fl.map(([k, n]) => `<button type="button" data-f="${k}" class="${state.filter === k ? "on" : ""}">${n}</button>`).join("");
+  const t = V2.test || {};
+  document.getElementById("expnote").innerHTML = comp ? `<div class="card note-exp" style="margin-bottom:12px"><p style="margin:0"><b>Experimental, not proven.</b> The Compounder Signal averages ${V2.kept.length} quarterly signals chosen on 2013–2019 (${V2.kept.map(k => esc(k.label)).join(", ")}). On the unseen years 2020–2023 its top 10% became moat compounders ${fx(t.multiple, 2)} as often as the average company; the test needed 2×, so it <b>failed</b>. Use it to find names worth a closer look, not as a ranking you can trust. The settings on the left do not change it. <a href="#proof">Proof</a></p></div>` : "";
+  let rows;
+  if (comp) {
+    // candidates are ranked once in Python with the default risk gate; the settings on the left do not change them
+    rows = R.all.filter(x => x.c.cs_rank !== null && x.c.cs_rank !== undefined).sort((a, b) => a.c.cs_rank - b.c.cs_rank);
+    if (state.filter === "top") rows = rows.filter(x => x.c.cs_short);
+  } else {
+    rows = R.ranked;
+    if (state.filter === "shortlist") rows = rows.filter(x => x.shortlist);
+    else if (state.filter === "strong") rows = rows.filter(x => x.strengthening && !x.removed);
+  }
+  rows.forEach((x, i) => x._pos = i + 1);
+  const base = rows.length;
+  if (state.ind) rows = rows.filter(x => x.c.sic_desc === state.ind);
+  rows = rows.filter(x => capOk(x.c));
+  if (state.q) rows = rows.filter(x => [x.c.ticker, x.c.name, x.c.sic_desc].filter(Boolean).join(" ").toLowerCase().includes(state.q));
+  const k = state.sort.key, d = state.sort.dir, get = SORTV[k] || SORTV.pos;
+  rows = rows.slice().sort((a, b) => { const va = get(a), vb = get(b), na = va === null || va === undefined || (typeof va === "number" && !isFinite(va)), nb = vb === null || vb === undefined || (typeof vb === "number" && !isFinite(vb));
+    if (na || nb) return na === nb ? 0 : na ? 1 : -1; return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * d; });
   const strong = R.ranked.filter(x => x.strengthening && !x.removed).length;
-  document.getElementById("kpis").innerHTML = [
-    [R.ranked.length, "companies scored"], [R.ranked.filter(x => !x.removed).length, "pass the risk gate"],
-    [strong, "moat strengthening"], [R.ranked.filter(x => x.shortlist).length, "on the shortlist"]].map(([v, l]) => `<div class="kpi"><b>${v.toLocaleString()}</b><span>${l}</span></div>`).join("");
-  const baseSL = new Set(state.base.ranked.filter(x => x.shortlist).map(x => x.c.cik));
-  const nowSL = new Set(R.ranked.filter(x => x.shortlist).map(x => x.c.cik));
-  const joined = R.ranked.filter(x => x.shortlist && !baseSL.has(x.c.cik));
-  const dropped = state.base.ranked.filter(x => x.shortlist && !nowSL.has(x.c.cik));
-  document.getElementById("chg").innerHTML = joined.length + dropped.length === 0
-    ? `<span class="small">Shortlist is the same as with the default settings (Methodology ${META.methodology}).</span>`
-    : `<div class="small">Compared with the default settings:</div>
-       <div class="chg"><b class="small">Joined ${joined.length}:</b> ${joined.map(x => `<a href="#deepdive/${x.c.cik}">${esc(x.c.ticker)}</a>`).join(", ") || "–"}</div>
-       <div class="chg"><b class="small">Dropped ${dropped.length}:</b> ${dropped.map(x => `<a href="#deepdive/${x.c.cik}">${esc(x.c.ticker)}</a>`).join(", ") || "–"}</div>`;
-  let rows = R.ranked;
-  if (state.filter === "shortlist") rows = rows.filter(x => x.shortlist);
-  else if (state.filter === "strong") rows = rows.filter(x => x.strengthening && !x.removed);
-  if (state.q) rows = rows.filter(x => (x.c.ticker + " " + x.c.name + " " + x.c.sic_desc).toLowerCase().includes(state.q));
+  const priced = rows.filter(x => x.c.mcap !== null && x.c.mcap !== undefined);
+  const medPE = (() => { const a = rows.map(x => x.c.pe).filter(v => v !== null && v !== undefined && isFinite(v)).sort((p, q) => p - q); return a.length ? a[Math.floor(a.length / 2)] : null; })();
+  document.getElementById("kpis").innerHTML = (comp
+    ? [[R.all.filter(x => x.c.cs_rank !== null && x.c.cs_rank !== undefined).length, "ranked candidates"], [V2.shortlist_size, "top candidates"], [rows.length, "shown after filters"], [fpe(medPE), "median clean P/E shown"]]
+    : [[R.ranked.length, "companies scored"], [R.ranked.filter(x => !x.removed).length, "pass the risk gate"], [strong, "moat strengthening"], [rows.length, "shown after filters"]])
+    .map(([v, l]) => `<div class="kpi"><b>${typeof v === "number" ? v.toLocaleString() : v}</b><span>${l}</span></div>`).join("");
+  if (comp) document.getElementById("chg").innerHTML = `<span class="small">Both lists: ${R.all.filter(x => x.c.cs_short && x.shortlist).map(x => `<a href="#deepdive/${x.c.cik}">${esc(x.c.ticker)}</a>`).join(", ") || "none"} are on the Moat Score shortlist and in the top ${V2.shortlist_size} candidates.</span>`;
+  else {
+    const baseSL = new Set(state.base.ranked.filter(x => x.shortlist).map(x => x.c.cik)), nowSL = new Set(R.ranked.filter(x => x.shortlist).map(x => x.c.cik));
+    const joined = R.ranked.filter(x => x.shortlist && !baseSL.has(x.c.cik)), dropped = state.base.ranked.filter(x => x.shortlist && !nowSL.has(x.c.cik));
+    document.getElementById("chg").innerHTML = joined.length + dropped.length === 0
+      ? `<span class="small">Shortlist is the same as with the default settings (Methodology ${META.methodology}).</span>`
+      : `<div class="small">Compared with the default settings:</div>
+         <div class="chg"><b class="small">Joined ${joined.length}:</b> ${joined.map(x => `<a href="#deepdive/${x.c.cik}">${esc(x.c.ticker)}</a>`).join(", ") || "–"}</div>
+         <div class="chg"><b class="small">Dropped ${dropped.length}:</b> ${dropped.map(x => `<a href="#deepdive/${x.c.cik}">${esc(x.c.ticker)}</a>`).join(", ") || "–"}</div>`;
+  }
+  const th = (key, label, cls = "", title = "") => `<th class="sort ${cls}" data-k="${key}" ${title ? `title="${esc(title)}"` : ""} aria-sort="${state.sort.key === key ? (state.sort.dir === 1 ? "ascending" : "descending") : "none"}"><button type="button">${label}</button></th>`;
+  const capCell = c => c.mcap_check ? `<span class="small" title="SEC share count looks mis-scaled; market value hidden">check</span>` : fusd(c.mcap);
   const shown = rows.slice(0, 300);
-  document.getElementById("tbl").innerHTML = `<thead><tr><th class="r">#</th><th class="r" title="Moat Score rank among all scored companies, before the risk gate">Overall rank</th><th>Company</th><th class="hm">Industry</th><th class="r">Moat Score</th><th>Themes improving</th><th>Status</th><th class="hm">Top reason</th></tr></thead><tbody>` +
-    shown.map((x, i) => `<tr class="click" data-cik="${x.c.cik}"><td class="r">${i + 1}</td><td class="r small">${x.rank}</td><td><b>${esc(x.c.ticker || "")}</b> <span class="small">${esc(x.c.name)}</span></td><td class="small hm">${esc(x.c.sic_desc)}</td><td class="r"><b>${f1(x.moat)}</b></td><td>${mini(x)} <span class="small">${x.nImp}/5</span></td>
-      <td>${x.removed ? badge("RISK", "Removed") : x.shortlist ? badge("MOAT", "Shortlist") : x.strengthening ? badge("GOOD", "Strengthening") : ""} ${x.flags ? badge("RISK", x.flags + " flag" + (x.flags > 1 ? "s" : "")) : ""} ${x.c.confidence !== "High" ? badge("CONF", x.c.confidence) : ""}</td>
-      <td class="small hm">${esc(x.c.reasons[0] || "")}</td></tr>`).join("") + `</tbody>` +
-    (rows.length > 300 ? `<caption class="small" style="caption-side:bottom;text-align:left;padding:8px">Showing 300 of ${rows.length}. Search to find others.</caption>` : "");
-  document.querySelectorAll("#tbl tr[data-cik]").forEach(tr => tr.addEventListener("click", () => go("deepdive", +tr.dataset.cik)));
+  document.getElementById("tbl").innerHTML = `<thead><tr>${th("pos", "#", "r", "Position in this list before sorting")}${comp ? th("csrank", "Candidate rank", "r hm") : th("rank", "Overall rank", "r hm", "Moat Score rank among all scored companies")}${th("ticker", "Company")}${th("industry", "Industry", "hm")}${comp ? th("cs", "Compounder Signal", "r") + th("moat", "Moat Score", "r hm") : th("moat", "Moat Score", "r") + th("nimp", "Themes improving")}${th("mcap", "Market value", "r", "Yahoo month-end close × SEC shares outstanding")}${th("pe", "Clean P/E", "r", "Market value ÷ clean net income, last 12 months (one-off items removed)")}<th>Status</th>${comp ? "" : `<th class="hm">Top reason</th>`}</tr></thead><tbody>` +
+    shown.map(x => `<tr class="click" data-cik="${x.c.cik}"><td class="r">${x._pos}</td><td class="r small hm">${comp ? f0(x.c.cs_rank) : x.rank}</td><td><b>${esc(x.c.ticker || "")}</b> <span class="small">${esc(x.c.name)}</span></td><td class="small hm">${esc(x.c.sic_desc)}</td>` +
+      (comp ? `<td class="r"><b>${f1(x.c.cs)}</b></td><td class="r hm">${f1(x.moat)}</td>` : `<td class="r"><b>${f1(x.moat)}</b></td><td>${mini(x)} <span class="small">${x.nImp}/5</span></td>`) +
+      `<td class="r">${capCell(x.c)}</td><td class="r">${fpe(x.c.pe)}</td>
+      <td>${comp ? (x.c.cs_short ? badge("NEUTRAL", "Candidate") : "") + (x.shortlist ? " " + badge("MOAT", "Moat shortlist") : "") : (x.removed ? badge("RISK", "Removed") : x.shortlist ? badge("MOAT", "Shortlist") : x.strengthening ? badge("GOOD", "Strengthening") : "")} ${x.flags ? badge("RISK", x.flags + " flag" + (x.flags > 1 ? "s" : "")) : ""} ${x.c.confidence !== "High" ? badge("CONF", x.c.confidence) : ""}</td>
+      ${comp ? "" : `<td class="small hm">${esc(x.c.reasons[0] || "")}</td>`}</tr>`).join("") + `</tbody>` +
+    (rows.length > 300 ? `<caption class="small" style="caption-side:bottom;text-align:left;padding:8px">Showing 300 of ${rows.length}. Filter or search to find others.</caption>` : "") +
+    (!rows.length ? `<caption class="small" style="caption-side:bottom;text-align:left;padding:8px">No company matches these filters (${base} before filters).</caption>` : "");
+  const vm = META.valuation || {};
+  document.getElementById("tblnote").innerHTML = `#: position in this list before sorting. ${comp ? "Candidate rank: Compounder Signal rank among companies that pass the risk gate." : "Overall rank: Moat Score rank among all scored companies; gaps on the shortlist are companies removed by the risk gate or not confirmed as Moat Strengthening."} Market value: Yahoo Finance close for ${esc(vm.price_month || "")} (retrieved ${esc(vm.prices_retrieved || "")}) × shares outstanding from the latest 10-K/10-Q cover page (else diluted shares); "check" = SEC share count looks mis-scaled. Clean P/E: market value ÷ clean net income over the last 12 months (one-off items removed, 21% tax on them); blank when earnings are zero or negative. Display only: neither is used in either score.`;
 }
 
 // ---------- charts ----------
@@ -341,7 +403,7 @@ function lineChart(o) {
   const fmt = v => o.unit === "pct" ? (v * 100).toFixed(Math.abs(hi - lo) < 0.1 ? 1 : 0) + "%" : o.unit === "x" ? v.toFixed(1) + "x" : o.unit === "usd" ? (Math.abs(hi) >= 1e9 ? (v / 1e9).toFixed(1) + "B" : (v / 1e6).toFixed(0) + "M") : v.toFixed(Math.abs(hi - lo) < 5 ? 1 : 0);
   const ticks = 4; let g = "";
   for (let i = 0; i <= ticks; i++) { const v = lo + (hi - lo) * i / ticks, yy = y(v); g += `<line x1="${L}" x2="${L + pw}" y1="${yy}" y2="${yy}" stroke="var(--grid)"/><text x="${L - 6}" y="${yy + 4}" text-anchor="end">${fmt(v)}</text>`; }
-  const step = Math.ceil(n / 6); o.years.forEach((yr, i) => { if (i % step === 0 || i === n - 1) g += `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">FY${String(yr).slice(2)}</text>`; });
+  const step = Math.ceil(n / 6); o.years.forEach((yr, i) => { if (i % step === 0 || i === n - 1) g += `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${o.labels ? shortP(o.labels[i]) : "FY" + String(yr).slice(2)}</text>`; });
   if (o.hurdle !== undefined) {
     const co = o.series[0].values; let poly = "";
     co.forEach((v, i) => { if (v !== null && v > o.hurdle) poly += `${x(i)},${y(v)} `; });
@@ -362,6 +424,8 @@ function lineChart(o) {
   labels.forEach(l => g += `<text x="${L + pw + 6}" y="${l.y + 4}" style="font-weight:${l.kind === "co" ? 700 : 600};fill:${l.kind === "co" ? "var(--navy)" : "var(--neutral-text)"}">${esc(l.t)}</text>`);
   return `<div class="card"><p class="ctitle">${esc(o.title)}</p><p class="csub">${esc(o.sub)}</p><div class="chart-scroll"><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.title)}">${g}</svg></div><p class="csrc">${esc(o.source)}</p></div>`;
 }
+// "TTM Sep 2026" → "Sep'26", "FY2025" → "FY25"
+function shortP(p) { p = String(p); const m = p.match(/^(?:TTM|FY) (\w{3}) \d{2}(\d{2})$/); return m ? m[1] + "'" + m[2] : "FY" + p.slice(-2); }
 function takeaway(name, years, v, med, unit, better = 1) {
   const idx = v.map((x, i) => x !== null && isFinite(x) ? i : -1).filter(i => i >= 0);
   if (idx.length < 2) return name;
@@ -369,10 +433,19 @@ function takeaway(name, years, v, med, unit, better = 1) {
   const f = unit === "pct" ? fp : unit === "x" ? (z => fx(z, 2)) : unit === "usd" ? fusd : f1;
   const dir = v[b] > v[a] ? "rose" : v[b] < v[a] ? "fell" : "was flat";
   const m = med && med[b] !== null && med[b] !== undefined ? `; industry median ${f(med[b])}` : "";
-  return `${name} ${dir} from ${f(v[a])} to ${f(v[b])} (FY${years[a]}–FY${years[b]})${m}`;
+  const lab = i => typeof years[i] === "string" ? years[i] : "FY" + years[i];
+  return `${name} ${dir} from ${f(v[a])} to ${f(v[b])} (${lab(a)} to ${lab(b)})${m}`;
 }
 
 // ---------- DEEP-DIVE ----------
+function quarterCharts(D, c) {
+  const Q = D.q; if (!Q || Q.end.length < 2) return `<p class="small">No quarterly 12-month figures for this company.</p>`;
+  const lab = Q.end.map((e, i) => (Q.ttm[i] ? "TTM " : "FY ") + new Date(e + "T00:00:00").toLocaleString("en-US", {month: "short", year: "numeric"}));
+  const idx = Q.end.map((_, i) => i), src = `Source: SEC EDGAR 10-Q and 10-K. Each point = 12 months to that quarter end (10-Q: last fiscal year + year to date − same period last year).`;
+  return `<h2>Last ${Q.end.length} quarters (12-month figures)</h2><p class="small">Shows what changed since the last annual report. Each point is a rolling 12 months, so one strong or weak quarter moves the line for a year.</p><div class="grid g2">
+  ${lineChart({title: takeaway("Revenue (12 months)", lab, Q.revenue, null, "usd"), sub: "Rolling 12-month revenue, US$ · quarter ends", years: idx, labels: lab, series: [{label: c.ticker || "Revenue", values: Q.revenue, kind: "co"}], unit: "usd", source: src})}
+  ${lineChart({title: takeaway("Clean operating margin (12 months)", lab, Q.op_margin, null, "pct"), sub: "Gross, clean operating and free-cash-flow margin, % · quarter ends", years: idx, labels: lab, series: [{label: "Operating", values: Q.op_margin, kind: "co"}, {label: "Gross", values: Q.gross_margin, kind: "med"}, {label: "FCF", values: Q.fcf_margin, kind: "med"}], unit: "pct", source: src})}</div>`;
+}
 function medFor(group, key, years) { const g = META.medians[group]; if (!g) return years.map(() => null); return years.map(y => { const i = g.years.indexOf(y); return i >= 0 ? g[key][i] : null; }); }
 function viewDeep(m) {
   const R = state.res;
@@ -381,11 +454,13 @@ function viewDeep(m) {
   if (!x) { m.innerHTML = `<p class="empty">Company not in the universe.</p>`; return; }
   if (!window.MM_DEEP) { m.innerHTML = `<p class="empty">Loading company history…</p>`; setTimeout(() => render(), 300); return; }
   const c = x.c, D = window.MM_DEEP[String(c.cik)], Y = D.years, S = D.s, s = state.s;
-  const lastFY = Y[Y.length - 1], src = `Source: SEC EDGAR, 10-K FY${Y[0]}–FY${lastFY}. Industry = ${c.group} median (${state.res.byGroup[c.group]?.length || "–"} companies).`;
+  const P = D.periods || Y.map(y => "FY" + y);
+  const isFY = P.every(z => String(z).startsWith("FY")), per = isFY ? "fiscal years" : "12-month periods";
+  const src = `Source: SEC EDGAR ${isFY ? "10-K" : "10-K and 10-Q"}, ${P[0]} to ${P[P.length - 1]}. Industry = ${c.group} median (${state.res.byGroup[c.group]?.length || "–"} companies).`;
   const groupRows = R.byGroup[c.group] || [];
   const tmed = k => { const a = groupRows.map(z => z.themes[k]).filter(v => v !== null).sort((p, q) => p - q); return a.length ? a[Math.floor(a.length / 2)] : null; };
   const med = k => medFor(c.group, k, Y);
-  const chart = (key, name, unit, opt = {}) => lineChart(Object.assign({title: takeaway(name, Y, S[key], opt.noMed ? null : med(key), unit), sub: `${name}, ${unit === "pct" ? "%" : unit === "x" ? "times" : unit === "usd" ? "US$" : "points"} · fiscal years`, years: Y,
+  const chart = (key, name, unit, opt = {}) => lineChart(Object.assign({title: takeaway(name, P, S[key], opt.noMed ? null : med(key), unit), sub: `${name}, ${unit === "pct" ? "%" : unit === "x" ? "times" : unit === "usd" ? "US$" : "points"} · ${per}`, years: Y, labels: P,
     series: [{label: c.ticker || "Company", values: S[key], kind: "co"}].concat(opt.noMed || !META.medians[c.group] || !(key in META.medians[c.group]) ? [] : [{label: "Industry", values: med(key), kind: "med"}]), unit, source: src}, opt));
   // peers: 5 closest by revenue in the same group
   const peers = groupRows.filter(z => z.c.cik !== c.cik).sort((a, b) => Math.abs(Math.log(a.c.revenue / c.revenue)) - Math.abs(Math.log(b.c.revenue / c.revenue))).slice(0, 5);
@@ -394,7 +469,7 @@ function viewDeep(m) {
     return `<tr><td>${r.label}</td><td class="r">${fmtRule(r, v)}</td><td class="r">${r.side === "below" ? "&lt; " : "&gt; "}${fmtRule(r, thr(s, r))}</td><td>${g.mode}</td><td>${res}</td></tr>`; }).join("");
   const indRows = INDS.map(it => { const p = k => { const v = c.pct[PCOL[it.name + "_" + k]]; return it.comps.includes(k) ? f0(v) : "·"; };
     return `<tr><td>${esc(it.label)}</td><td class="small">${THEMES.find(t => t.key === it.theme).name}</td><td class="r">${p("L")}</td><td class="r">${p("T")}</td><td class="r">${p("C")}</td><td class="r"><b>${f0(x.ind[it.name])}</b></td></tr>`; }).join("");
-  const bridge = Y.map((yr, i) => `<tr><td>FY${yr}</td><td class="r">${fusd(S.op_income[i])}</td><td class="r">${fusd(S.impairment[i])}</td><td class="r">${fusd(S.restructuring[i])}</td><td class="r">${fusd(S.litigation[i])}</td><td class="r">${fusd(S.acq_costs[i])}</td><td class="r">${S.gains[i] ? fusd(-S.gains[i]) : "–"}</td><td class="r"><b>${fusd(S.clean_oi[i])}</b></td><td class="r small">${S.gains_business && S.gains_business[i] ? fusd(S.gains_business[i]) : "–"}</td><td><a href="${filingUrl(c.cik, D.accn[i])}" target="_blank" rel="noopener">10-K</a></td></tr>`).reverse().join("");
+  const bridge = Y.map((yr, i) => `<tr><td>${esc(P[i])}</td><td class="r">${fusd(S.op_income[i])}</td><td class="r">${fusd(S.impairment[i])}</td><td class="r">${fusd(S.restructuring[i])}</td><td class="r">${fusd(S.litigation[i])}</td><td class="r">${fusd(S.acq_costs[i])}</td><td class="r">${S.gains[i] ? fusd(-S.gains[i]) : "–"}</td><td class="r"><b>${fusd(S.clean_oi[i])}</b></td><td class="r small">${S.gains_business && S.gains_business[i] ? fusd(S.gains_business[i]) : "–"}</td><td><a href="${filingUrl(c.cik, D.accn[i])}" target="_blank" rel="noopener">${String(P[i]).startsWith("TTM") ? "10-Q" : "10-K"}</a></td></tr>`).reverse().join("");
   // what would change the result
   const what = [];
   if (x.strengthening) what.push(`It has ${x.nImp} of 5 themes improving; raising the confirmation rule to ${x.nImp + 1} would ${x.nImp >= 5 ? "not apply (maximum is 5)" : "take it off the Moat Strengthening list"}.`);
@@ -415,28 +490,30 @@ function viewDeep(m) {
   <p class="back"><a href="#screener">← Back to screener</a></p>
   <section class="hdr">
     <div><h1>${esc(c.name)} <span class="muted" style="font-size:.7em">${esc(c.ticker || "")}</span></h1>
-      <div class="small">${esc(c.sic_desc)} · SIC ${c.sic} · peer group ${esc(c.group)} · FY${c.fy} ended ${c.fy_end} · latest 10-K filed <a href="${filingUrl(c.cik, c.accn)}" target="_blank" rel="noopener">${c.filed}</a></div>
+      <div class="small">${esc(c.sic_desc)} · SIC ${c.sic} · peer group ${esc(c.group)} · scored on ${esc(c.period || "FY" + c.fy)} (ended ${c.fy_end}) · ${c.ttm ? "10-Q" : "10-K"} filed <a href="${filingUrl(c.cik, c.accn)}" target="_blank" rel="noopener">${c.filed}</a></div>
       <div class="toolbar" style="margin-top:8px">${x.shortlist ? badge("MOAT", "Shortlist") : ""} ${x.strengthening ? badge("GOOD", "Moat strengthening") : badge("NEUTRAL", "Not confirmed")} ${x.removed ? badge("RISK", "Removed by risk gate") : ""} ${badge("CONF", "Data confidence: " + c.confidence)}</div></div>
     <div style="text-align:right"><div class="small">Moat Score</div><div class="score-big">${f1(x.moat)}</div><div class="small">Rank #${x.rank} of ${state.res.ranked.length} · #${x.irank} of ${x.isize} in industry</div>
+      <div class="small">Market value ${c.mcap_check ? "check (share count)" : fusd(c.mcap)} · clean P/E ${fpe(c.pe)}</div>
       <button class="btn ghost sm" id="export" type="button" style="margin-top:8px">Export HTML</button></div>
   </section>
   <h2>Top 3 reasons</h2><ol>${c.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
+  ${compCard(c)}
   <h2>Scorecard</h2>
   <div class="tbl"><table class="num"><thead><tr><th>Theme</th><th class="r">Score</th><th class="r">Industry median</th><th class="r">Improving score</th><th>Improving?</th></tr></thead><tbody>
   ${THEMES.map(t => `<tr><td>${t.name}</td><td class="r"><b>${f0(x.themes[t.key])}</b></td><td class="r">${f0(tmed(t.key))}</td><td class="r">${f0(x.improving[t.key])}</td><td>${x.improving[t.key] === null ? badge("NEUTRAL", "No data") : x.improving[t.key] >= s.scoring.improving_rank ? badge("GOOD", "Yes") : badge("NEUTRAL", "No")}</td></tr>`).join("")}</tbody></table></div>
   <details style="margin-top:10px"><summary>Indicator detail: level / trend / consistency percentiles within industry (0–100)</summary>
   <div class="tbl"><table class="num"><thead><tr><th>Indicator</th><th>Theme</th><th class="r">Level</th><th class="r">Trend</th><th class="r">Consist.</th><th class="r">Score</th></tr></thead><tbody>${indRows}</tbody></table></div>
   <p class="small">· = not used for this indicator. <a href="#learn">What each indicator means</a></p></details>
-  <h3>Risk gate (FY${c.fy})</h3>
+  <h3>Risk gate (${esc(c.period || "FY" + c.fy)})</h3>
   <div class="tbl"><table class="num"><thead><tr><th>Check</th><th class="r">Value</th><th class="r">Threshold</th><th>Mode</th><th>Result</th></tr></thead><tbody>${ruleRows}</tbody></table></div>
   <h2>Key observations</h2><div class="card">${D.obs.length ? D.obs.map(o => `<div class="obs"><span>${badge(o.kind, o.kind)}</span><div>${esc(o.text)} <a href="${o.link}" target="_blank" rel="noopener">${esc(o.src)}</a></div></div>`).join("") : '<p class="small">No observations.</p>'}</div>
   <h2>1 · Value creation</h2><div class="grid g2">${chart("roic", "Clean ROIC", "pct", {hurdle: s.hurdle_rate})}${chart("incr_roic", "Incremental ROIC (3 yrs)", "pct", {noMed: true})}</div>
   <h2>2 · Pricing power</h2><div class="grid g2">${chart("gross_margin", "Gross margin", "pct")}${chart("gp_assets", "Gross profit ÷ assets", "pct")}</div>
-  <h2>3 · Scale advantage</h2><div class="grid g2">${lineChart({title: takeaway("Revenue", Y, S.revenue, null, "usd"), sub: "Revenue and clean operating income, US$ · fiscal years", years: Y, series: [{label: "Revenue", values: S.revenue, kind: "co"}, {label: "Clean OI", values: S.clean_oi, kind: "med"}], unit: "usd", source: src})}${chart("op_margin", "Clean operating margin", "pct")}${chart("incr_margin", "Incremental operating margin (3 yrs)", "pct", {noMed: true})}${chart("sga_rev", "SG&A ÷ revenue", "pct")}${chart("asset_turnover", "Asset turnover", "x")}</div>
+  <h2>3 · Scale advantage</h2><div class="grid g2">${lineChart({title: takeaway("Revenue", P, S.revenue, null, "usd"), sub: "Revenue and clean operating income, US$ · " + per, years: Y, labels: P, series: [{label: "Revenue", values: S.revenue, kind: "co"}, {label: "Clean OI", values: S.clean_oi, kind: "med"}], unit: "usd", source: src})}${chart("op_margin", "Clean operating margin", "pct")}${chart("incr_margin", "Incremental operating margin (3 yrs)", "pct", {noMed: true})}${chart("sga_rev", "SG&A ÷ revenue", "pct")}${chart("asset_turnover", "Asset turnover", "x")}</div>
   <h2>4 · Pulling away from peers</h2><div class="grid g2">${chart("rev_growth", "Revenue growth", "pct")}${chart("peer_level_rank", "Peer rank on returns, margins and turnover", "pts", {noMed: true})}</div>
-  <h2>5 · Profit quality &amp; runway</h2><div class="grid g2">${lineChart({title: takeaway("Free cash flow", Y, S.fcf, null, "usd"), sub: "FCF vs clean net income, US$ · fiscal years", years: Y, series: [{label: "FCF", values: S.fcf, kind: "co"}, {label: "Clean NI", values: S.clean_ni, kind: "med"}], unit: "usd", source: src})}${chart("accruals", "Accruals ÷ assets", "pct")}${chart("reinvest_rate", "Reinvestment rate (Δ capital ÷ NOPAT)", "pct", {noMed: true})}</div>
+  <h2>5 · Profit quality &amp; runway</h2><div class="grid g2">${lineChart({title: takeaway("Free cash flow", P, S.fcf, null, "usd"), sub: "FCF vs clean net income, US$ · " + per, years: Y, labels: P, series: [{label: "FCF", values: S.fcf, kind: "co"}, {label: "Clean NI", values: S.clean_ni, kind: "med"}], unit: "usd", source: src})}${chart("accruals", "Accruals ÷ assets", "pct")}${chart("reinvest_rate", "Reinvestment rate (Δ capital ÷ NOPAT)", "pct", {noMed: true})}</div>
   <h2>Risk charts</h2><div class="grid g2">${chart("nd_ebitda", "Net debt ÷ EBITDA", "x")}${chart("interest_cover", "Interest cover", "x")}${chart("altman_z", "Altman Z''", "num")}${chart("shares", "Diluted shares", "num", {noMed: true, zero: false})}${chart("sbc_rev", "Stock-based comp ÷ revenue", "pct")}${chart("gw_assets", "Goodwill ÷ assets", "pct", {noMed: true})}</div>
-  <p class="small">Quarterly TTM charts are not in Methodology ${META.methodology}: levels use the latest fiscal year (see Methodology).</p>
+  ${quarterCharts(D, c)}
   <h2>Clean-up bridge</h2><p class="small">Reported operating income + tagged one-off charges − gains on selling assets = clean operating income. Only items the company tags separately in XBRL can be removed. Gains on selling a whole business usually sit below operating income, so they are shown but not removed.</p>
   <div class="tbl"><table class="num"><thead><tr><th>Year</th><th class="r">Reported OI</th><th class="r">+ Impairment</th><th class="r">+ Restructuring</th><th class="r">+ Litigation</th><th class="r">+ Deal costs</th><th class="r">− Gains on assets</th><th class="r">Clean OI</th><th class="r">Business-sale gain (not removed)</th><th>Filing</th></tr></thead><tbody>${bridge}</tbody></table></div>
   <h2>Peers</h2><div class="tbl"><table class="num"><thead><tr><th>Company</th><th class="r">Revenue</th><th class="r">Moat Score</th><th class="r">Themes impr.</th><th class="r">Value</th><th class="r">Pricing</th><th class="r">Scale</th><th class="r">Peers</th><th class="r">Quality</th></tr></thead><tbody>
@@ -448,6 +525,12 @@ function viewDeep(m) {
   </div>`;
   document.querySelectorAll("#deep tr.click[data-cik]").forEach(tr => tr.addEventListener("click", () => go("deepdive", +tr.dataset.cik)));
   document.getElementById("export").addEventListener("click", () => exportDeep(c));
+}
+function compCard(c) {
+  const V2 = META.compounder; if (!V2 || c.cs === null || c.cs === undefined) return "";
+  const rows = V2.kept.map((k, i) => `<tr><td>${esc(k.label)}</td><td class="r"><b>${f0(c.sig[i])}</b></td></tr>`).join("");
+  return `<h2>Compounder Signal (experimental)</h2><div class="card note-exp"><p style="margin-top:0"><b>${f1(c.cs)}</b> of 100 · candidate rank ${c.cs_rank ?? "–"}${c.cs_short ? " · in the top " + V2.shortlist_size : ""}. Average of ${V2.kept.length} quarterly signals, each ranked 0–100 within the industry. This signal failed its 2020–2023 test (${fx(V2.test.multiple, 2)} vs 2× needed): treat it as a prompt to look closer, not as evidence. <a href="#proof">Proof</a></p>
+  <div class="tbl"><table class="num"><thead><tr><th>Signal (latest quarter, point in time)</th><th class="r">Rank in industry</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function exportDeep(c) {
   const css = document.getElementById("mm-style").textContent, body = document.getElementById("deep").innerHTML.replace(/<button[^>]*id="export"[^>]*>.*?<\/button>/, "");
@@ -461,7 +544,7 @@ function viewHow(m) {
   m.innerHTML = `<h1>How it works</h1><p class="muted">From every company that files numbers with the SEC to a short list, in five steps. The counts are from the official run of ${META.as_of}.</p>
   <div class="card">${F.map(([n, v], i) => `<div class="funnel-row"><span>${esc(n)}</span><div><div class="funnel-bar${i === F.length - 1 ? " hl" : ""}" style="width:${Math.max(1.5, v / max * 100)}%"></div></div><b class="r">${v.toLocaleString()}</b></div>`).join("")}</div>
   <h2>The five steps</h2><div class="grid g3">
-  ${[["1 · Collect and clean", "Up to 10 years of 10-K numbers per company, straight from SEC XBRL. One-off items the company tags (impairments, restructuring, litigation, deal costs, gains on disposals) are removed; tax is set to one rate (21%) so years compare fairly."],
+  ${[["1 · Collect and clean", "Up to 10 years of 10-K numbers per company, straight from SEC XBRL (10-Q data for the 12-quarter charts and the experimental Compounder list). One-off items the company tags (impairments, restructuring, litigation, deal costs, gains on disposals) are removed; tax is set to one rate (21%) so years compare fairly."],
      ["2 · Universe", "US-listed, revenue ≥ $100M, at least 5 fiscal years, not a bank, insurer or REIT (SIC 6000–6799)."],
      ["3 · Risk gate", "Before any scoring: interest cover, debt, Altman Z'', Beneish M-Score, dilution, stock-based pay and acquisition-driven goodwill. Each rule can be Off, Flag (penalty) or Remove."],
      ["4 · Five themes", "Value creation, pricing power, scale, pulling away from peers, profit quality. Each indicator is ranked within its industry on level, 5-year trend and consistency; the default weights favour improvement (70%) over level (30%)."],
@@ -478,29 +561,29 @@ function viewHow(m) {
 
 // ---------- LEARN ----------
 const LEARN = [
-  {k:"roic", t:"Clean ROIC and the hurdle rate", theme:"Value creation", def:"Return on invested capital: how much after-tax operating profit the business earns on the money tied up in it, after removing one-off items.", why:"A company that earns well above its cost of capital, and keeps doing so, usually has something competitors cannot copy. A rising spread over the hurdle is the core sign of a strengthening moat.", watch:"Very high values can come from tiny or negative capital (e.g. after large buybacks). Leases before 2019 were not on balance sheets, so they are left out for comparability.", f:"NOPAT = (operating income + one-offs) × (1 − 21%)\nInvested capital = equity + debt − cash above 2% of revenue\nClean ROIC = NOPAT ÷ average invested capital", dia:["NOPAT","÷","Invested capital","−","Hurdle 9%","=","Spread"], ev:"Mauboussin & Callahan, “Measuring the Moat” (Credit Suisse, 2013/2016); Koller, Goedhart & Wessels, “Valuation” (McKinsey)", ex:z => `FY${z.fy}: clean ROIC ${fp(z.v("roic"))}, so the spread over the 9% hurdle is ${fp(z.v("roic") - 0.09)}.`},
-  {k:"incr_roic", t:"Incremental ROIC", theme:"Value creation", def:"Extra profit earned on the extra capital put in over the last 3 years.", why:"Shows whether new investment earns as much as the old. A moat that is widening earns high returns on new money too.", watch:"Unstable when capital barely changed; shown only when capital grew. Capped between −100% and 200%.", f:"(NOPAT this year − NOPAT 3 years ago) ÷ (capital this year − capital 3 years ago)", dia:["Δ NOPAT (3 yrs)","÷","Δ Invested capital"], ev:"Mauboussin, “Measuring the Moat”", ex:z => `Incremental ROIC FY${z.fy}: ${fp(z.v("incr_roic"))}.`},
-  {k:"gross_margin", t:"Gross margin", theme:"Pricing power", def:"Revenue minus the direct cost of what was sold, as a share of revenue.", why:"Rising gross margin, especially when peers are flat, suggests customers accept higher prices or the company buys better: both signs of pricing power.", watch:"Mix changes and commodity costs move it too. Many service companies do not report cost of revenue, so this theme can be missing.", f:"(Revenue − cost of revenue) ÷ revenue", dia:["Revenue","−","Cost of revenue","÷","Revenue"], ev:"Novy-Marx (2013), “The other side of value”, Journal of Financial Economics", ex:z => `FY${z.fy}: gross margin ${fp(z.v("gross_margin"))}.`},
-  {k:"gp_assets", t:"Gross profit ÷ assets", theme:"Pricing power", def:"Gross profit earned per dollar of total assets.", why:"Novy-Marx showed this simple profitability measure predicts returns about as well as value. It rewards companies that earn a lot from a lean asset base.", watch:"Asset-light and asset-heavy industries differ a lot, which is why ranks are within industry.", f:"Gross profit ÷ average total assets", dia:["Gross profit","÷","Average assets"], ev:"Novy-Marx (2013)", ex:z => `FY${z.fy}: ${fp(z.v("gp_assets"))}.`},
+  {k:"roic", t:"Clean ROIC and the hurdle rate", theme:"Value creation", def:"Return on invested capital: how much after-tax operating profit the business earns on the money tied up in it, after removing one-off items.", why:"A company that earns well above its cost of capital, and keeps doing so, usually has something competitors cannot copy. A rising spread over the hurdle is the core sign of a strengthening moat.", watch:"Very high values can come from tiny or negative capital (e.g. after large buybacks). Leases before 2019 were not on balance sheets, so they are left out for comparability.", f:"NOPAT = (operating income + one-offs) × (1 − 21%)\nInvested capital = equity + debt − cash above 2% of revenue\nClean ROIC = NOPAT ÷ average invested capital", dia:["NOPAT","÷","Invested capital","−","Hurdle 9%","=","Spread"], ev:"Mauboussin & Callahan, “Measuring the Moat” (Credit Suisse, 2013/2016); Koller, Goedhart & Wessels, “Valuation” (McKinsey)", ex:z => `${z.p}: clean ROIC ${fp(z.v("roic"))}, so the spread over the 9% hurdle is ${fp(z.v("roic") - 0.09)}.`},
+  {k:"incr_roic", t:"Incremental ROIC", theme:"Value creation", def:"Extra profit earned on the extra capital put in over the last 3 years.", why:"Shows whether new investment earns as much as the old. A moat that is widening earns high returns on new money too.", watch:"Unstable when capital barely changed; shown only when capital grew. Capped between −100% and 200%.", f:"(NOPAT this year − NOPAT 3 years ago) ÷ (capital this year − capital 3 years ago)", dia:["Δ NOPAT (3 yrs)","÷","Δ Invested capital"], ev:"Mauboussin, “Measuring the Moat”", ex:z => `Incremental ROIC ${z.p}: ${fp(z.v("incr_roic"))}.`},
+  {k:"gross_margin", t:"Gross margin", theme:"Pricing power", def:"Revenue minus the direct cost of what was sold, as a share of revenue.", why:"Rising gross margin, especially when peers are flat, suggests customers accept higher prices or the company buys better: both signs of pricing power.", watch:"Mix changes and commodity costs move it too. Many service companies do not report cost of revenue, so this theme can be missing.", f:"(Revenue − cost of revenue) ÷ revenue", dia:["Revenue","−","Cost of revenue","÷","Revenue"], ev:"Novy-Marx (2013), “The other side of value”, Journal of Financial Economics", ex:z => `${z.p}: gross margin ${fp(z.v("gross_margin"))}.`},
+  {k:"gp_assets", t:"Gross profit ÷ assets", theme:"Pricing power", def:"Gross profit earned per dollar of total assets.", why:"Novy-Marx showed this simple profitability measure predicts returns about as well as value. It rewards companies that earn a lot from a lean asset base.", watch:"Asset-light and asset-heavy industries differ a lot, which is why ranks are within industry.", f:"Gross profit ÷ average total assets", dia:["Gross profit","÷","Average assets"], ev:"Novy-Marx (2013)", ex:z => `${z.p}: ${fp(z.v("gp_assets"))}.`},
   {k:"gm_stability", t:"Gross-margin stability", theme:"Pricing power", def:"How little gross margin moved over the last 5 years.", why:"A steady margin through good and bad years suggests pricing that does not depend on the cycle.", watch:"A margin that is steady because it is low is not a moat; read it with the level.", f:"− standard deviation of gross margin, last 5 fiscal years", dia:["5 yearly margins","→","spread","→","lower is better"], ev:"Morningstar economic-moat methodology", ex:z => `5-year gross margin range: ${fp(z.min("gross_margin"))} to ${fp(z.max("gross_margin"))}.`},
-  {k:"incr_margin", t:"Incremental operating margin", theme:"Scale advantage", def:"How much of each extra dollar of revenue over 3 years became operating profit.", why:"If incremental margin is above the average margin, costs are growing slower than sales: scale is working.", watch:"Meaningless when revenue fell; shown only when revenue grew.", f:"(Clean OI now − 3 yrs ago) ÷ (revenue now − 3 yrs ago)", dia:["Δ Clean OI","÷","Δ Revenue"], ev:"Mauboussin; Morningstar (cost advantage)", ex:z => `FY${z.fy}: ${fp(z.v("incr_margin"))} vs average margin ${fp(z.v("op_margin"))}.`},
-  {k:"sga_rev", t:"SG&A ÷ revenue", theme:"Scale advantage", def:"Selling, general and administrative cost as a share of revenue.", why:"Falling overhead per dollar of sales is the classic scale benefit.", watch:"Cutting marketing can lift this for a while and hurt later.", f:"SG&A ÷ revenue (lower is better)", dia:["SG&A","÷","Revenue"], ev:"Morningstar moat framework (cost advantage)", ex:z => `FY${z.fy}: ${fp(z.v("sga_rev"))}.`},
-  {k:"asset_turnover", t:"Asset turnover", theme:"Scale advantage", def:"Revenue earned per dollar of assets.", why:"More sales from the same asset base means the network, plant or brand is used more intensively.", watch:"Large acquisitions add assets and goodwill and lower turnover for a few years.", f:"Revenue ÷ average total assets", dia:["Revenue","÷","Average assets"], ev:"McKinsey “Valuation” (ROIC tree)", ex:z => `FY${z.fy}: ${fx(z.v("asset_turnover"), 2)}.`},
-  {k:"rev_excess", t:"Growth vs industry", theme:"Pulling away from peers", def:"3-year revenue growth rate minus the median of the same industry.", why:"Taking share from peers is what a strengthening moat looks like from the outside. Comparing with the industry removes the cycle.", watch:"Acquisitions inflate it; see the goodwill rule in the risk gate.", f:"Revenue CAGR (3 yrs) − industry median CAGR", dia:["Company growth","−","Industry median growth"], ev:"Morningstar moat trend; Mauboussin", ex:z => `FY${z.fy}: 3-yr revenue growth versus the industry median: ${fp(z.v("rev_excess"))} a year.`},
-  {k:"peer_rank_change", t:"Peer rank change", theme:"Pulling away from peers", def:"How far the company moved up its industry ranking on ROIC, gross margin, operating margin and asset turnover in 3 years.", why:"Climbing the industry table on quality measures is a direct sign of pulling away.", watch:"Ranks in small industries move in big steps.", f:"Average industry percentile now − 3 years ago", dia:["Rank now","−","Rank 3 yrs ago"], ev:"Own construction from the brief", ex:z => `FY${z.fy}: peer rank ${f0(z.v("peer_level_rank"))} of 100.`},
-  {k:"fcf_conv", t:"FCF ÷ clean net income", theme:"Profit quality & runway", def:"How much of the reported profit turned into free cash flow.", why:"Profit backed by cash is more likely to be real and to last.", watch:"Heavy growth capex lowers it for good reasons; read with reinvestment.", f:"(Operating cash flow − capex) ÷ clean net income", dia:["CFO","−","Capex","÷","Clean NI"], ev:"Sloan (1996); Piotroski (2000)", ex:z => `FY${z.fy}: FCF ${fusd(z.v("fcf"))} vs clean net income ${fusd(z.v("clean_ni"))}.`},
-  {k:"accruals", t:"Accruals", theme:"Profit quality & runway", def:"Net income not yet backed by operating cash, as a share of assets.", why:"Sloan (1996) found that companies with high accruals tend to see earnings fall later.", watch:"Fast-growing companies build receivables and inventory naturally.", f:"(Net income − operating cash flow) ÷ average assets (lower is better)", dia:["Net income","−","CFO","÷","Assets"], ev:"Sloan (1996), The Accounting Review", ex:z => `FY${z.fy}: ${fp(z.v("accruals"))} of assets.`},
-  {k:"runway", t:"Reinvestment runway", theme:"Profit quality & runway", def:"Share of NOPAT reinvested in the business times the return on that new capital.", why:"A moat compounds only if the company can keep putting money to work at high returns.", watch:"Rate is capped at 150% of NOPAT to avoid one-year spikes.", f:"(Δ invested capital ÷ NOPAT) × incremental ROIC", dia:["Reinvestment rate","×","Incremental ROIC"], ev:"Mauboussin; Mohanram G-Score (2005) as cross-check", ex:z => `FY${z.fy}: reinvests ${fp(z.v("reinvest_rate"), 0)} of NOPAT.`},
-  {k:"interest_cover", t:"Interest cover (risk)", theme:"Risk gate", def:"Clean operating income divided by interest expense.", why:"Below about 3x, a bad year can make interest hard to pay.", watch:"Companies with no tagged interest pass.", f:"Clean operating income ÷ interest expense", dia:["Clean OI","÷","Interest"], ev:"Rating-agency practice (e.g. Moody's, S&P coverage bands)", ex:z => `FY${z.fy}: ${fx(z.v("interest_cover"))}.`},
-  {k:"nd_ebitda", t:"Net debt ÷ EBITDA (risk)", theme:"Risk gate", def:"Years of cash profit needed to repay net debt.", why:"High leverage can turn a good business into a fragile one.", watch:"Negative = more cash than debt.", f:"(Debt − cash) ÷ (clean OI + depreciation & amortisation)", dia:["Debt − cash","÷","EBITDA"], ev:"Rating-agency practice", ex:z => `FY${z.fy}: ${fx(z.v("nd_ebitda"))}.`},
-  {k:"altman_z", t:"Altman Z'' (risk)", theme:"Risk gate", def:"A bankruptcy-risk score from four balance-sheet and profit ratios.", why:"Below 1.1 the company is in the distress zone in Altman's studies.", watch:"Companies with negative equity from buybacks score low even when healthy. That is why the score uses book values: EDGAR has no prices.", f:"6.56·(working capital ÷ assets) + 3.26·(retained earnings ÷ assets) + 6.72·(EBIT ÷ assets) + 1.05·(equity ÷ liabilities)", dia:["Liquidity","+","Past profits","+","Current profit","+","Solvency"], ev:"Altman (1968; Z'' 1995 for non-manufacturers)", ex:z => `FY${z.fy}: ${f1(z.v("altman_z"))}.`},
+  {k:"incr_margin", t:"Incremental operating margin", theme:"Scale advantage", def:"How much of each extra dollar of revenue over 3 years became operating profit.", why:"If incremental margin is above the average margin, costs are growing slower than sales: scale is working.", watch:"Meaningless when revenue fell; shown only when revenue grew.", f:"(Clean OI now − 3 yrs ago) ÷ (revenue now − 3 yrs ago)", dia:["Δ Clean OI","÷","Δ Revenue"], ev:"Mauboussin; Morningstar (cost advantage)", ex:z => `${z.p}: ${fp(z.v("incr_margin"))} vs average margin ${fp(z.v("op_margin"))}.`},
+  {k:"sga_rev", t:"SG&A ÷ revenue", theme:"Scale advantage", def:"Selling, general and administrative cost as a share of revenue.", why:"Falling overhead per dollar of sales is the classic scale benefit.", watch:"Cutting marketing can lift this for a while and hurt later.", f:"SG&A ÷ revenue (lower is better)", dia:["SG&A","÷","Revenue"], ev:"Morningstar moat framework (cost advantage)", ex:z => `${z.p}: ${fp(z.v("sga_rev"))}.`},
+  {k:"asset_turnover", t:"Asset turnover", theme:"Scale advantage", def:"Revenue earned per dollar of assets.", why:"More sales from the same asset base means the network, plant or brand is used more intensively.", watch:"Large acquisitions add assets and goodwill and lower turnover for a few years.", f:"Revenue ÷ average total assets", dia:["Revenue","÷","Average assets"], ev:"McKinsey “Valuation” (ROIC tree)", ex:z => `${z.p}: ${fx(z.v("asset_turnover"), 2)}.`},
+  {k:"rev_excess", t:"Growth vs industry", theme:"Pulling away from peers", def:"3-year revenue growth rate minus the median of the same industry.", why:"Taking share from peers is what a strengthening moat looks like from the outside. Comparing with the industry removes the cycle.", watch:"Acquisitions inflate it; see the goodwill rule in the risk gate.", f:"Revenue CAGR (3 yrs) − industry median CAGR", dia:["Company growth","−","Industry median growth"], ev:"Morningstar moat trend; Mauboussin", ex:z => `${z.p}: 3-yr revenue growth versus the industry median: ${fp(z.v("rev_excess"))} a year.`},
+  {k:"peer_rank_change", t:"Peer rank change", theme:"Pulling away from peers", def:"How far the company moved up its industry ranking on ROIC, gross margin, operating margin and asset turnover in 3 years.", why:"Climbing the industry table on quality measures is a direct sign of pulling away.", watch:"Ranks in small industries move in big steps.", f:"Average industry percentile now − 3 years ago", dia:["Rank now","−","Rank 3 yrs ago"], ev:"Own construction from the brief", ex:z => `${z.p}: peer rank ${f0(z.v("peer_level_rank"))} of 100.`},
+  {k:"fcf_conv", t:"FCF ÷ clean net income", theme:"Profit quality & runway", def:"How much of the reported profit turned into free cash flow.", why:"Profit backed by cash is more likely to be real and to last.", watch:"Heavy growth capex lowers it for good reasons; read with reinvestment.", f:"(Operating cash flow − capex) ÷ clean net income", dia:["CFO","−","Capex","÷","Clean NI"], ev:"Sloan (1996); Piotroski (2000)", ex:z => `${z.p}: FCF ${fusd(z.v("fcf"))} vs clean net income ${fusd(z.v("clean_ni"))}.`},
+  {k:"accruals", t:"Accruals", theme:"Profit quality & runway", def:"Net income not yet backed by operating cash, as a share of assets.", why:"Sloan (1996) found that companies with high accruals tend to see earnings fall later.", watch:"Fast-growing companies build receivables and inventory naturally.", f:"(Net income − operating cash flow) ÷ average assets (lower is better)", dia:["Net income","−","CFO","÷","Assets"], ev:"Sloan (1996), The Accounting Review", ex:z => `${z.p}: ${fp(z.v("accruals"))} of assets.`},
+  {k:"runway", t:"Reinvestment runway", theme:"Profit quality & runway", def:"Share of NOPAT reinvested in the business times the return on that new capital.", why:"A moat compounds only if the company can keep putting money to work at high returns.", watch:"Rate is capped at 150% of NOPAT to avoid one-year spikes.", f:"(Δ invested capital ÷ NOPAT) × incremental ROIC", dia:["Reinvestment rate","×","Incremental ROIC"], ev:"Mauboussin; Mohanram G-Score (2005) as cross-check", ex:z => `${z.p}: reinvests ${fp(z.v("reinvest_rate"), 0)} of NOPAT.`},
+  {k:"interest_cover", t:"Interest cover (risk)", theme:"Risk gate", def:"Clean operating income divided by interest expense.", why:"Below about 3x, a bad year can make interest hard to pay.", watch:"Companies with no tagged interest pass.", f:"Clean operating income ÷ interest expense", dia:["Clean OI","÷","Interest"], ev:"Rating-agency practice (e.g. Moody's, S&P coverage bands)", ex:z => `${z.p}: ${fx(z.v("interest_cover"))}.`},
+  {k:"nd_ebitda", t:"Net debt ÷ EBITDA (risk)", theme:"Risk gate", def:"Years of cash profit needed to repay net debt.", why:"High leverage can turn a good business into a fragile one.", watch:"Negative = more cash than debt.", f:"(Debt − cash) ÷ (clean OI + depreciation & amortisation)", dia:["Debt − cash","÷","EBITDA"], ev:"Rating-agency practice", ex:z => `${z.p}: ${fx(z.v("nd_ebitda"))}.`},
+  {k:"altman_z", t:"Altman Z'' (risk)", theme:"Risk gate", def:"A bankruptcy-risk score from four balance-sheet and profit ratios.", why:"Below 1.1 the company is in the distress zone in Altman's studies.", watch:"Companies with negative equity from buybacks score low even when healthy. That is why the score uses book values: EDGAR has no prices.", f:"6.56·(working capital ÷ assets) + 3.26·(retained earnings ÷ assets) + 6.72·(EBIT ÷ assets) + 1.05·(equity ÷ liabilities)", dia:["Liquidity","+","Past profits","+","Current profit","+","Solvency"], ev:"Altman (1968; Z'' 1995 for non-manufacturers)", ex:z => `${z.p}: ${f1(z.v("altman_z"))}.`},
   {k:"beneish", t:"Beneish M-Score (risk)", theme:"Risk gate", def:"An eight-ratio score that looks for signs of earnings manipulation.", why:"Above −1.78 Beneish found a higher chance of manipulation.", watch:"Fast growth alone raises it; needs at least 6 of 8 inputs or it is not tested.", f:"−4.84 + 0.92·DSRI + 0.528·GMI + 0.404·AQI + 0.892·SGI + 0.115·DEPI − 0.172·SGAI + 4.679·TATA − 0.327·LVGI", dia:["8 ratios","→","M-Score"], ev:"Beneish (1999), Financial Analysts Journal", ex:z => "See the risk table in each Deep-Dive."},
-  {k:"dilution", t:"Dilution, stock pay, goodwill (risk)", theme:"Risk gate", def:"Share count growth per year, stock-based pay as a share of revenue, and goodwill added in 3 years as a share of assets.", why:"Growth paid for with new shares or bought through acquisitions is not a moat.", watch:"Mergers paid in stock show up in both dilution and goodwill.", f:"(shares now ÷ 3 yrs ago)^(1/3) − 1 · SBC ÷ revenue · Δ goodwill ÷ assets", dia:["Shares","·","Stock pay","·","Goodwill"], ev:"Own rules from the brief", ex:z => `FY${z.fy}: stock pay ${fp(z.v("sbc_rev"))} of revenue.`},
+  {k:"dilution", t:"Dilution, stock pay, goodwill (risk)", theme:"Risk gate", def:"Share count growth per year, stock-based pay as a share of revenue, and goodwill added in 3 years as a share of assets.", why:"Growth paid for with new shares or bought through acquisitions is not a moat.", watch:"Mergers paid in stock show up in both dilution and goodwill.", f:"(shares now ÷ 3 yrs ago)^(1/3) − 1 · SBC ÷ revenue · Δ goodwill ÷ assets", dia:["Shares","·","Stock pay","·","Goodwill"], ev:"Own rules from the brief", ex:z => `${z.p}: stock pay ${fp(z.v("sbc_rev"))} of revenue.`},
 ];
 function viewLearn(m) {
   const top = state.res.ranked.find(x => x.shortlist) || state.res.ranked[0];
   const D = window.MM_DEEP ? window.MM_DEEP[String(top.c.cik)] : null;
-  const z = {fy: top.c.fy, v: k => D && D.s[k] ? D.s[k][D.s[k].length - 1] : null, min: k => D ? Math.min(...D.s[k].slice(-5).filter(v => v !== null)) : null, max: k => D ? Math.max(...D.s[k].slice(-5).filter(v => v !== null)) : null};
+  const z = {fy: top.c.fy, p: top.c.period || "FY" + top.c.fy, v: k => D && D.s[k] ? D.s[k][D.s[k].length - 1] : null, min: k => D ? Math.min(...D.s[k].slice(-5).filter(v => v !== null)) : null, max: k => D ? Math.max(...D.s[k].slice(-5).filter(v => v !== null)) : null};
   m.innerHTML = `<h1>Learn</h1><p class="muted">Every indicator and risk check: what it is, why it matters, what to watch, the formula, and a worked example with real numbers from ${esc(top.c.name)} (${esc(top.c.ticker)}), the top shortlist name today.</p>
   <div class="grid g2">${LEARN.map(e => `<div class="card learn" id="learn-${e.k}"><span class="small">${e.theme}</span><h3>${e.t}</h3><p>${e.def}</p><p><b>Why it matters.</b> ${e.why}</p><p><b>Watch out.</b> ${e.watch}</p>
   <div class="diagram">${e.dia.map(d => ["÷","−","+","×","=","→","·"].includes(d) ? `<span class="op">${d}</span>` : `<span class="box">${d}</span>`).join("")}</div>
@@ -529,13 +612,16 @@ function viewTrack(m) { const T = window.MM_TRACK; m.innerHTML = T ? T.html : `<
 function viewDemo(m) { const P = window.MM_DEMO; m.innerHTML = P ? P.html : `<h1>Demo</h1><p class="empty">The guided walkthrough with three case studies is chosen from the validation results (step 8).</p>`; }
 function viewMethod(m) {
   m.innerHTML = `<h1>Methodology v${META.methodology}</h1>
-  <div class="grid g2"><div class="card"><h3>Data</h3><p>SEC EDGAR XBRL (companyfacts) and submissions, bulk files retrieved ${META.sec_retrieved}. Up to 10 fiscal years of 10-K data per company. Every value keeps its form, period, filing date and accession number. The store keeps the first filed value and later restatements, so a past run uses only what was public then.</p></div>
+  <div class="grid g2"><div class="card"><h3>Data</h3><p>SEC EDGAR XBRL (companyfacts) and submissions, bulk files retrieved ${META.sec_retrieved}. Up to 10 fiscal years of 10-K data per company for the Moat Score. 10-Q data from 2011 is used for the 12-quarter charts (12-month figures: last fiscal year + year to date − same period a year earlier) and for the experimental Compounder Signal. Every value keeps its form, period, filing date and accession number. The store keeps the first filed value and later restatements, so a past run uses only what was public then.</p></div>
   <div class="card"><h3>Cleaning</h3><p>One-offs removed where tagged: impairments, restructuring, litigation, acquisition costs, gains/losses on disposals. Tax normalised at ${(DEFAULT.data.tax_rate * 100).toFixed(0)}% for every year. Invested capital = equity + debt + finance leases − cash above ${(DEFAULT.data.excess_cash_pct_revenue * 100).toFixed(0)}% of revenue. Operating leases are left out for comparability across 2019. Data confidence: High (≥ 90% of core items present over 5 years), Medium (≥ 70%), Low.</p></div>
   <div class="card"><h3>Scoring</h3><p>13 indicators in 5 themes, each ranked 0–100 within its SIC industry (4 → 3 → 2 digits until ≥ ${DEFAULT.scoring.min_peers} peers) on level (latest fiscal year), trend (5-year slope) and consistency (years improved of last 4). Blend ${DEFAULT.scoring.blend.level}/${DEFAULT.scoring.blend.trend}/${DEFAULT.scoring.blend.consistency}. Theme weights ${THEMES.map(t => t.name + " " + DEFAULT.scoring.theme_weights[t.key]).join(", ")}. Moat Score = weighted themes − ${DEFAULT.risk_gate.flag_penalty} points per risk flag. Moat Strengthening: ≥ ${DEFAULT.scoring.confirm_themes} themes with improving score ≥ ${DEFAULT.scoring.improving_rank}.</p></div>
-  <div class="card"><h3>Known limits</h3><ul class="small" style="color:var(--ink)"><li>Level uses the latest fiscal year, not trailing 12 months (planned).</li><li>One-offs only described in text cannot be removed.</li><li>Hurdle rate is 9% for every sector; EDGAR has no market data for a true cost of capital.</li><li>Altman Z'' uses book equity and can flag healthy companies with negative equity from buybacks.</li><li>Foreign filers (20-F) and banks/insurers are out of scope.</li></ul></div></div>
+  <div class="card"><h3>Known limits</h3><ul class="small" style="color:var(--ink)"><li>The Moat Score uses the latest fiscal year (10-K); trailing-12-month scoring was tested and not adopted. Newer quarters show in the 12-quarter charts and drive the experimental Compounder Signal.</li><li>One-offs only described in text cannot be removed.</li><li>Hurdle rate is 9% for every sector; EDGAR has no market data for a true cost of capital.</li><li>Altman Z'' (book equity) and Beneish M-Score are off by default since v1.1; Z'' misreads buyback-driven negative equity and regulated debt, and Beneish counts fast growth as a warning sign.</li><li>Foreign filers (20-F) and banks/insurers are out of scope.</li><li>Market value uses the latest month-end price and the cover-page share count; for multi-class companies without a cover count (e.g. Alphabet) the diluted count is used. Values below 0.2% or above 200× of revenue are hidden as a likely share-count error.</li></ul></div></div>
   <h2>Change log</h2><div class="tbl"><table><thead><tr><th>Version</th><th>Date</th><th>Change</th></tr></thead><tbody>
   <tr><td>1.0-draft</td><td>2026-11-03</td><td>First build from brief v4: point-in-time store, clean-up, risk gate, five themes, confirmation rule.</td></tr>
   <tr><td>1.0-draft</td><td>2026-11-03</td><td>Peer ranks use the full SIC group (fixes leftover groups of 1–7). Incremental ROIC only when capital grew ≥ 10%.</td></tr>
+  <tr><td><b>1.1</b></td><td>2026-11-03</td><td>Altman Z'' and Beneish M-Score switched from Remove to Off (values still shown in Deep-Dives). Reason: they removed 20 of the 100 largest companies (e.g. NVIDIA for fast growth, AbbVie for buyback-driven negative equity) while changing back-test false alarms by less than 1 point. Chosen after seeing results; see the Proof tab.</td></tr>
+  <tr><td><b>1.1 + v2.0 list</b></td><td>2026-11-04</td><td>Second, experimental list in the Screener: Compounder candidates (v2.0), 8 quarterly signals chosen on 2013–2019. It failed its one-time 2020–2023 test (top 10% won 1.19× the base rate; 2× needed), so it is shown as a prompt for research, not a proven ranking. Added market value and clean P/E (display only), industry and market-value filters, and sorting by any column.</td></tr>
+  <tr><td>1.2 (not adopted)</td><td>2026-11-03</td><td>Tried scoring on trailing-12-month (TTM) figures from the latest 10-Q. Not adopted: no better than fiscal years once the back-test's look-ahead was removed, and a lower market return. The 12-quarter charts in the Deep-Dive were kept. See the Proof tab.</td></tr>
   <tr><td>1.0-draft</td><td>2026-11-03</td><td>After the 10-K spot-check (<a href="spotcheck.html">report</a>): gains on selling a whole business are no longer removed (they sit below operating income); when the operating-income tag differs from revenue − total costs by more than 10% of operating income, data confidence drops one level. Shortlist unchanged.</td></tr></tbody></table></div>`;
 }
 

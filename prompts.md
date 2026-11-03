@@ -591,3 +591,87 @@ Why number in front of each ticker is not sort from 1 to xxx.
   - **Show both numbers instead of only one.** I found the overall rank confusing as the only number. Keeping it in its own column still shows how the risk gate changes the list.
   - **Dashboard link through claude.ai.** GitHub shows HTML as source, and a free HTML-hosting service shows a warning page first. The claude.ai page is private until I share it.
 - **ขั้นต่อไป:** Fill the deck placeholders, edit `help.md`, and submit before Wed 4 Nov 21:00.
+
+---
+
+## รอบ 14 · 2026-11-03 → 04 · Risk gate v1.1, TTM test (not adopted), v2.0 Compounder Signal (experimental list), valuation filters
+
+- **ทำอะไร:**
+  - **Risk gate v1.1:** Altman Z'' and Beneish M-Score switched to Off after a study of the 100 largest US companies (`src/mm_gate_study.py`, `output/data/gate_study.json`).
+  - **v1.2 TTM experiment, not adopted:**
+    - Built 12-month (TTM) figures from 10-Qs, with quarterly data back to 2011.
+    - Re-ran the back-test and the market test.
+    - Kept: the 12-quarter charts in the Deep-Dive. Results: `output/data/ttm_study.json`.
+  - **v2.0 Compounder Signal:**
+    - Design and plan: `docs/specs/…-design.md`, `docs/plans/…-compounder-signal.md`.
+    - New modules: `mm_quarterly`, `mm_signals`, `mm_outcomes`, `mm_discover`.
+    - Process: 10 quarterly signals fixed in advance, chosen on 2013–2019, tested once on 2020–2023, plus a price test.
+  - **Dashboard:**
+    - "Compounder candidates (experimental)" shown as a second list.
+    - New filters for industry and market value.
+    - Market value and clean P/E (12 months, one-offs removed) shown in the table, plus sorting by any column header.
+    - A Compounder card in the Deep-Dive, and a v2.0 section on the Proof tab.
+  - **Track record:** froze `2026-11-03_v1.1.json` and `2026-11-03_v2.0-experimental.json`.
+  - **Code review:** an independent review found 3 important issues; all are fixed with tests. 61 tests pass.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser · one review subagent (Opus) · SEC bulk files + Yahoo Finance monthly prices
+- **Prompt ที่ใช้:**
+
+```text
+As we are closer to end year 2026 and several thing change. I saw in MOAT evaluation still look at indicator of MOAT graph still show 2024 or 2025.  How can we reflect better scoring with recent data ?
+```
+
+```text
+Let's brainstorm first.  Objective is to identify company who is potentially "becoming next big growth stock from improvement in it's MOAT".   So I believe each quarter result should be better way instead of FY or TTM.  But we need to use backtest to review key improvement of business based on our criteria, identify "optimal improvement signal" to shortlist those candidate.  Explain to me why / why not the current work could meet / not meet my objective.  We can communicate in english
+```
+
+```text
+Ok. Then show V2.0 as a second list.  Then show me update dashboard. 
+
+Add following improvement in filter to adjust screening result:
+
+1. Industry
+2. Market Capital
+3. Add and show current PE TTM (Exclude Non Recurring Item e.g one off)
+4. I want to be able to sort result in table from header e.g. sort by Industry.
+
+My aim is to use this additional data to spot potential compounder despite it's doesn't have proof signal from historical back test.  This would be the next twist in this tool to finish today.
+```
+
+- **ผลที่ได้:**
+  - **v1.1:** the risk gate now removes 6 of the 100 largest companies instead of 20 (NVDA and MU are back). The back-test false-alarm rate moved by less than 1 point.
+  - **TTM (v1.2):** it first looked better (hit rate 36% vs 27%), but the TTM point already covered part of the period used to measure the outcome.
+    - Measured on a window that starts after all data used: 34.8% vs 39.0% for fiscal years.
+    - Market: 12.2% vs 15.6% a year.
+    - Not adopted.
+  - **v2.0, training:** 8 of 10 signals were kept. The two gross-margin signals were dropped as noise. High ROIC was better, so the "start mid-table" idea was not supported.
+  - **v2.0, test:** the one-time 2020–2023 test **failed**.
+    - Top 10% became winners 1.19× as often as the base rate; 2× was needed.
+    - After fixing the label bug found in review: 1.18×.
+    - Without COVID rebounds: also 1.18×.
+  - **Same yardstick for both:**
+    - Top 10%, 2020–2023: v1.1 1.17× vs v2.0 1.19×.
+    - Top 25: v1.1 3.2× vs v2.0 0.4× (small sample).
+    - Price, Apr 2020 – Feb 2024: v2.0 37.5% vs v1.1 31.6% vs S&P 20.8% (starts at the COVID low).
+    - Price, 2013–2024: v2.0 15.3% vs v1.1 16.1%.
+  - **Market value:** 98% of companies have one. SEC diluted share counts are sometimes filed in thousands or millions (McDonald's showed 712.3), so the cover-page share count is used instead. 5 companies are hidden as "check".
+  - **Still missing:** the pitch documents show v1.0 numbers. The Google Sheet has no tab for `compounder.csv` yet. 6 minor review points are deferred (listed in the ledger).
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Risk gate option G (both off).** The gate removed large, strong companies, and I am not familiar with these two measures; the study showed they barely changed the back-test.
+  - **TTM: "complete + re-test" first, then not adopted.**
+    - I wanted scores that reflect 2026 data.
+    - When the test showed it was not better, I chose to rethink the goal (brainstorm) instead of keeping TTM.
+  - **Goal of v2.0 = "the next big growth stock from an improving moat".**
+    - Winner = all six business conditions; revenue must grow at least 20% a year.
+    - Train on business results, use price only as the final test. Price alone brings noise (valuation, sector cycles), and the check showed commodity booms in a price-based list.
+  - **Universe B** (as before: at least 5 years, $100M revenue). Keeps data quality the same as v1.1.
+  - **Signals 1–5, 8–11, 14**, out of 16 candidates. Fewer signals means less chance of a lucky "discovery".
+  - **COVID rebound check added before running the test**, as a second result only. The main pass/fail rule was not changed after seeing data.
+  - **v2.0 as a second, experimental list; v1.1 stays the main ranking.**
+    - v2.0 failed the test I set in advance.
+    - I still want to use it, together with market value, P/E and industry, to spot possible compounders. It is clearly labelled as not proven.
+- **ขั้นต่อไป:**
+  - Update the whitepaper, one-pager and deck with v1.1 / v2.0 results.
+  - Add a `compounder` tab to the Google Sheet.
+  - Edit `help.md`.
+  - Submit the repo link.
+  - Each quarter: re-run and freeze both lists (`mm_track.py freeze` / `freeze_compounder`). Real results from 2026 onward are the true test of v2.0.

@@ -1,0 +1,335 @@
+{
+ "fingerprint_sha256": "dd5179192bfdd7fbf491a58bef0986761e4fcf23fa1cb5ad0895c49b1c3099f2",
+ "record": {
+  "as_of": "2026-11-03",
+  "methodology": "1.1",
+  "sec_data_retrieved": "2026-11-03",
+  "settings": {
+   "methodology_version": "1.1",
+   "data": {
+    "sec_retrieved": "2026-11-03",
+    "max_years": 10,
+    "min_years": 5,
+    "quarters": 12,
+    "tax_rate": 0.21,
+    "excess_cash_pct_revenue": 0.02
+   },
+   "universe": {
+    "min_revenue_usd": 100000000,
+    "min_years": 5,
+    "exclude_sic": [
+     6000,
+     6799
+    ],
+    "latest_10k_within_days": 548,
+    "exchanges": [
+     "NYSE",
+     "Nasdaq",
+     "NYSE American",
+     "CBOE",
+     "NYSE Arca"
+    ]
+   },
+   "hurdle_rate": 0.09,
+   "risk_gate": {
+    "flag_penalty": 5,
+    "interest_cover": {
+     "mode": "remove",
+     "below": 3.0
+    },
+    "net_debt_ebitda": {
+     "mode": "flag",
+     "above": 3.0
+    },
+    "altman_z": {
+     "mode": "off",
+     "below": 1.1
+    },
+    "beneish_m": {
+     "mode": "off",
+     "above": -1.78
+    },
+    "dilution": {
+     "mode": "flag",
+     "above": 0.03
+    },
+    "sbc_revenue": {
+     "mode": "flag",
+     "above": 0.1
+    },
+    "goodwill_jump": {
+     "mode": "flag",
+     "above": 0.25
+    }
+   },
+   "scoring": {
+    "blend": {
+     "level": 30,
+     "trend": 50,
+     "consistency": 20
+    },
+    "theme_weights": {
+     "value": 25,
+     "pricing": 20,
+     "scale": 15,
+     "peers": 20,
+     "quality": 20
+    },
+    "min_peers": 8,
+    "trend_years": 5,
+    "consistency_years": 4,
+    "confirm_themes": 3,
+    "improving_rank": 60,
+    "shortlist_size": 25
+   },
+   "validation": {
+    "years": [
+     2013,
+     2014,
+     2015,
+     2016,
+     2017,
+     2018,
+     2019,
+     2020,
+     2021,
+     2022,
+     2023
+    ],
+    "as_of_month_day": "06-30",
+    "horizons": [
+     1,
+     3,
+     5
+    ]
+   }
+  },
+  "shortlist": [
+   {
+    "rank_in_universe": 2,
+    "ticker": "LVS",
+    "cik": 1300514,
+    "name": "LAS VEGAS SANDS CORP",
+    "moat_score": 86.45,
+    "fiscal_year": 2025,
+    "latest_10k": "0001300514-26-000013"
+   },
+   {
+    "rank_in_universe": 3,
+    "ticker": "ANF",
+    "cik": 1018840,
+    "name": "ABERCROMBIE & FITCH CO /DE/",
+    "moat_score": 85.19,
+    "fiscal_year": 2025,
+    "latest_10k": "0001018840-26-000012"
+   },
+   {
+    "rank_in_universe": 4,
+    "ticker": "MEDP",
+    "cik": 1668397,
+    "name": "Medpace Holdings, Inc.",
+    "moat_score": 85.03,
+    "fiscal_year": 2025,
+    "latest_10k": "0001668397-26-000006"
+   },
+   {
+    "rank_in_universe": 5,
+    "ticker": "SEZL",
+    "cik": 1662991,
+    "name": "Sezzle Inc.",
+    "moat_score": 84.95,
+    "fiscal_year": 2025,
+    "latest_10k": "0001662991-26-000016"
+   },
+   {
+    "rank_in_universe": 6,
+    "ticker": "EAT",
+    "cik": 703351,
+    "name": "BRINKER INTERNATIONAL, INC",
+    "moat_score": 84.22,
+    "fiscal_year": 2025,
+    "latest_10k": "0000703351-26-000029"
+   },
+   {
+    "rank_in_universe": 7,
+    "ticker": "TOL",
+    "cik": 794170,
+    "name": "Toll Brothers, Inc.",
+    "moat_score": 84.2,
+    "fiscal_year": 2025,
+    "latest_10k": "0000794170-25-000112"
+   },
+   {
+    "rank_in_universe": 8,
+    "ticker": "NYT",
+    "cik": 71691,
+    "name": "NEW YORK TIMES CO",
+    "moat_score": 83.97,
+    "fiscal_year": 2025,
+    "latest_10k": "0000071691-26-000011"
+   },
+   {
+    "rank_in_universe": 9,
+    "ticker": "UAL",
+    "cik": 100517,
+    "name": "United Airlines Holdings, Inc.",
+    "moat_score": 83.68,
+    "fiscal_year": 2025,
+    "latest_10k": "0000100517-26-000023"
+   },
+   {
+    "rank_in_universe": 10,
+    "ticker": "HXL",
+    "cik": 717605,
+    "name": "HEXCEL CORP /DE/",
+    "moat_score": 83.11,
+    "fiscal_year": 2025,
+    "latest_10k": "0001193125-26-046377"
+   },
+   {
+    "rank_in_universe": 11,
+    "ticker": "MU",
+    "cik": 723125,
+    "name": "MICRON TECHNOLOGY INC",
+    "moat_score": 83.1,
+    "fiscal_year": 2026,
+    "latest_10k": "0000723125-26-000023"
+   },
+   {
+    "rank_in_universe": 12,
+    "ticker": "VRT",
+    "cik": 1674101,
+    "name": "Vertiv Holdings Co",
+    "moat_score": 82.83,
+    "fiscal_year": 2025,
+    "latest_10k": "0001674101-26-000008"
+   },
+   {
+    "rank_in_universe": 13,
+    "ticker": "HNRG",
+    "cik": 788965,
+    "name": "HALLADOR ENERGY CO",
+    "moat_score": 82.73,
+    "fiscal_year": 2025,
+    "latest_10k": "0001104659-26-027174"
+   },
+   {
+    "rank_in_universe": 14,
+    "ticker": "YOU",
+    "cik": 1856314,
+    "name": "Clear Secure, Inc.",
+    "moat_score": 82.08,
+    "fiscal_year": 2025,
+    "latest_10k": "0001856314-26-000006"
+   },
+   {
+    "rank_in_universe": 16,
+    "ticker": "CRS",
+    "cik": 17843,
+    "name": "CARPENTER TECHNOLOGY CORP",
+    "moat_score": 81.49,
+    "fiscal_year": 2025,
+    "latest_10k": "0000017843-26-000034"
+   },
+   {
+    "rank_in_universe": 17,
+    "ticker": "HWM",
+    "cik": 4281,
+    "name": "Howmet Aerospace Inc.",
+    "moat_score": 80.75,
+    "fiscal_year": 2025,
+    "latest_10k": "0000004281-26-000012"
+   },
+   {
+    "rank_in_universe": 18,
+    "ticker": "FTI",
+    "cik": 1681459,
+    "name": "TechnipFMC plc",
+    "moat_score": 79.98,
+    "fiscal_year": 2025,
+    "latest_10k": "0001681459-26-000010"
+   },
+   {
+    "rank_in_universe": 19,
+    "ticker": "NEU",
+    "cik": 1282637,
+    "name": "NEWMARKET CORP",
+    "moat_score": 79.12,
+    "fiscal_year": 2025,
+    "latest_10k": "0001282637-26-000005"
+   },
+   {
+    "rank_in_universe": 20,
+    "ticker": "AWI",
+    "cik": 7431,
+    "name": "ARMSTRONG WORLD INDUSTRIES INC",
+    "moat_score": 79.07,
+    "fiscal_year": 2025,
+    "latest_10k": "0001193125-26-065183"
+   },
+   {
+    "rank_in_universe": 21,
+    "ticker": "COCO",
+    "cik": 1482981,
+    "name": "Vita Coco Company, Inc.",
+    "moat_score": 78.67,
+    "fiscal_year": 2025,
+    "latest_10k": "0001482981-26-000022"
+   },
+   {
+    "rank_in_universe": 22,
+    "ticker": "GFF",
+    "cik": 50725,
+    "name": "GRIFFON CORP",
+    "moat_score": 78.64,
+    "fiscal_year": 2025,
+    "latest_10k": "0001628280-25-053242"
+   },
+   {
+    "rank_in_universe": 23,
+    "ticker": "SFM",
+    "cik": 1575515,
+    "name": "Sprouts Farmers Market, Inc.",
+    "moat_score": 78.61,
+    "fiscal_year": 2025,
+    "latest_10k": "0001575515-26-000008"
+   },
+   {
+    "rank_in_universe": 24,
+    "ticker": "RL",
+    "cik": 1037038,
+    "name": "RALPH LAUREN CORP",
+    "moat_score": 78.51,
+    "fiscal_year": 2025,
+    "latest_10k": "0001628280-26-037074"
+   },
+   {
+    "rank_in_universe": 25,
+    "ticker": "NVDA",
+    "cik": 1045810,
+    "name": "NVIDIA CORP",
+    "moat_score": 78.43,
+    "fiscal_year": 2025,
+    "latest_10k": "0001045810-26-000021"
+   },
+   {
+    "rank_in_universe": 26,
+    "ticker": "FSS",
+    "cik": 277509,
+    "name": "FEDERAL SIGNAL CORP /DE/",
+    "moat_score": 78.3,
+    "fiscal_year": 2025,
+    "latest_10k": "0001628280-26-011576"
+   },
+   {
+    "rank_in_universe": 27,
+    "ticker": "SMTI",
+    "cik": 714256,
+    "name": "Sanara MedTech Inc.",
+    "moat_score": 78.27,
+    "fiscal_year": 2025,
+    "latest_10k": "0001493152-26-012352"
+   }
+  ]
+ }
+}

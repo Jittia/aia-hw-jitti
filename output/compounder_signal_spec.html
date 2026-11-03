@@ -1,0 +1,182 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Compounder Signal Spec</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet"><style>
+:root {
+  --paper:#FFF1E5; --card:#FBE6D4; --ink:#262A33; --ink-2:#66605A; --grid:#E3D3C4; --navy:#1F3A5F; --teal:#0F7B78; --teal-text:#0B6F6C;
+  --good:#2E7D4F; --good-text:#266C44; --good-bg:#E3EFE6; --neutral:#8A847D; --neutral-text:#5A544E; --neutral-bg:#ECE6E0;
+  --risk:#B3261E; --risk-text:#9E2119; --risk-bg:#F6DEDB; --on-solid:#FFFFFF; --hover:#F7DCC6;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif; --sans:"Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --r:4px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper:#1E1B18; --card:#2A2622; --ink:#F2E8DE; --ink-2:#B5AA9E; --grid:#3D3731; --navy:#8FB3E0; --teal:#4FC2BC; --teal-text:#4FC2BC;
+  --good:#6CC28F; --good-text:#6CC28F; --good-bg:#23382B; --neutral:#A8A198; --neutral-text:#C9C1B8; --neutral-bg:#33302C;
+  --risk:#F08A80; --risk-text:#F08A80; --risk-bg:#3E2523; --on-solid:#1E1B18; --hover:#332E29; color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --paper:#1E1B18; --card:#2A2622; --ink:#F2E8DE; --ink-2:#B5AA9E; --grid:#3D3731; --navy:#8FB3E0; --teal:#4FC2BC; --teal-text:#4FC2BC;
+  --good:#6CC28F; --good-text:#6CC28F; --good-bg:#23382B; --neutral:#A8A198; --neutral-text:#C9C1B8; --neutral-bg:#33302C;
+  --risk:#F08A80; --risk-text:#F08A80; --risk-bg:#3E2523; --on-solid:#1E1B18; --hover:#332E29; color-scheme:dark; }
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--paper); color:var(--ink); font:400 16px/1.5 var(--sans); }
+.wrap { max-width:1180px; margin:0 auto; padding:0 16px 48px; }
+h1,h2,h3,h4 { font-family:var(--serif); color:var(--navy); font-weight:600; line-height:1.2; }
+h1 { font-size:clamp(26px,4vw,34px); margin:20px 0 4px; }
+h2 { font-size:22px; margin:28px 0 8px; }
+h3 { font-size:17px; margin:18px 0 6px; }
+p { margin:0 0 10px; max-width:75ch; }
+a { color:var(--teal-text); }
+.num, td.r, .r { font-variant-numeric:tabular-nums lining-nums; }
+.small { font-size:13px; color:var(--ink-2); }
+.muted { color:var(--ink-2); }
+.bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:2px solid var(--navy); }
+.wordmark { display:flex; align-items:center; gap:10px; color:var(--navy); text-decoration:none; }
+.wordmark span { font:600 21px/1 var(--serif); }
+.tagline { font:italic 500 14px/1.3 var(--serif); color:var(--ink-2); }
+.tabs { display:flex; gap:2px; border-bottom:1px solid var(--grid); overflow-x:auto; position:sticky; top:0; background:var(--paper); z-index:5; }
+.tab { font:600 14px/1 var(--sans); padding:13px 12px; color:var(--ink-2); border:0; background:none; border-bottom:3px solid transparent; white-space:nowrap; cursor:pointer; }
+.tab[aria-selected="true"] { color:var(--navy); border-bottom-color:var(--teal); }
+.btn { font:600 14px/1 var(--sans); padding:9px 13px; border-radius:var(--r); border:1px solid var(--navy); background:var(--navy); color:var(--on-solid); cursor:pointer; }
+.btn.ghost { background:transparent; color:var(--navy); }
+.btn.sm { padding:6px 9px; font-size:13px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, .tab:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
+.card { background:var(--card); border:1px solid var(--grid); border-radius:var(--r); padding:16px; min-width:0; }
+.grid { display:grid; gap:14px; }
+.g2 { grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+.g3 { grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); }
+.badge { display:inline-flex; align-items:center; gap:5px; font:700 11px/1 var(--sans); letter-spacing:.5px; text-transform:uppercase; padding:5px 7px; border-radius:3px; border:1px solid transparent; white-space:nowrap; }
+.badge.dot::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.b-good { background:var(--good-bg); color:var(--good-text); border-color:var(--good); }
+.b-neutral { background:var(--neutral-bg); color:var(--neutral-text); border-color:var(--neutral); }
+.b-risk { background:var(--risk-bg); color:var(--risk-text); border-color:var(--risk); }
+.b-moat { background:var(--navy); color:var(--on-solid); }
+.b-conf { color:var(--ink-2); border-color:var(--grid); }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th,td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--grid); vertical-align:top; }
+th { font-weight:600; color:var(--ink-2); font-size:12px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; }
+td.r, th.r { text-align:right; }
+.tbl { overflow-x:auto; }
+tr.click { cursor:pointer; }
+tr.click:hover td { background:var(--hover); }
+.layout { display:grid; grid-template-columns:290px 1fr; gap:18px; align-items:start; margin-top:14px; }
+@media (max-width:900px) { .layout { grid-template-columns:1fr; } }
+.layout > * { min-width:0; }
+@media (max-width:640px) { .hm { display:none; } .tab { padding:12px 9px; } }
+.controls { position:sticky; top:52px; max-height:calc(100vh - 64px); overflow:auto; }
+@media (max-width:900px) { .controls { position:static; max-height:none; } }
+.ctl { margin-bottom:12px; }
+.ctl label { display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:var(--ink); }
+.ctl input[type=range] { width:100%; accent-color:var(--teal); }
+.seg { display:inline-flex; border:1px solid var(--grid); border-radius:var(--r); overflow:hidden; }
+.seg button { font:600 12px/1 var(--sans); padding:6px 8px; color:var(--ink-2); background:transparent; border:0; cursor:pointer; }
+.seg button.on { background:var(--teal); color:var(--on-solid); }
+.rule { display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; padding:7px 0; border-bottom:1px solid var(--grid); font-size:13px; }
+.rule input { width:64px; font:13px var(--sans); padding:3px 5px; border:1px solid var(--grid); border-radius:3px; background:var(--paper); color:var(--ink); }
+input[type=search], select, input[type=text] { font:14px var(--sans); padding:8px 10px; border:1px solid var(--grid); border-radius:var(--r); background:var(--paper); color:var(--ink); }
+.toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+.mini { display:inline-flex; gap:2px; vertical-align:middle; }
+.mini i { display:block; width:9px; height:16px; border-radius:1px; background:var(--grid); }
+.mini i.on { background:var(--teal); }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:12px 0; }
+.kpi { background:var(--card); border:1px solid var(--grid); border-radius:var(--r); padding:12px; }
+.kpi b { display:block; font:600 26px/1.1 var(--serif); color:var(--navy); font-variant-numeric:tabular-nums; }
+.kpi span { font-size:12px; color:var(--ink-2); }
+.chg { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.chart-scroll { overflow-x:auto; }
+svg.chart { width:100%; min-width:420px; height:auto; display:block; }
+svg.chart text { font-family:var(--sans); fill:var(--ink-2); font-size:11px; font-variant-numeric:tabular-nums; }
+.ctitle { font:600 15px/1.3 var(--serif); color:var(--ink); margin:0 0 2px; }
+.csub, .csrc { font-size:12px; color:var(--ink-2); margin:0 0 6px; }
+.csrc { margin-top:4px; }
+.obs { display:grid; grid-template-columns:78px 1fr; gap:10px; padding:9px 0; border-bottom:1px solid var(--grid); font-size:14px; }
+.obs:last-child { border-bottom:0; }
+.funnel-row { display:grid; grid-template-columns:minmax(160px,1fr) 2fr 70px; gap:10px; align-items:center; padding:7px 0; border-bottom:1px solid var(--grid); font-size:14px; }
+.funnel-bar { height:18px; background:var(--navy); border-radius:2px; }
+.funnel-bar.hl { background:var(--teal); }
+.learn h3 { margin-top:0; }
+.formula { font-family:ui-monospace,Menlo,monospace; font-size:13px; background:var(--paper); border:1px solid var(--grid); padding:8px 10px; border-radius:var(--r); overflow-x:auto; }
+.diagram { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:8px 0; font-size:13px; }
+.diagram .box { border:1px solid var(--navy); color:var(--navy); padding:5px 8px; border-radius:3px; background:var(--paper); }
+.diagram .op { color:var(--ink-2); font-weight:700; }
+.empty { border:1px dashed var(--grid); padding:18px; border-radius:var(--r); color:var(--ink-2); }
+.hide { display:none !important; }
+.disclaimer { margin-top:36px; padding-top:12px; border-top:2px solid var(--navy); font-size:12px; color:var(--ink-2); }
+.back { margin:14px 0 0; }
+.score-big { font:600 40px/1 var(--serif); color:var(--navy); font-variant-numeric:tabular-nums; }
+.hdr { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; justify-content:space-between; }
+details summary { cursor:pointer; font-weight:600; color:var(--navy); }
+@media print { body { background:#fff; } .tabs, .controls, .btn, .bar button { display:none !important; } }
+</style></head>
+<body><div class="wrap"><header class="bar"><span class="wordmark"><span>Moat Momentum</span></span><span class="tagline">v2.0 design spec · reading copy of docs/specs/2026-11-03-compounder-signal-design.md</span></header>
+<h1>Moat Momentum v2.0 · Compounder Signal — design spec</h1>
+<p>Status: design approved by Jitti in chat, 2026-11-03. This file is the written spec for review; no code has changed for v2.0 yet.</p>
+<p>Reading copy: <code>output/compounder_signal_spec.html</code>.</p>
+<h2>1. Why v2.0</h2>
+<p><b>Objective (Jitti):</b> find companies that are about to become the next big growth stocks because their moat is improving, and choose the signal by back-testing, not by hand.</p>
+<p>Why v1.x does not meet it (measured 2026-11-03 on the 2013–2023 back-test, <code>data/cache/mm/validation_rows_v1.0.pkl</code>):</p>
+<div class="tbl"><table><thead><tr><th>Problem</th><th>Evidence</th></tr></thead><tbody><tr><td>v1.x measured a different outcome (&quot;peer rank kept rising&quot;), not &quot;became a compounder&quot;</td><td>5 of 275 v1.0 shortlist picks met the compounder definition below (1.8%), against 1.1% for the whole universe</td></tr><tr><td>Weights and rules were set by hand; the back-test only graded them</td><td>Shortlist kept improving less often than the rest (27–39% vs ~50%)</td></tr><tr><td>The score rewards a high level plus a mature 5-year trend, so it picks companies near their peak</td><td>Same result; v1.0 shortlist false alarms 38% vs 22%</td></tr><tr><td>Fiscal-year data is slow; TTM smooths turning points away</td><td>v1.2 TTM test: no gain once look-ahead was removed; market CAGR 12.2% vs 15.6% for fiscal years (section 9)</td></tr></tbody></table></div>
+<h2>2. Outcome: what a &quot;moat compounder&quot; is</h2>
+<p>Measured from the screen date over the next 12 quarters, using 12-month (TTM) figures at the screen date and 12 quarters later, and the three fiscal years in between. Every condition must hold:</p>
+<ol>
+<li><b>Scales:</b> revenue CAGR ≥ 20% a year.</li>
+<li><b>Beats its industry:</b> revenue CAGR at least 10 percentage points above the median of its peer group (same SIC grouping as v1.x) over the same period.</li>
+<li><b>Steady:</b> revenue up in each of the 3 years.</li>
+<li><b>Earns its growth:</b> clean ROIC above the 9% hurdle in at least 2 of the 3 years, and the final ROIC no more than 2 points below the starting ROIC.</li>
+<li><b>Keeps pricing power:</b> gross margin no more than 2 points lower at the end (skipped when the company does not report gross profit).</li>
+<li><b>Organic:</b> goodwill added over the 3 years is less than 25% of starting total assets (same threshold as the v1.x goodwill rule).</li>
+</ol>
+<p>Companies with no outcome (acquired, delisted, stopped filing) are counted as &quot;no outcome&quot;, not as losers, and reported separately, as in v1.x.</p>
+<p>Base rate from a first check of conditions 1–5 on annual data: 247 of 22,109 company-years (1.1%), spread across all years (5–36 a year). Energy, mining and utilities are 5% of winners against 13% of the universe, so the industry-relative rule removes most commodity booms. The price-based alternative (top-quintile 3-year return) was rejected because a large share of its winners were commodity and 2020–21 valuation moves.</p>
+<h2>3. Universe and screen dates</h2>
+<ul>
+<li><b>Universe B (unchanged from v1.x):</b> US exchange listing (live runs only), at least 5 fiscal years of history, TTM revenue ≥ $100M, SIC outside 6000–6799. No market-value floor, so no price data is used before the final test.</li>
+<li><b>Screen dates:</b> 15 March, 15 May, 15 August, 15 November. Only facts filed on or before the screen date are used (existing point-in-time store).</li>
+<li><b>Training:</b> 2013-03-15 to 2019-11-15 (28 screens). <b>Test:</b> 2020-03-15 to 2023-11-15 (16 screens), opened once. The last test outcome ends in late 2026, which is why 2023 is the final test year.</li>
+</ul>
+<h2>4. Signals (fixed before testing)</h2>
+<p>All calculated per company at each screen date from point-in-time data, then ranked 0–100 within the industry peer group. &quot;Quarter&quot; means the single latest fiscal quarter; Q4 = full year − 9 months year to date.</p>
+<div class="tbl"><table><thead><tr><th>#</th><th>Theme</th><th>Signal</th><th>Expected direction</th></tr></thead><tbody><tr><td>1</td><td>Value creation</td><td>Clean ROIC (TTM) now minus 4 quarters earlier</td><td>higher = better</td></tr><tr><td>2</td><td>Value creation</td><td>Incremental ROIC over the last 4 quarters: Δ NOPAT ÷ Δ invested capital (only when capital grew ≥ 10%)</td><td>higher = better</td></tr><tr><td>3</td><td>Pricing power</td><td>Gross margin, latest quarter minus same quarter a year earlier</td><td>higher = better</td></tr><tr><td>4</td><td>Pricing power</td><td>Gross-margin acceleration: signal 3 now minus signal 3 two quarters earlier</td><td>higher = better</td></tr><tr><td>5</td><td>Scale</td><td>Clean operating margin, latest quarter minus same quarter a year earlier</td><td>higher = better</td></tr><tr><td>8</td><td>Peers</td><td>Revenue growth (latest quarter vs same quarter last year) minus peer median</td><td>higher = better</td></tr><tr><td>9</td><td>Peers</td><td>Revenue-growth acceleration: growth now minus growth two quarters earlier</td><td>higher = better</td></tr><tr><td>10</td><td>Peers</td><td>Peer-rank change over 4 quarters (v1.x peer rank on ROIC, gross margin, operating margin, asset turnover; TTM)</td><td>higher = better</td></tr><tr><td>11</td><td>Quality</td><td>Free-cash-flow margin (TTM) now minus 4 quarters earlier</td><td>higher = better</td></tr><tr><td>14</td><td>Starting point</td><td>Clean ROIC rank vs industry at the screen date</td><td>tested both ways; hypothesis: winners start mid-table</td></tr></tbody></table></div>
+<p>Signals 6, 7, 12, 13, 15 and 16 from the candidate list were not chosen. Keeping the list short lowers the chance of a lucky &quot;discovery&quot;.</p>
+<h2>5. Training rule and combination</h2>
+<p>On training screens only:</p>
+<ol>
+<li>For each signal, per calendar year: winner rate in the signal&#x27;s top 10% vs the universe winner rate that year.</li>
+<li><b>Keep</b> a signal if its top 10% beats the base rate in at least 5 of the 7 training years and the direction matches section 4. For signal 14, the direction that wins in at least 5 of 7 years is kept, and the hypothesis is reported as confirmed or not.</li>
+<li><b>Combine</b> the kept signals as the equal-weighted mean of their 0–100 ranks: the <b>Compounder Signal</b>. No fitted weights.</li>
+<li>Report every signal&#x27;s yearly results, kept or not.</li>
+</ol>
+<p>Because screens a quarter apart share most companies, results are judged per year, not on pooled counts.</p>
+<h2>6. Success test (pre-registered)</h2>
+<p>Run once on the test screens after the signal is fixed.</p>
+<ul>
+<li><b>Business (main):</b> the top 10% by Compounder Signal become winners at least <b>2× the universe base rate</b> over 2020–2023.</li>
+<li><b>Price (reported, not used to choose):</b> top 25 by Compounder Signal at each screen, equal weight, held one quarter (rebalanced each screen), against the S&amp;P 500 total return, QUAL, the equal-weight universe and the v1.1 shortlist. Same three missing-price cases as v1.x (survivors only, neutral, worst case) and the same bankruptcy masking.</li>
+<li><b>If it fails:</b> the result is published as is. No re-tuning on 2020–2023. Any revised method needs new years (2024 onward screens, as their outcomes arrive) to be tested.</li>
+</ul>
+<h2>7. Product changes (Methodology v2.0)</h2>
+<ul>
+<li><b>Screener:</b> ranked by Compounder Signal; shortlist = top 25 (after the existing risk gate: interest cover remove, other rules flag).</li>
+<li><b>Deep-Dive:</b> Compounder Signal and each signal&#x27;s rank, the 12-quarter charts, today&#x27;s five-theme Moat Score as context.</li>
+<li><b>Scenarios:</b> individual signals can be switched on or off; theme sliders apply only to the context score. JavaScript mirrors the Python combination, checked for parity as in v1.x.</li>
+<li><b>Proof tab:</b> training table per signal and year, the single test result, the price test, v1.x and the v1.2 TTM experiment as earlier attempts.</li>
+<li><b>Also:</b> Google Sheet tabs, track record (new freeze at v2.0), Methodology page and change log, then the pitch documents.</li>
+</ul>
+<h2>8. Components</h2>
+<div class="tbl"><table><thead><tr><th>Unit</th><th>Does</th><th>Depends on</th></tr></thead><tbody><tr><td><code>mm_quarterly.py</code> (new)</td><td>Single-quarter and TTM rows per company at any screen date, point-in-time</td><td><code>facts.pkl</code>, <code>mm_fundamentals</code> (TTM builder, clean-up)</td></tr><tr><td><code>mm_signals.py</code> (new)</td><td>The 10 signals and their industry ranks for one screen date</td><td><code>mm_quarterly</code>, <code>mm_score</code> (peer groups)</td></tr><tr><td><code>mm_outcomes.py</code> (new)</td><td>Compounder label for a company at a screen date</td><td><code>facts.pkl</code> (all filings)</td></tr><tr><td><code>mm_discover.py</code> (new)</td><td>Training table, keep rule, combination, the one test, writes <code>output/data/discovery.json</code></td><td>the three above</td></tr><tr><td><code>mm_market.py</code> (extended)</td><td>Quarterly-rebalanced price test for the Compounder shortlist</td><td><code>discovery.json</code>, Yahoo prices cache</td></tr><tr><td><code>mm_run.py</code>, web page, Sheet, track (updated)</td><td>Live v2.0</td><td>all of the above</td></tr></tbody></table></div>
+<p>Testing: unit tests with synthetic facts for single-quarter derivation (including Q4), each signal, the outcome label (each of the 6 conditions), and point-in-time behaviour; one check against real filings for 3 companies.</p>
+<h2>9. Today&#x27;s uncommitted v1.2 TTM work</h2>
+<ul>
+<li><b>Keep:</b> TTM builder (<code>ttm_rows</code>, <code>scoring_table</code>), quarterly facts from 2011, 12-quarter chart, TTM tests.</li>
+<li><b>Revert:</b> live default to v1.1 (<code>data.ttm: false</code>, <code>methodology_version: &quot;1.1&quot;</code>) and re-run the live outputs until v2.0 ships.</li>
+<li><b>Document:</b> on the Proof tab, as an experiment not adopted:</li>
+<li>the first back-test showed shortlist hit 36.1% vs 26.9%, but that was look-ahead (the TTM point saw part of the outcome period);</li>
+<li>with outcomes starting after all data used: hit 34.8% vs 39.0% for fiscal years, false alarm 34.3% vs 27.8%;</li>
+<li>market test Jul 2013 – Oct 2026: CAGR 12.2% (TTM) vs 15.6% (fiscal years, v1.1 gate) vs 14.3% S&amp;P 500.</li>
+<li><b>Remove:</b> <code>track_record/2026-11-03_v1.2.json</code> (never committed or published); the removal is noted in prompts.md.</li>
+</ul>
+<h2>10. Risks and limits</h2>
+<ul>
+<li>Winners are about 1% of company-years, so a top-10% group of ~200 companies holds only a few winners per screen; yearly results will be noisy.</li>
+<li>10-Q figures are unaudited; some tags are missing in 10-Qs more often than in 10-Ks (for example, interest expense is available for 59% of companies on TTM rows vs 65% on fiscal years).</li>
+<li>A pass on 2020–2023 would be one test period that includes an unusual cycle (pandemic, rate rise); the live track record from 2026 onward is the real test.</li>
+<li>Universe B excludes companies with less than 5 years of history, so some early-stage winners are missed by design.</li>
+</ul></div></body></html>

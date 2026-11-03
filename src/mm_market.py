@@ -32,7 +32,7 @@ import pandas as pd
 import yaml
 import yfinance as yf
 
-from mm_fundamentals import annual_table
+from mm_fundamentals import scoring_table
 from mm_score import score_as_of
 
 warnings.filterwarnings("ignore")
@@ -51,16 +51,20 @@ def portfolios(settings: dict) -> pd.DataFrame:
     q["scoring"]["blend"] = {"level": 100, "trend": 0, "consistency": 0}
     q["scoring"]["confirm_themes"] = 0  # quality only: no improvement requirement
     rows = []
+    tax, cash, ttm = settings["data"]["tax_rate"], settings["data"]["excess_cash_pct_revenue"], bool(settings["data"].get("ttm"))
     for y in YEARS:
         as_of = f"{y}-06-30"
-        d = annual_table(facts, as_of, settings["data"]["tax_rate"], settings["data"]["excess_cash_pct_revenue"])
+        d = scoring_table(facts, as_of, tax, cash, ttm=ttm)
         a = score_as_of(d, companies, as_of, settings, live=False)["results"]
         b = score_as_of(d, companies, as_of, q, live=False)["results"]
+        # same settings on fiscal years only (the v1.1 method), to show what the 12-month figures change
+        c = score_as_of(scoring_table(facts, as_of, tax, cash, ttm=False), companies, as_of, settings, live=False)["results"]
         a = a[a["in_universe"]]
         qual = set(b.loc[b["shortlist"], "cik"])
+        fy_only = set(c.loc[c["shortlist"], "cik"])
         for _, r in a.iterrows():
             rows.append({"year": y, "cik": int(r["cik"]), "sic": int(r["sic"]), "moat": bool(r["shortlist"]),
-                         "quality": int(r["cik"]) in qual})
+                         "quality": int(r["cik"]) in qual, "moat_fy": int(r["cik"]) in fy_only})
         print(f"  portfolios {y}: universe {len(a)}", flush=True)
     p = pd.DataFrame(rows)
     p.to_pickle(path)
@@ -69,8 +73,12 @@ def portfolios(settings: dict) -> pd.DataFrame:
 
 def prices(tickers: list[str]) -> pd.DataFrame:
     path = CACHE / "prices_monthly.pkl"
-    if path.exists():
-        return pd.read_pickle(path)
+    old = pd.read_pickle(path) if path.exists() else None
+    if old is not None:
+        missing = [t for t in tickers if t not in old.columns]
+        if not missing:
+            return old
+        tickers = missing  # a new method can pick companies outside the cached list: fetch only those
     frames = []
     for i in range(0, len(tickers), 200):
         chunk = tickers[i:i + 200]
@@ -81,7 +89,12 @@ def prices(tickers: list[str]) -> pd.DataFrame:
     px = pd.concat(frames, axis=1)
     px.index = pd.to_datetime(px.index).to_period("M")
     px = px.loc[:, ~px.columns.duplicated()]
-    px.attrs["retrieved"] = str(date.today())
+    if old is not None:
+        px = pd.concat([old, px.reindex(old.index)], axis=1)
+        px.attrs["retrieved"] = old.attrs.get("retrieved")
+        px.attrs["topped_up"] = str(date.today())
+    else:
+        px.attrs["retrieved"] = str(date.today())
     px.to_pickle(path)
     return px
 
@@ -115,12 +128,102 @@ def stats(series: pd.Series) -> dict:
             "growth": float(v.iloc[-1]), "months": int(len(r)), "start": str(r.index[0]), "end": str(r.index[-1])}
 
 
+def hold_paths(members: pd.DataFrame, months: list, start: pd.Period, stop_cutoff: str, rets: pd.DataFrame,
+               px: pd.DataFrame, status: pd.DataFrame, spx: pd.Series) -> dict:
+    """Monthly returns of an equal-weight, buy-and-hold basket over `months`, in three cases for missing prices:
+    survivors (only names priced throughout), neutral (missing months earn the S&P 500), worst (a company that
+    stopped filing 10-Ks before `stop_cutoff` and was not acquired loses everything in its first missing month)."""
+    paths = {s: [] for s in ("survivors", "neutral", "worst")}
+    n_missing = n_dead = 0
+    for _, m in members.iterrows():
+        t = m["ticker"]
+        r = rets[t].reindex(months) if t in rets else pd.Series(np.nan, index=months)
+        first_px = px[t].reindex([start]).notna().iloc[0] if t in px else False
+        st = status.loc[m["cik"]] if m["cik"] in status.index else None
+        stopped = st is not None and (st["last10k"] is None or st["last10k"] < stop_cutoff)
+        dead = stopped and not st["acquired"]
+        missing = r.isna()
+        if missing.any():
+            n_missing += 1
+            n_dead += int(dead)
+        if first_px and not missing.any():
+            paths["survivors"].append(r)
+        neutral = r.where(~missing, spx.reindex(months))
+        paths["neutral"].append(neutral)
+        worst = neutral.copy()
+        if dead and missing.any():
+            first = missing.idxmax()
+            worst.loc[first] = -1.0
+            worst.loc[worst.index > first] = 0.0
+        paths["worst"].append(worst)
+    out = {}
+    for s, lst in paths.items():
+        if lst:
+            g = pd.concat(lst, axis=1).fillna(0).add(1).cumprod()
+            v = g.mean(axis=1)  # equal weight at the start, buy and hold
+            out[s] = v / v.shift(1, fill_value=1.0) - 1
+    out["_missing"], out["_dead"] = n_missing, n_dead
+    return out
+
+
+def compounder_picks(settings: dict) -> pd.DataFrame:
+    """v2.0: top shortlist_size by Compounder Signal at each screen, after the risk gate's Remove rules; plus the
+    whole universe at each screen (key 'universe'). Empty if discovery has not been run."""
+    path = ROOT / "output" / "data" / "discovery.json"
+    from mm_discover import rows_path
+    parts = [rows_path(settings, k) for k in ("train", "test")]
+    if not path.exists() or not all(x.exists() for x in parts):
+        return pd.DataFrame()
+    from mm_discover import combine  # noqa: F811
+    kept = json.loads(path.read_text())["kept"]
+    rows = pd.concat([pd.read_pickle(x) for x in parts], ignore_index=True)
+    rows["cs"] = combine(rows, kept)
+    rows["ticker"] = rows["ticker"].map(lambda t: t.replace(".", "-") if isinstance(t, str) else None)
+    n = settings["compounder"]["shortlist_size"]
+    elig = rows[~rows["gate_removed"].astype(bool) & rows["cs"].notna()]
+    top = elig.sort_values("cs", ascending=False).groupby("screen").head(n).assign(key="compounder")
+    return pd.concat([top, rows.assign(key="universe")], ignore_index=True)[["screen", "cik", "ticker", "sic", "key"]]
+
+
+def compounder_section(cp: pd.DataFrame, rets, px, status, spx, port_series) -> dict:
+    """Quarterly rebalance: bought at the month-end of the screen month, held to the month-end of the next screen's
+    month. Two windows: the test period (screens 2020–2023) and all screens (2013–2023)."""
+    scr = sorted(cp["screen"].unique())
+    series = {k: {s: [] for s in ("survivors", "neutral", "worst")} for k in ("compounder", "universe")}
+    for i, sc in enumerate(scr):
+        start = pd.Period(sc[:7], "M")
+        end = pd.Period(scr[i + 1][:7], "M") if i + 1 < len(scr) else start + 3
+        months = [m for m in pd.period_range(start + 1, end, freq="M") if m in rets.index]
+        cutoff = f"{int(sc[:4]) + 2}{sc[4:]}"
+        for k in series:
+            hp = hold_paths(cp[(cp["screen"] == sc) & (cp["key"] == k)], months, start, cutoff, rets, px, status, spx)
+            hp.pop("_missing"), hp.pop("_dead")
+            for s, v in hp.items():
+                series[k][s].append(v)
+    v11 = pd.concat(port_series["moat"]["neutral"])
+    out = {"rebalance": "quarterly, at each screen", "windows": {}}
+    for wname, (a, b) in {"test 2020-2023": ("2020-03-15", "2023-11-15"), "all 2013-2023": (scr[0], scr[-1])}.items():
+        lo, hi = pd.Period(a[:7], "M") + 1, pd.Period(b[:7], "M") + 3
+        w = {}
+        for k, d in series.items():
+            for s, lst in d.items():
+                ser = pd.concat(lst)
+                ser = ser[(ser.index >= lo) & (ser.index <= hi)]
+                w[f"{k}_{s}"] = stats(ser)
+        for b_, lab in (("^SP500TR", "sp500"), ("QUAL", "qual")):
+            w[lab] = stats(rets[b_].loc[lo:hi].dropna())
+        w["v11_shortlist"] = stats(v11[(v11.index >= lo) & (v11.index <= hi)])
+        out["windows"][wname] = w
+    return out
+
+
 def main() -> None:
     settings = yaml.safe_load((ROOT / "settings.yaml").read_text())
     p = portfolios(settings)
     comp = pd.read_pickle(CACHE / "companies.pkl").set_index("cik")
     p["ticker"] = p["cik"].map(comp["tickers"].map(lambda t: t[0].replace(".", "-") if t else None))
-    tickers = sorted(set(p["ticker"].dropna())) + list(BENCH)
+    cp = compounder_picks(settings)
+    tickers = sorted(set(p["ticker"].dropna()) | set(cp["ticker"].dropna())) + list(BENCH)
     px = prices(tickers)
     rets = px.pct_change(fill_method=None)
     status = sec_status(set(p["cik"]))
@@ -138,7 +241,7 @@ def main() -> None:
         return pd.period_range(f"{y}-07", f"{min(y + 1, 2026)}-{'06' if y < 2026 - 0 else '10'}", freq="M")
 
     out = {"retrieved": px.attrs.get("retrieved"), "portfolios": {}, "coverage": {}, "years": {}}
-    port_series = {k: {s: [] for s in ("survivors", "neutral", "worst")} for k in ("moat", "quality", "universe")}
+    port_series = {k: {s: [] for s in ("survivors", "neutral", "worst")} for k in ("moat", "moat_fy", "quality", "universe")}
     yearly = []
     for y in YEARS:
         months = holding(y)
@@ -146,36 +249,11 @@ def main() -> None:
             months = pd.period_range("2025-07", "2026-10", freq="M")
         months = [m for m in months if m in rets.index]
         py = p[p["year"] == y]
-        for key, members in (("moat", py[py["moat"]]), ("quality", py[py["quality"]]), ("universe", py)):
-            paths = {s: [] for s in ("survivors", "neutral", "worst")}
-            n_missing = n_dead = 0
-            for _, m in members.iterrows():
-                t = m["ticker"]
-                r = rets[t].reindex(months) if t in rets else pd.Series(np.nan, index=months)
-                first_px = px[t].reindex([pd.Period(f"{y}-06", "M")]).notna().iloc[0] if t in px else False
-                st = status.loc[m["cik"]] if m["cik"] in status.index else None
-                stopped = st is not None and (st["last10k"] is None or st["last10k"] < f"{y + 2}-06-30")
-                dead = stopped and not st["acquired"]
-                missing = r.isna()
-                if missing.any():
-                    n_missing += 1
-                    n_dead += int(dead)
-                if first_px and not missing.any():
-                    paths["survivors"].append(r)
-                neutral = r.where(~missing, spx.reindex(months))
-                paths["neutral"].append(neutral)
-                worst = neutral.copy()
-                if dead and missing.any():
-                    first = missing.idxmax()
-                    worst.loc[first] = -1.0
-                    worst.loc[worst.index > first] = 0.0
-                paths["worst"].append(worst)
-            for s, lst in paths.items():
-                if not lst:
-                    continue
-                g = pd.concat(lst, axis=1).fillna(0).add(1).cumprod()
-                v = g.mean(axis=1)  # equal weight at the start, buy and hold
-                port_series[key][s].append(v / v.shift(1, fill_value=1.0) - 1)
+        for key, members in (("moat", py[py["moat"]]), ("moat_fy", py[py["moat_fy"]]), ("quality", py[py["quality"]]), ("universe", py)):
+            hp = hold_paths(members, months, pd.Period(f"{y}-06", "M"), f"{y + 2}-06-30", rets, px, status, spx)
+            n_missing, n_dead = hp.pop("_missing"), hp.pop("_dead")
+            for s, v in hp.items():
+                port_series[key][s].append(v)
             if key == "moat":
                 yearly.append({"year": y, "picks": int(len(members)), "missing_some_months": n_missing,
                                "stopped_not_acquired": n_dead})
@@ -213,6 +291,8 @@ def main() -> None:
     out["sectors"] = {int(k): {"n": int(v["count"]), "median_excess": float(v["median"])} for k, v in sec.iterrows()}
     out["coverage"] = yearly
     out["masked_bankruptcy_months"] = masked
+    if len(cp):
+        out["compounder"] = compounder_section(cp, rets, px, status, spx, port_series)
     (ROOT / "output" / "data" / "market.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
     for k, v in out["portfolios"].items():
         for s, st in v.items():

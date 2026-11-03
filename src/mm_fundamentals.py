@@ -101,8 +101,9 @@ def _sum_any(*cols: pd.Series) -> pd.Series:
 
 
 def annual_table(facts: pd.DataFrame, as_of: str | pd.Timestamp | None = None,
-                 tax_rate: float = 0.21, excess_cash_pct: float = 0.02) -> pd.DataFrame:
-    k = known_as_of(facts, as_of)
+                 tax_rate: float = 0.21, excess_cash_pct: float = 0.02, ratios: bool = True,
+                 known: pd.DataFrame | None = None) -> pd.DataFrame:
+    k = known_as_of(facts, as_of) if known is None else known
     k = k[k["form"].isin(ANNUAL_FORMS)]
 
     # Fiscal years = periods with an annual revenue fact; one start per (cik, end), closest to 365 days.
@@ -125,7 +126,93 @@ def annual_table(facts: pd.DataFrame, as_of: str | pd.Timestamp | None = None,
     wide_i = inst.pivot_table(index=["cik", "end"], columns="tag", values="val", aggfunc="first", observed=True)
     w = years.set_index(["cik", "end"]).join(wide_f, how="left", rsuffix="_f").join(wide_i, how="left", rsuffix="_i")
     w.columns = [str(c) for c in w.columns]
+    d = _derive(w, tax_rate, excess_cash_pct)
+    d = d.drop_duplicates(["cik", "fy"], keep="last")
+    return add_ratios(d, tax_rate) if ratios else d
 
+
+QUARTER_FORMS = {"10-Q", "10-Q/A"}
+POINT_TAGS = {"WeightedAverageNumberOfDilutedSharesOutstanding"}  # an average, not a sum: use the year-to-date value
+
+
+def ttm_rows(k: pd.DataFrame, tax_rate: float = 0.21, excess_cash_pct: float = 0.02) -> pd.DataFrame:
+    """Trailing-12-month rows at every 10-Q period end (methodology v1.2), from facts already filtered by known_as_of:
+      flow (income, cash flow) = last fiscal year + this year to date − the same period a year earlier
+      balance sheet            = the 10-Q balance sheet at that quarter end
+    Each tag is built only when all three parts were filed; the rest stays missing. Same clean-up as annual rows."""
+    k = k.assign(tagc=pd.factorize(k["tag"].astype(str))[0].astype("int32"))
+    day = pd.Timedelta(days=1)
+    ann = k[(k["kind"] == "A") & k["form"].isin(ANNUAL_FORMS)]
+    ann = pd.DataFrame({"cik": ann["cik"], "tagc": ann["tagc"], "key": ann["end"] + day,
+                        "a_start": ann["start"], "a_val": ann["val"]})
+    ytd = k[k["kind"].isin(["Q", "YTD"])].copy()
+    ytd["nq"] = ((ytd["end"] - ytd["start"]).dt.days / 91.3).round().astype("int32")
+    cur = ytd[ytd["form"].isin(QUARTER_FORMS)].assign(key=lambda x: x["start"])
+    m = pd.merge_asof(cur.sort_values("key"), ann.sort_values("key"), on="key", by=["cik", "tagc"],
+                      direction="nearest", tolerance=5 * day).dropna(subset=["a_val"])  # year to date starts after the last FY
+    prior = pd.DataFrame({"cik": ytd["cik"], "tagc": ytd["tagc"], "nq": ytd["nq"], "key2": ytd["start"],
+                          "p_end": ytd["end"], "p_val": ytd["val"]})
+    m = pd.merge_asof(m.assign(key2=m["a_start"]).sort_values("key2"), prior.sort_values("key2"), on="key2",
+                      by=["cik", "tagc", "nq"], direction="nearest", tolerance=5 * day)
+    m = m[(m["end"] - m["p_end"]).dt.days.between(350, 380)]
+    m["ttm"] = np.where(m["tag"].isin(POINT_TAGS), m["val"], m["a_val"] + m["val"] - m["p_val"])
+
+    rev = m[m["tag"].isin(REVENUE_TAGS)].copy()
+    rev["prio"] = rev["tag"].map({t: i for i, t in enumerate(REVENUE_TAGS)}).astype(int)
+    rev = rev.sort_values(["cik", "end", "prio"]).drop_duplicates(["cik", "end"])
+    years = rev[["cik", "end", "ttm", "tag", "accn", "filed"]].rename(columns={"ttm": "revenue", "tag": "revenue_tag"})
+    years = years[years["revenue"] > 0]
+    years["fy_start"] = years["end"] - pd.Timedelta(days=364)
+    flows = m.merge(years[["cik", "end"]], on=["cik", "end"]).drop_duplicates(["cik", "tag", "end"])
+    wide_f = flows.pivot_table(index=["cik", "end"], columns="tag", values="ttm", aggfunc="first", observed=True)
+    inst = k[k["kind"] == "I"].merge(years[["cik", "end"]], on=["cik", "end"])
+    inst = inst.drop_duplicates(["cik", "tag", "end"], keep="last")
+    wide_i = inst.pivot_table(index=["cik", "end"], columns="tag", values="val", aggfunc="first", observed=True)
+    w = years.set_index(["cik", "end"]).join(wide_f, how="left", rsuffix="_f").join(wide_i, how="left", rsuffix="_i")
+    w.columns = [str(c) for c in w.columns]
+    return _derive(w, tax_rate, excess_cash_pct)
+
+
+def scoring_table(facts: pd.DataFrame, as_of: str | pd.Timestamp | None = None, tax_rate: float = 0.21,
+                  excess_cash_pct: float = 0.02, ttm: bool = True, points: int = 15,
+                  with_quarters: bool = False):
+    """The table the score uses. ttm=False: fiscal years (methodology ≤ v1.1). ttm=True (v1.2): a rolling series
+    ending at each company's latest period (a 10-Q TTM or a 10-K year), then the same period 1, 2, 3 … years earlier,
+    so every point is a full 12 months and points are exactly one year apart. A point with no 12-month figure
+    (quarterly data before 2011, or missing tags) falls back to the fiscal year ending nearest to it (within 6 months)."""
+    k = known_as_of(facts, as_of)
+    a = annual_table(facts, as_of, tax_rate, excess_cash_pct, ratios=False, known=k)
+    a["is_ttm"] = False
+    if not ttm and not with_quarters:
+        return add_ratios(a.assign(period="FY" + a["fy"].astype(str)), tax_rate)
+    t = ttm_rows(k, tax_rate, excess_cash_pct).reset_index(drop=True)
+    t["is_ttm"] = True
+    cand = pd.concat([a, t], ignore_index=True)
+    if not ttm:
+        a = a.assign(period="FY" + a["fy"].astype(str))
+        s = add_ratios(a, tax_rate)
+        return (s, cand) if with_quarters else s
+    cand["row"] = np.arange(len(cand))
+    latest = cand.groupby("cik")["end"].max()
+    anchors = pd.concat([pd.DataFrame({"cik": latest.index, "k": i, "anchor": latest.to_numpy()})
+                         .assign(anchor=lambda x, i=i: x["anchor"] - pd.DateOffset(years=i)) for i in range(points)])
+    j = anchors.merge(cand[["cik", "end", "is_ttm", "row"]], on="cik")
+    j["gap"] = (j["end"] - j["anchor"]).dt.days.abs()
+    exact = j["gap"] <= 20
+    j["pref"] = np.select([exact & ~j["is_ttm"], exact, ~j["is_ttm"] & (j["gap"] <= 183)], [0, 1, 2], 9)
+    j = j[j["pref"] < 9].sort_values(["cik", "k", "pref", "gap"]).drop_duplicates(["cik", "k"])
+    j = j.drop_duplicates(["cik", "row"])  # a fiscal year serves at most one point
+    s = cand.loc[j["row"].to_numpy()].reset_index(drop=True)
+    lab = latest.dt.year.where(latest.dt.month > 6, latest.dt.year - 1)
+    s["fy_own"] = s["fy"]
+    s["fy"] = (s["cik"].map(lab) - j["k"].to_numpy()).astype(int)
+    s["period"] = np.where(s["is_ttm"], "TTM " + s["end"].dt.strftime("%b %Y"), "FY" + s["fy_own"].astype("Int64").astype(str))
+    s = add_ratios(s.drop(columns="row").sort_values(["cik", "fy"]).reset_index(drop=True), tax_rate)
+    return (s, cand.drop(columns="row")) if with_quarters else s
+
+
+def _derive(w: pd.DataFrame, tax_rate: float, excess_cash_pct: float) -> pd.DataFrame:
+    """Raw tag columns indexed by (cik, period end) → canonical values and the clean-up (no year-on-year ratios)."""
     d = pd.DataFrame(index=w.index)
     for c in ("revenue", "revenue_tag", "accn", "filed", "fy_start"):
         d[c] = w[c]
@@ -175,8 +262,7 @@ def annual_table(facts: pd.DataFrame, as_of: str | pd.Timestamp | None = None,
     d["net_debt"] = d["debt"] - d["cash"].fillna(0)
     d = d.reset_index().sort_values(["cik", "end"]).reset_index(drop=True)
     d["fy"] = d["end"].dt.year.where(d["end"].dt.month > 6, d["end"].dt.year - 1)  # FY label: year most months fall in
-    d = d.drop_duplicates(["cik", "fy"], keep="last")
-    return add_ratios(d, tax_rate)
+    return d
 
 
 def _lag(d: pd.DataFrame, col: str, n: int) -> pd.Series:
@@ -226,6 +312,7 @@ def add_ratios(d: pd.DataFrame, tax_rate: float) -> pd.DataFrame:
     d["altman_z"] = (6.56 * div(d["assets_cur"] - d["liab_cur"], ta) + 3.26 * div(d["retained"], ta)
                      + 6.72 * div(d["clean_oi"], ta) + 1.05 * div(d["equity_nci"], tl))
     d["beneish_m"], d["beneish_n"] = _beneish(d)
+    d["beneish_sgi"] = (d["revenue"] / _lag(d, "revenue", 1)).where(lambda x: np.isfinite(x)).fillna(1.0)
     sh3 = _lag(d, "shares", 3)
     d["dilution"] = div(d["shares"], sh3) ** (1 / 3) - 1
     d["sbc_rev"] = div(d["sbc"], d["revenue"])

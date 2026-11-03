@@ -1,12 +1,18 @@
-# Moat Momentum · Methodology v1.0 default settings (spec.md §6, brief §5).
+# Moat Momentum · Methodology v1.1 default settings (spec.md §6, brief §5).
+# v1.1 (2026-11-03): Altman Z'' and Beneish M-Score set to off (were remove). Chosen by Jitti after the risk-gate
+# study (output/data/gate_study.json): in the 2013–2023 back-test both rules changed false alarms by < 1 point,
+# while removing 14 more of today's 100 largest companies (20 vs 6: NVDA, MU, ABBV, ORCL ...). Values still show in Deep-Dives.
 # Every value is adjustable in the Sheet / web page. Change log: methodology section of the web page.
-methodology_version: "1.0"
+# v1.2 TTM experiment (2026-11-03) NOT adopted: no better than fiscal years once look-ahead was removed, and lower
+# market return (output/data/ttm_study.json). Live stays v1.1 until v2.0 (docs/specs/2026-11-03-compounder-signal-design.md).
+methodology_version: "1.1"
 
 data:
   sec_retrieved: "2026-11-03"     # bulk companyfacts.zip / submissions.zip download date
   max_years: 10
   min_years: 5
   quarters: 12
+  ttm: false                      # true = rolling 12-month series ending at the latest 10-Q (v1.2 experiment, not adopted)
   tax_rate: 0.21                  # one constant rate for every year (spec §7.1)
   excess_cash_pct_revenue: 0.02   # cash above 2% of revenue is "excess" and leaves invested capital
 
@@ -23,8 +29,8 @@ risk_gate:                        # mode: off | flag | remove; flag subtracts fl
   flag_penalty: 5
   interest_cover:   {mode: remove, below: 3.0}
   net_debt_ebitda:  {mode: flag,   above: 3.0}
-  altman_z:         {mode: remove, below: 1.1}     # Z'' (book equity) distress zone (spec §7.2)
-  beneish_m:        {mode: remove, above: -1.78}
+  altman_z:         {mode: "off", below: 1.1}    # Z'' (book equity) distress zone (spec §7.2); off since v1.1
+  beneish_m:        {mode: "off", above: -1.78}  # off since v1.1
   dilution:         {mode: flag,   above: 0.03}    # diluted shares, per year over 3 years
   sbc_revenue:      {mode: flag,   above: 0.10}
   goodwill_jump:    {mode: flag,   above: 0.25}    # goodwill added over 3 years / total assets
@@ -43,3 +49,12 @@ validation:
   years: [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
   as_of_month_day: "06-30"        # run date each year: after the main 10-K season
   horizons: [1, 3, 5]
+
+compounder:                       # v2.0 Compounder Signal (docs/specs/2026-11-03-compounder-signal-design.md)
+  train: [2013, 2019]             # signals chosen on these screens only
+  test: [2020, 2023]              # evaluated once, after the kept signals are written
+  screen_days: ["03-15", "05-15", "08-15", "11-15"]
+  top_share: 0.10                 # "top 10%" by a signal, per screen
+  keep_years: 5                   # a signal is kept if its top 10% beats the base rate in ≥ 5 of 7 training years
+  pass_multiple: 2.0              # test passes if the top 10% wins ≥ 2× the base rate
+  shortlist_size: 25

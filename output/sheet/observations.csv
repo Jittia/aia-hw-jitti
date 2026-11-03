@@ -7,6 +7,11 @@ ANF,RISK,"Clean ROIC moved from 91.9% (FY2021) to 88.8% (FY2025); hurdle 9%, ind
 ANF,GOOD,"Revenue grew 12.5% a year over 3 years to FY2025, 11.0% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1018840/000101884026000012/0001018840-26-000012-index.htm
 ANF,NEUTRAL,Gross margin moved from 62.3% (FY2021) to 61.5% (FY2025); industry median 38.7%.,https://www.sec.gov/Archives/edgar/data/1018840/000101884026000012/0001018840-26-000012-index.htm
 ANF,NEUTRAL,Free cash flow was 73% of clean net income in FY2025 ($378M vs $519M).,https://www.sec.gov/Archives/edgar/data/1018840/000101884026000012/0001018840-26-000012-index.htm
+MEDP,RISK,Altman Z'' was 0.20 in FY2025; below 1.1 is the distress zone.,https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/0001668397-26-000006-index.htm
+MEDP,GOOD,"Clean ROIC moved from 29.6% (FY2021) to 400.7% (FY2025); hurdle 9%, industry median 13.5%.",https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/0001668397-26-000006-index.htm
+MEDP,GOOD,"Revenue grew 20.1% a year over 3 years to FY2025, 19.8% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/0001668397-26-000006-index.htm
+MEDP,GOOD,Free cash flow was 151% of clean net income in FY2025 ($682M vs $451M).,https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/0001668397-26-000006-index.htm
+MEDP,NEUTRAL,SG&A ÷ revenue moved from 9.5% (FY2021) to 7.8% (FY2025); industry median 19.3%.,https://www.sec.gov/Archives/edgar/data/1668397/000166839726000006/0001668397-26-000006-index.htm
 SEZL,RISK,"Diluted share count grew 87.3% a year over 3 years to FY2025, threshold 3%.",https://www.sec.gov/Archives/edgar/data/1662991/000166299126000016/0001662991-26-000016-index.htm
 SEZL,GOOD,SG&A ÷ revenue moved from 13.7% (FY2021) to 3.7% (FY2025); industry median 20.9%.,https://www.sec.gov/Archives/edgar/data/1662991/000166299126000016/0001662991-26-000016-index.htm
 SEZL,GOOD,"Revenue grew 53.1% a year over 3 years to FY2025, 43.3% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1662991/000166299126000016/0001662991-26-000016-index.htm
@@ -26,16 +31,36 @@ NYT,GOOD,Free cash flow was 159% of clean net income in FY2025 ($551M vs $346M).
 NYT,NEUTRAL,"Clean ROIC moved from 25.1% (FY2021) to 23.9% (FY2025); hurdle 9%, industry median 15.3%.",https://www.sec.gov/Archives/edgar/data/71691/000007169126000011/0000071691-26-000011-index.htm
 NYT,NEUTRAL,Gross margin moved from 49.9% (FY2021) to 50.8% (FY2025); industry median 42.5%.,https://www.sec.gov/Archives/edgar/data/71691/000007169126000011/0000071691-26-000011-index.htm
 NYT,NEUTRAL,"Revenue grew 7.0% a year over 3 years to FY2025, 2.9% versus the industry median.",https://www.sec.gov/Archives/edgar/data/71691/000007169126000011/0000071691-26-000011-index.htm
+UAL,RISK,Altman Z'' was 0.33 in FY2025; below 1.1 is the distress zone.,https://www.sec.gov/Archives/edgar/data/100517/000010051726000023/0000100517-26-000023-index.htm
+UAL,GOOD,"Clean ROIC moved from -16.0% (FY2021) to 15.6% (FY2025); hurdle 9%, industry median 5.1%.",https://www.sec.gov/Archives/edgar/data/100517/000010051726000023/0000100517-26-000023-index.htm
+UAL,NEUTRAL,"Revenue grew 9.5% a year over 3 years to FY2025, 1.7% versus the industry median.",https://www.sec.gov/Archives/edgar/data/100517/000010051726000023/0000100517-26-000023-index.htm
+UAL,NEUTRAL,Free cash flow was 72% of clean net income in FY2025 ($2.6B vs $3.6B).,https://www.sec.gov/Archives/edgar/data/100517/000010051726000023/0000100517-26-000023-index.htm
 HXL,GOOD,Gross margin moved from 18.9% (FY2021) to 23.0% (FY2025); industry median 22.0%.,https://www.sec.gov/Archives/edgar/data/717605/000119312526046377/0001193125-26-046377-index.htm
 HXL,GOOD,"Revenue grew 6.3% a year over 3 years to FY2025, 14.1% versus the industry median.",https://www.sec.gov/Archives/edgar/data/717605/000119312526046377/0001193125-26-046377-index.htm
 HXL,GOOD,Free cash flow was 119% of clean net income in FY2025 ($157M vs $132M).,https://www.sec.gov/Archives/edgar/data/717605/000119312526046377/0001193125-26-046377-index.htm
 HXL,NEUTRAL,"Clean ROIC moved from 2.4% (FY2021) to 7.3% (FY2025); hurdle 9%, industry median 5.2%.",https://www.sec.gov/Archives/edgar/data/717605/000119312526046377/0001193125-26-046377-index.htm
 HXL,NEUTRAL,SG&A ÷ revenue moved from 10.2% (FY2021) to 8.9% (FY2025); industry median 9.8%.,https://www.sec.gov/Archives/edgar/data/717605/000119312526046377/0001193125-26-046377-index.htm
+MU,RISK,"Beneish M-Score was -0.10 in FY2026, above the -1.78 threshold that can signal earnings manipulation.",https://www.sec.gov/Archives/edgar/data/723125/000072312526000023/0000723125-26-000023-index.htm
+MU,GOOD,"Clean ROIC moved from 16.9% (FY2022) to 96.9% (FY2026); hurdle 9%, industry median 60.9%.",https://www.sec.gov/Archives/edgar/data/723125/000072312526000023/0000723125-26-000023-index.htm
+MU,GOOD,Gross margin moved from 45.2% (FY2022) to 80.7% (FY2026); industry median 54.2%.,https://www.sec.gov/Archives/edgar/data/723125/000072312526000023/0000723125-26-000023-index.htm
+MU,GOOD,SG&A ÷ revenue moved from 3.5% (FY2022) to 1.5% (FY2026); industry median 7.1%.,https://www.sec.gov/Archives/edgar/data/723125/000072312526000023/0000723125-26-000023-index.htm
+MU,GOOD,"Revenue grew 104.6% a year over 3 years to FY2026, 49.2% versus the industry median.",https://www.sec.gov/Archives/edgar/data/723125/000072312526000023/0000723125-26-000023-index.htm
+MU,NEUTRAL,Free cash flow was 69% of clean net income in FY2026 ($59.0B vs $85.0B).,https://www.sec.gov/Archives/edgar/data/723125/000072312526000023/0000723125-26-000023-index.htm
 VRT,GOOD,"Clean ROIC moved from 6.8% (FY2021) to 30.9% (FY2025); hurdle 9%, industry median 9.5%.",https://www.sec.gov/Archives/edgar/data/1674101/000167410126000008/0001674101-26-000008-index.htm
 VRT,GOOD,Gross margin moved from 30.5% (FY2021) to 36.3% (FY2025); industry median 36.9%.,https://www.sec.gov/Archives/edgar/data/1674101/000167410126000008/0001674101-26-000008-index.htm
 VRT,GOOD,SG&A ÷ revenue moved from 22.2% (FY2021) to 15.8% (FY2025); industry median 15.8%.,https://www.sec.gov/Archives/edgar/data/1674101/000167410126000008/0001674101-26-000008-index.htm
 VRT,GOOD,"Revenue grew 21.6% a year over 3 years to FY2025, 17.3% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1674101/000167410126000008/0001674101-26-000008-index.htm
 VRT,GOOD,Free cash flow was 138% of clean net income in FY2025 ($1.9B vs $1.4B).,https://www.sec.gov/Archives/edgar/data/1674101/000167410126000008/0001674101-26-000008-index.htm
+HNRG,RISK,Altman Z'' was 0.86 in FY2025; below 1.1 is the distress zone.,https://www.sec.gov/Archives/edgar/data/788965/000110465926027174/0001104659-26-027174-index.htm
+HNRG,RISK,"Diluted share count grew 8.9% a year over 3 years to FY2025, threshold 3%.",https://www.sec.gov/Archives/edgar/data/788965/000110465926027174/0001104659-26-027174-index.htm
+HNRG,RISK,Free cash flow was 28% of clean net income in FY2025 ($12M vs $42M).,https://www.sec.gov/Archives/edgar/data/788965/000110465926027174/0001104659-26-027174-index.htm
+HNRG,GOOD,"Clean ROIC moved from -1.1% (FY2021) to 26.9% (FY2025); hurdle 9%, industry median 5.3%.",https://www.sec.gov/Archives/edgar/data/788965/000110465926027174/0001104659-26-027174-index.htm
+HNRG,GOOD,"Revenue grew 9.1% a year over 3 years to FY2025, 5.3% versus the industry median.",https://www.sec.gov/Archives/edgar/data/788965/000110465926027174/0001104659-26-027174-index.htm
+HNRG,NEUTRAL,SG&A ÷ revenue moved from 6.0% (FY2021) to 5.6% (FY2025); industry median 9.8%.,https://www.sec.gov/Archives/edgar/data/788965/000110465926027174/0001104659-26-027174-index.htm
+YOU,RISK,"Beneish M-Score was -1.29 in FY2025, above the -1.78 threshold that can signal earnings manipulation.",https://www.sec.gov/Archives/edgar/data/1856314/000185631426000006/0001856314-26-000006-index.htm
+YOU,GOOD,SG&A ÷ revenue moved from 80.4% (FY2021) to 31.8% (FY2025); industry median 45.0%.,https://www.sec.gov/Archives/edgar/data/1856314/000185631426000006/0001856314-26-000006-index.htm
+YOU,GOOD,"Revenue grew 27.2% a year over 3 years to FY2025, 15.0% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1856314/000185631426000006/0001856314-26-000006-index.htm
+YOU,GOOD,Free cash flow was 300% of clean net income in FY2025 ($343M vs $109M).,https://www.sec.gov/Archives/edgar/data/1856314/000185631426000006/0001856314-26-000006-index.htm
 CRS,GOOD,"Clean ROIC moved from -1.0% (FY2021) to 22.6% (FY2025); hurdle 9%, industry median 9.5%.",https://www.sec.gov/Archives/edgar/data/17843/000001784326000034/0000017843-26-000034-index.htm
 CRS,GOOD,Gross margin moved from 8.2% (FY2021) to 30.6% (FY2025); industry median 15.0%.,https://www.sec.gov/Archives/edgar/data/17843/000001784326000034/0000017843-26-000034-index.htm
 CRS,GOOD,"Revenue grew 7.0% a year over 3 years to FY2025, 11.5% versus the industry median.",https://www.sec.gov/Archives/edgar/data/17843/000001784326000034/0000017843-26-000034-index.htm
@@ -46,6 +71,11 @@ HWM,GOOD,Gross margin moved from 27.7% (FY2021) to 34.2% (FY2025); industry medi
 HWM,GOOD,"Revenue grew 13.4% a year over 3 years to FY2025, 11.8% versus the industry median.",https://www.sec.gov/Archives/edgar/data/4281/000000428126000012/0000004281-26-000012-index.htm
 HWM,GOOD,Free cash flow was 94% of clean net income in FY2025 ($1.4B vs $1.5B).,https://www.sec.gov/Archives/edgar/data/4281/000000428126000012/0000004281-26-000012-index.htm
 HWM,NEUTRAL,SG&A ÷ revenue moved from 5.0% (FY2021) to 4.5% (FY2025); industry median 9.8%.,https://www.sec.gov/Archives/edgar/data/4281/000000428126000012/0000004281-26-000012-index.htm
+FTI,RISK,Altman Z'' was 0.73 in FY2025; below 1.1 is the distress zone.,https://www.sec.gov/Archives/edgar/data/1681459/000168145926000010/0001681459-26-000010-index.htm
+FTI,GOOD,"Clean ROIC moved from 16.4% (FY2021) to 38.6% (FY2025); hurdle 9%, industry median 11.9%.",https://www.sec.gov/Archives/edgar/data/1681459/000168145926000010/0001681459-26-000010-index.htm
+FTI,GOOD,SG&A ÷ revenue moved from 10.1% (FY2021) to 7.1% (FY2025); industry median 13.6%.,https://www.sec.gov/Archives/edgar/data/1681459/000168145926000010/0001681459-26-000010-index.htm
+FTI,GOOD,"Revenue grew 14.0% a year over 3 years to FY2025, 5.7% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1681459/000168145926000010/0001681459-26-000010-index.htm
+FTI,GOOD,Free cash flow was 142% of clean net income in FY2025 ($1.4B vs $1.0B).,https://www.sec.gov/Archives/edgar/data/1681459/000168145926000010/0001681459-26-000010-index.htm
 NEU,GOOD,"Clean ROIC moved from 14.5% (FY2021) to 16.9% (FY2025); hurdle 9%, industry median 1.9%.",https://www.sec.gov/Archives/edgar/data/1282637/000128263726000005/0001282637-26-000005-index.htm
 NEU,GOOD,Gross margin moved from 23.2% (FY2021) to 31.5% (FY2025); industry median 14.4%.,https://www.sec.gov/Archives/edgar/data/1282637/000128263726000005/0001282637-26-000005-index.htm
 NEU,GOOD,"Revenue grew -0.5% a year over 3 years to FY2025, 9.4% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1282637/000128263726000005/0001282637-26-000005-index.htm
@@ -77,6 +107,12 @@ RL,GOOD,Gross margin moved from 66.7% (FY2021) to 69.9% (FY2025); industry media
 RL,GOOD,Free cash flow was 123% of clean net income in FY2025 ($1.2B vs $941M).,https://www.sec.gov/Archives/edgar/data/1037038/000162828026037074/0001628280-26-037074-index.htm
 RL,NEUTRAL,SG&A ÷ revenue moved from 53.2% (FY2021) to 53.9% (FY2025); industry median 50.2%.,https://www.sec.gov/Archives/edgar/data/1037038/000162828026037074/0001628280-26-037074-index.htm
 RL,NEUTRAL,"Revenue grew 8.0% a year over 3 years to FY2025, 4.1% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1037038/000162828026037074/0001628280-26-037074-index.htm
+NVDA,RISK,"Beneish M-Score was -1.16 in FY2025, above the -1.78 threshold that can signal earnings manipulation.",https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021-index.htm
+NVDA,GOOD,"Clean ROIC moved from 53.7% (FY2021) to 99.7% (FY2025); hurdle 9%, industry median 6.7%.",https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021-index.htm
+NVDA,GOOD,Gross margin moved from 64.9% (FY2021) to 71.1% (FY2025); industry median 44.7%.,https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021-index.htm
+NVDA,GOOD,SG&A ÷ revenue moved from 8.0% (FY2021) to 2.1% (FY2025); industry median 15.6%.,https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021-index.htm
+NVDA,GOOD,"Revenue grew 100.0% a year over 3 years to FY2025, 99.0% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021-index.htm
+NVDA,NEUTRAL,Free cash flow was 81% of clean net income in FY2025 ($96.7B vs $120.1B).,https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/0001045810-26-000021-index.htm
 FSS,GOOD,"Clean ROIC moved from 12.7% (FY2021) to 21.4% (FY2025); hurdle 9%, industry median 8.2%.",https://www.sec.gov/Archives/edgar/data/277509/000162828026011576/0001628280-26-011576-index.htm
 FSS,GOOD,Gross margin moved from 23.8% (FY2021) to 28.9% (FY2025); industry median 17.5%.,https://www.sec.gov/Archives/edgar/data/277509/000162828026011576/0001628280-26-011576-index.htm
 FSS,GOOD,"Revenue grew 15.0% a year over 3 years to FY2025, 9.2% versus the industry median.",https://www.sec.gov/Archives/edgar/data/277509/000162828026011576/0001628280-26-011576-index.htm
@@ -87,38 +123,3 @@ SMTI,GOOD,"Clean ROIC moved from -63.1% (FY2021) to 60.3% (FY2025); hurdle 9%, i
 SMTI,GOOD,Gross margin moved from 90.4% (FY2021) to 92.7% (FY2025); industry median 62.9%.,https://www.sec.gov/Archives/edgar/data/714256/000149315226012352/0001493152-26-012352-index.htm
 SMTI,GOOD,SG&A ÷ revenue moved from 116.2% (FY2021) to 76.3% (FY2025); industry median 39.6%.,https://www.sec.gov/Archives/edgar/data/714256/000149315226012352/0001493152-26-012352-index.htm
 SMTI,GOOD,"Revenue grew 31.0% a year over 3 years to FY2025, 21.7% versus the industry median.",https://www.sec.gov/Archives/edgar/data/714256/000149315226012352/0001493152-26-012352-index.htm
-IBP,GOOD,"Clean ROIC moved from 17.8% (FY2021) to 23.0% (FY2025); hurdle 9%, industry median 15.8%.",https://www.sec.gov/Archives/edgar/data/1580905/000158090526000004/0001580905-26-000004-index.htm
-IBP,GOOD,Gross margin moved from 29.9% (FY2021) to 34.0% (FY2025); industry median 22.8%.,https://www.sec.gov/Archives/edgar/data/1580905/000158090526000004/0001580905-26-000004-index.htm
-IBP,GOOD,Free cash flow was 113% of clean net income in FY2025 ($301M vs $266M).,https://www.sec.gov/Archives/edgar/data/1580905/000158090526000004/0001580905-26-000004-index.htm
-IBP,NEUTRAL,SG&A ÷ revenue moved from 13.8% (FY2021) to 14.7% (FY2025); industry median 8.4%.,https://www.sec.gov/Archives/edgar/data/1580905/000158090526000004/0001580905-26-000004-index.htm
-IBP,NEUTRAL,"Revenue grew 3.6% a year over 3 years to FY2025, 0.2% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1580905/000158090526000004/0001580905-26-000004-index.htm
-FLXS,RISK,SG&A ÷ revenue moved from 12.3% (FY2021) to 15.4% (FY2025); industry median 35.3%.,https://www.sec.gov/Archives/edgar/data/37472/000119312526357097/0001193125-26-357097-index.htm
-FLXS,GOOD,"Clean ROIC moved from 2.9% (FY2021) to 25.6% (FY2025); hurdle 9%, industry median 5.8%.",https://www.sec.gov/Archives/edgar/data/37472/000119312526357097/0001193125-26-357097-index.htm
-FLXS,GOOD,Gross margin moved from 13.4% (FY2021) to 24.7% (FY2025); industry median 42.6%.,https://www.sec.gov/Archives/edgar/data/37472/000119312526357097/0001193125-26-357097-index.htm
-FLXS,GOOD,"Revenue grew 5.3% a year over 3 years to FY2025, 8.5% versus the industry median.",https://www.sec.gov/Archives/edgar/data/37472/000119312526357097/0001193125-26-357097-index.htm
-FLXS,GOOD,Free cash flow was 143% of clean net income in FY2025 ($48M vs $33M).,https://www.sec.gov/Archives/edgar/data/37472/000119312526357097/0001193125-26-357097-index.htm
-DECK,GOOD,"Clean ROIC moved from 76.7% (FY2021) to 140.1% (FY2025); hurdle 9%, industry median 23.4%.",https://www.sec.gov/Archives/edgar/data/910521/000162828026037664/0001628280-26-037664-index.htm
-DECK,GOOD,Gross margin moved from 51.0% (FY2021) to 57.7% (FY2025); industry median 42.8%.,https://www.sec.gov/Archives/edgar/data/910521/000162828026037664/0001628280-26-037664-index.htm
-DECK,GOOD,"Revenue grew 14.7% a year over 3 years to FY2025, 10.3% versus the industry median.",https://www.sec.gov/Archives/edgar/data/910521/000162828026037664/0001628280-26-037664-index.htm
-DECK,GOOD,Free cash flow was 107% of clean net income in FY2025 ($1.1B vs $1.0B).,https://www.sec.gov/Archives/edgar/data/910521/000162828026037664/0001628280-26-037664-index.htm
-DECK,NEUTRAL,SG&A ÷ revenue moved from 33.1% (FY2021) to 34.6% (FY2025); industry median 31.5%.,https://www.sec.gov/Archives/edgar/data/910521/000162828026037664/0001628280-26-037664-index.htm
-ROP,GOOD,"Revenue grew 13.7% a year over 3 years to FY2025, 14.0% versus the industry median.",https://www.sec.gov/Archives/edgar/data/882835/000088283526000009/0000882835-26-000009-index.htm
-ROP,GOOD,Free cash flow was 165% of clean net income in FY2025 ($2.5B vs $1.5B).,https://www.sec.gov/Archives/edgar/data/882835/000088283526000009/0000882835-26-000009-index.htm
-ROP,NEUTRAL,"Clean ROIC moved from 5.4% (FY2021) to 6.4% (FY2025); hurdle 9%, industry median 6.6%.",https://www.sec.gov/Archives/edgar/data/882835/000088283526000009/0000882835-26-000009-index.htm
-ROP,NEUTRAL,Gross margin moved from 70.5% (FY2021) to 69.2% (FY2025); industry median 59.1%.,https://www.sec.gov/Archives/edgar/data/882835/000088283526000009/0000882835-26-000009-index.htm
-ROP,NEUTRAL,SG&A ÷ revenue moved from 42.9% (FY2021) to 41.0% (FY2025); industry median 27.4%.,https://www.sec.gov/Archives/edgar/data/882835/000088283526000009/0000882835-26-000009-index.htm
-POWL,GOOD,"Clean ROIC moved from 0.5% (FY2021) to 103.6% (FY2025); hurdle 9%, industry median 9.2%.",https://www.sec.gov/Archives/edgar/data/80420/000008042025000152/0000080420-25-000152-index.htm
-POWL,GOOD,Gross margin moved from 16.0% (FY2021) to 29.4% (FY2025); industry median 38.8%.,https://www.sec.gov/Archives/edgar/data/80420/000008042025000152/0000080420-25-000152-index.htm
-POWL,GOOD,SG&A ÷ revenue moved from 14.3% (FY2021) to 8.6% (FY2025); industry median 19.8%.,https://www.sec.gov/Archives/edgar/data/80420/000008042025000152/0000080420-25-000152-index.htm
-POWL,GOOD,"Revenue grew 27.5% a year over 3 years to FY2025, 14.6% versus the industry median.",https://www.sec.gov/Archives/edgar/data/80420/000008042025000152/0000080420-25-000152-index.htm
-POWL,NEUTRAL,Free cash flow was 86% of clean net income in FY2025 ($155M vs $181M).,https://www.sec.gov/Archives/edgar/data/80420/000008042025000152/0000080420-25-000152-index.htm
-BCPC,GOOD,"Clean ROIC moved from 13.0% (FY2021) to 14.2% (FY2025); hurdle 9%, industry median 2.8%.",https://www.sec.gov/Archives/edgar/data/9326/000000932626000007/0000009326-26-000007-index.htm
-BCPC,GOOD,Gross margin moved from 30.4% (FY2021) to 35.7% (FY2025); industry median 27.7%.,https://www.sec.gov/Archives/edgar/data/9326/000000932626000007/0000009326-26-000007-index.htm
-BCPC,GOOD,"Revenue grew 3.2% a year over 3 years to FY2025, 13.5% versus the industry median.",https://www.sec.gov/Archives/edgar/data/9326/000000932626000007/0000009326-26-000007-index.htm
-BCPC,GOOD,Free cash flow was 140% of clean net income in FY2025 ($217M vs $155M).,https://www.sec.gov/Archives/edgar/data/9326/000000932626000007/0000009326-26-000007-index.htm
-BCPC,NEUTRAL,SG&A ÷ revenue moved from 5.2% (FY2021) to 6.5% (FY2025); industry median 11.9%.,https://www.sec.gov/Archives/edgar/data/9326/000000932626000007/0000009326-26-000007-index.htm
-HURN,GOOD,"Clean ROIC moved from 6.8% (FY2021) to 15.2% (FY2025); hurdle 9%, industry median 15.1%.",https://www.sec.gov/Archives/edgar/data/1289848/000162828026011093/0001628280-26-011093-index.htm
-HURN,GOOD,Gross margin moved from 28.6% (FY2021) to 33.9% (FY2025); industry median 36.6%.,https://www.sec.gov/Archives/edgar/data/1289848/000162828026011093/0001628280-26-011093-index.htm
-HURN,GOOD,"Revenue grew 13.6% a year over 3 years to FY2025, 8.5% versus the industry median.",https://www.sec.gov/Archives/edgar/data/1289848/000162828026011093/0001628280-26-011093-index.htm
-HURN,GOOD,Free cash flow was 162% of clean net income in FY2025 ($183M vs $113M).,https://www.sec.gov/Archives/edgar/data/1289848/000162828026011093/0001628280-26-011093-index.htm
-HURN,NEUTRAL,SG&A ÷ revenue moved from 19.2% (FY2021) to 18.7% (FY2025); industry median 20.9%.,https://www.sec.gov/Archives/edgar/data/1289848/000162828026011093/0001628280-26-011093-index.htm

@@ -1,0 +1,9 @@
+{
+ "title": "Methodology v1.2 experiment (not adopted): score on trailing-12-month (TTM) figures from the latest 10-Q",
+ "date": "2026-11-03",
+ "source": "SEC EDGAR bulk companyfacts.zip retrieved 2026-11-03; back-test rows data/cache/mm/validation_rows_v1.2.pkl and validation_rows_v1.0.pkl; prices Yahoo Finance monthly adjusted close (output/data/archive_v1.2/market.json)",
+ "first_test": {"note": "outcome FY t to t+3; the TTM point already covers part of FY t+1, so this favours TTM (look-ahead)", "v12_hit": 0.361, "v12_false_alarm": 0.352, "v10_hit": 0.269, "v10_false_alarm": 0.380},
+ "no_overlap": {"note": "outcome FY t+1 to t+4, after all data either method used", "v12_hit": 0.348, "v12_false_alarm": 0.343, "v10_hit": 0.390, "v10_false_alarm": 0.278, "rest_hit": 0.498, "rest_false_alarm": 0.209},
+ "market_cagr": {"period": "2013-07 to 2026-10, neutral case", "ttm": 0.122, "fiscal_years_v11_gate": 0.156, "sp500": 0.143},
+ "decision": "Not adopted. Jitti chose to build v2.0 (Compounder Signal, quarterly signals chosen on 2013-2019 and tested on 2020-2023). The TTM builder and 12-quarter charts are kept."
+}
