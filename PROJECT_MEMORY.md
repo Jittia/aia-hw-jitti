@@ -45,6 +45,9 @@
 - Treat a month above +300% as a Yahoo stitching error only for companies with a bankruptcy 8-K (item 1.03); real jumps (e.g. GME Jan 2021) stay.
 - Compare a screen with a simpler version of itself (e.g. level only) built from the same data and the same price method, not only with an index.
 - Choose demo cases by a rule written down before looking, and include a miss.
+- Build pitch documents from code that reads the validation outputs; never retype numbers by hand into a deck or document.
+- Leave prices, volumes and the funding ask as marked placeholders for the founder; never invent them.
+- Before sending a generated Slides batch, compact it (round colours, drop default styles); per-cell table styling can be several times the size of the content.
 
 ## บันทึกปัญหา
 
@@ -203,3 +206,10 @@
 - **สาเหตุ:** Consistent with step 5: picks are good companies whose improvement tends to fade, and annual turnover is 81%.
 - **แก้อย่างไร:** Reported in the Proof tab and spec §7b. The product is positioned as a research screen for high-quality improving businesses, not a return predictor.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** —
+
+### 2026-11-03 · A number in my chat summary did not match the data
+
+- **เจออะไร:** I told Jitti, and wrote in round 11, that the shortlist beat the S&P 500 in "5 of 13 years". The pitch generator counted 7 of 13, and the yearly table confirms 7 (2013, 2014, 2016, 2017, 2020, 2022, 2025).
+- **สาเหตุ:** The number in the summary was counted by eye from a printed table instead of read from the data. The Proof page, which computes it, was right.
+- **แก้อย่างไร:** Corrected round 11 with a note. Pitch numbers are now generated from the outputs, not typed.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Counting from a printed table.

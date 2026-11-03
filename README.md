@@ -7,19 +7,25 @@
 | **ชื่อเล่น** | Jitti |
 | **กลุ่ม** | G03 |
 | **โจทย์ 1 บรรทัด** | Find US companies whose competitive moat is strengthening in their official SEC filings (returns on capital, pricing power, scale, peer gap), before they become recognised leaders, and prove the signal with point-in-time data |
-| **ลิงก์ผลงาน** | [`spec.md`](spec.md) · [`output/`](output/) (in progress) |
-| **สถานะ** | กำลังทำ (rebuilt from 2026-11-03) |
+| **ลิงก์ผลงาน** | [web page](output/moat_momentum.html) (download `output/` and open) · [Proof](output/proof.html) · [spot-check](output/spotcheck.html) · [brand guide](output/brand_guide.html) · [spec](spec.md) |
+| **สถานะ** | พร้อมตรวจ: steps 1–9 of the brief done (pitch pack drafted) |
+
+![Moat Momentum screener](output/dashboard.jpg)
 
 ---
 
-## Status (2026-11-03)
+## Results (as of 2026-11-03, Methodology v1.0)
 
-- **New tool.** The earlier catalyst-of-change radar (Phase 1 / 1.5) gave too many false alarms and no proof, so it was
-  replaced. Its full results are kept in [`archive/phase1.5-catalyst-radar/`](archive/phase1.5-catalyst-radar/) and
-  under the git tag `phase1.5-catalyst-radar`; the diagnosis is in [`prompts.md`](prompts.md) round 9.
-- **Kept and reused:** SEC client (throttle, cache), point-in-time facts, quarter/TTM derivation, ticker → CIK,
-  filing spot-check, price helpers, and the lessons in [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md).
-- **Plan and stop points:** [`spec.md`](spec.md) section 8.
+- **What it does:** scores 1,870 US-listed companies on whether their competitive position is improving, using only SEC 10-K data: clean ROIC vs a 9% hurdle, pricing power, scale, gains against SIC peers and profit quality. A risk gate runs first (debt, Altman Z'', Beneish, dilution, stock pay, acquisitions). Output: a 25-name shortlist, a Deep-Dive for every company, a Google Sheet, and a frozen, fingerprinted track record.
+- **Data checked against 10-Ks:** 331 of 333 non-zero inputs found in the filing text, 60 of 60 hand recalculations match ([spot-check](output/spotcheck.html)).
+- **Does it work?** Point-in-time back-tests, settings locked before the run, everything tried reported ([Proof](output/proof.html)):
+  - Picks stay above their industry 3 years later (+8.3 peer-rank points, clean ROIC +5.4 pp).
+  - But they do **not** keep improving: 26.9% kept improving vs 48.6% for other companies; 38.0% deteriorated vs 21.8%. The same holds in all 17 variants.
+  - Market test Jul 2013 – Oct 2026: 14.3% a year, the same as the S&P 500 (14.3%), with higher volatility (18.6% vs 14.3%).
+- **Decision:** v1.0 is accepted as a screen for high-quality, improving businesses, not as a predictor ([spec](spec.md) §7b). A v1.1 must be designed in advance and tested on unseen years.
+- **Pitch pack** (Google Docs and Slides, in the founder's Drive): methodology whitepaper, one-pager and a 13-slide deck. Every number comes from the validation outputs; prices, volumes and the ask are left as marked assumptions. HTML reading copies are in [`output/pitch/`](output/pitch/).
+- **Earlier work:** the catalyst-of-change radar (Phase 1 / 1.5) is kept in [`archive/`](archive/phase1.5-catalyst-radar/) and under the git tag `phase1.5-catalyst-radar`. Why it was replaced: `prompts.md` round 9.
+- **Method in detail:** [`spec.md`](spec.md), [`prompts.md`](prompts.md) rounds 9–12, [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md), [`src/`](src/), [`tests/`](tests/) (21 tests).
 
 ## ไฟล์ใน repo นี้
 
@@ -82,9 +88,9 @@ repo นี้ใครก็เปิดดูได้ ห้ามใส่�
 
 - [x] repo เป็น Public และเปิดได้จากหน้าต่าง incognito (checked 2026-11-02: page loads without login)
 - [x] `spec.md` ครบ 5 หัวข้อ
-- [x] `prompts.md` มีบันทึกอย่างน้อย 3 รอบ และทุก commit มี entry คู่กัน (8 rounds)
+- [x] `prompts.md` มีบันทึกอย่างน้อย 3 รอบ และทุก commit มี entry คู่กัน (12 rounds)
 - [x] `PROJECT_MEMORY.md` มีปัญหาหรือบทเรียนอย่างน้อย 1 ข้อ
 - [x] `output/` มีภาพหรือลิงก์อย่างน้อย 1 ชิ้น
-- [ ] `help.md` เขียนครบ 3 ข้อ (AI draft written; Jitti to review and edit)
+- [ ] `help.md` เขียนครบ 3 ข้อ (AI draft for Moat Momentum written 2026-11-03; Jitti to review and edit)
 - [x] ไม่มี key, password หรือข้อมูลพอร์ตจริงในทุกไฟล์
 - [ ] ส่งลิงก์แล้ว

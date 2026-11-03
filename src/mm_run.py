@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import warnings
 from pathlib import Path
 
@@ -153,7 +154,10 @@ def top_reasons(row: pd.Series, h: pd.DataFrame) -> list[str]:
         "accruals": lambda: f"Low accruals ({pct(row['accruals'])} of assets)",
         "runway": lambda: f"Reinvests {pct(row['reinvest_rate'], 0)} of NOPAT at {pct(row['incr_roic'], 0)} incremental ROIC",
     }
-    return [f"{IND_LABEL[n]} — {txt[n]()}" for n in best]
+    def clean(t: str) -> str:
+        # a start year with no value: say the latest value instead of "n/a → x"
+        return re.sub(r"n/a → ([^ ]+)( \(FY\d{4}–FY(\d{4})\))?", lambda m: f"{m.group(1)}" + (f" in FY{m.group(3)}" if m.group(3) else ""), t)
+    return [f"{IND_LABEL[n]} — {clean(txt[n]())}" for n in best]
 
 
 def _clean(x):

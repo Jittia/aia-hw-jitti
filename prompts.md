@@ -490,7 +490,7 @@ Yahoo + SEC bounds
     | QUAL | 13.5% | 14.5% | −27.8% |
     | RSP | 11.8% | 15.5% | −26.7% |
 
-    - The shortlist beat the S&P 500 in 5 of 13 years. 48% of picks beat it over their year. Turnover is 81% a year.
+    - The shortlist beat the S&P 500 in 7 of 13 years (corrected in round 12; first written as 5). 48% of picks beat it over their year. Turnover is 81% a year.
     - **No excess return**, with more risk than the index. Same conclusion in all three scenarios.
   - **Data error found:** Yahoo joins old and new shares after a Chapter 11 (CHRD +30,991% in one month, AMPY +15,525%). 4 such months were treated as missing.
   - **Track record:** 2026-11-03 shortlist frozen, fingerprint `86cab85d825dbea2…`, verify OK.
@@ -504,3 +504,62 @@ Yahoo + SEC bounds
   - **"Quality only" baseline from our own engine, plus the QUAL ETF from Yahoo,** to test "beyond the known quality factor" without downloading other files.
   - **Bankruptcy price jumps treated as data errors only for companies with a bankruptcy 8-K.** This removes the stitching errors while keeping real jumps such as GameStop in January 2021. The rule was set before re-running.
 - **ขั้นต่อไป:** Step 9 ★: pitch pack (whitepaper and one-pager in Google Docs, ~12-slide deck in Google Slides, brand applied). Position the product as a transparent, self-testing research tool; claims limited to what the Proof tab shows. Then update README, help.md and do a final check before Wednesday 21:00.
+
+---
+
+## รอบ 12 · 2026-11-03 · Moat Momentum step 9: pitch pack, README and help.md
+
+- **ทำอะไร:**
+  - **Step 9 ★: pitch pack** in the Google ecosystem (in Jitti's Drive, private):
+    - "Moat Momentum · Methodology Whitepaper v1.0" (Google Docs);
+    - "Moat Momentum · One-Pager" (Google Docs);
+    - "Moat Momentum · Investor Deck (draft)" (Google Slides, 13 slides, brand colours and fonts).
+  - **Code:** `src/mm_pitch.py` writes the whitepaper and one-pager with every number read from `validation.json`, `market.json`, `spotcheck.csv` and the track record; HTML reading copies are in `output/pitch/`. `src/mm_deck_spec.py` builds the slide spec from the same outputs.
+  - **Repo:** updated README (results summary, new screenshot `output/dashboard.jpg`), `output/README.md` and `help.md` (AI draft of 3 open problems for Jitti to edit).
+  - **Fixes:** the reason text that showed "n/a → x"; the "5 of 13 years" error in round 11 (correct: 7 of 13).
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · Google Drive, Docs and Slides connectors (google-workspace skill, slides_helper.py build) · headless Chrome for the screenshot
+- **Prompt ที่ใช้:**
+
+```text
+เริ่ม pitch pack
+```
+
+```text
+save
+```
+
+- **ผลที่ได้:**
+  - **Whitepaper, 10 sections plus an appendix:**
+    - problem and academic foundations;
+    - method: indicator table and risk-gate counts;
+    - data quality: 331/333 inputs found, 60/60 recalculations;
+    - fundamental validation with variants and sub-periods;
+    - market test with bounds and yearly returns;
+    - what the evidence supports and what it does not;
+    - limits, audit trail and roadmap;
+    - appendix: market-size anchors.
+  - **Deck, 13 slides with story titles** (one per slide):
+    - problem → product funnel (5,176 → 1,870 → 1,044 → 346 → 25);
+    - product tour;
+    - Proof: picks stay above industry, but do not keep improving;
+    - market: 14.3% = S&P 500, more volatility;
+    - track record fingerprint, founder, market and customers;
+    - two revenue lines, competition, roadmap and the ask.
+  - **Market size:** Morningstar $2,445.5M (FY2025), FactSet $2,476.3M (FY Aug 2026) and MSCI $3,134.5M (FY2025) from their 10-K XBRL facts, $8.1B in total. Shown as the scale of spend, not as our addressable market.
+  - **Still open:**
+    - prices per tier, volumes, the ask amount and the use of funds are `[to set] ASSUMPTION` for Jitti to fill in;
+    - competitor cells marked "to verify";
+    - `help.md` to be rewritten in Jitti's own words;
+    - the whitepaper is about 6–7 pages, below the brief's 8–12.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Market size from the incumbents' own 10-Ks.** AGENTS.md allows only the sources in spec.md, and SEC EDGAR is one of them, so no new source type was needed.
+  - **No invented prices, volumes or ask.** The brief asks for a pricing hypothesis and unit economics marked as assumptions, and AGENTS.md forbids guessing numbers. The deck shows the structure (tiers, licence) and leaves the numbers for the founder.
+  - **Pitch built on what the Proof tab supports:** transparency, self-testing and a frozen track record, not a return claim. This follows my earlier choice to accept v1.0 and the brief's rule "never overstate results".
+  - **Docs built by uploading generated HTML; the deck built with the Slides API from an inch-based spec.** The brief says Google ecosystem only, with no Microsoft formats. Generating from code keeps the numbers identical to the outputs.
+  - **Approved the pitch pack and saved (my choice).**
+- **ขั้นต่อไป:**
+  - Fill the price and ask placeholders.
+  - Edit `help.md`.
+  - Submit the repo link before Wed 4 Nov 21:00.
+  - After the Repair Clinic: design v1.1 in advance (persistence, distance from prior peak), tested only on 2018–2023.
+  - Run the track record each quarter (`src/mm_track.py freeze`).
