@@ -48,6 +48,7 @@
 - Build pitch documents from code that reads the validation outputs; never retype numbers by hand into a deck or document.
 - Leave prices, volumes and the funding ask as marked placeholders for the founder; never invent them.
 - Before sending a generated Slides batch, compact it (round colours, drop default styles); per-cell table styling can be several times the size of the content.
+- In any ranked table, label which rank a number is (position in this list vs overall rank); a filtered list with gaps reads as a bug.
 
 ## บันทึกปัญหา
 

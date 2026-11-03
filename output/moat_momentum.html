@@ -294,6 +294,7 @@ function viewScreener(m) {
       <input type="search" id="q" placeholder="Search ticker, name or industry" value="${esc(state.q)}" aria-label="Search" style="flex:1;min-width:180px">
     </div>
     <div class="tbl"><table class="num" id="tbl"></table></div>
+    <p class="small">#: position in this list. Overall rank: Moat Score rank among all scored companies; gaps on the shortlist are companies removed by the risk gate or not confirmed as Moat Strengthening.</p>
   </div></div>`;
   bindControls();
   document.getElementById("flt").addEventListener("click", e => { const b = e.target.closest("[data-f]"); if (!b) return; state.filter = b.dataset.f; document.querySelectorAll("#flt button").forEach(x => x.classList.toggle("on", x === b)); renderTable(); });
@@ -320,8 +321,8 @@ function renderTable() {
   else if (state.filter === "strong") rows = rows.filter(x => x.strengthening && !x.removed);
   if (state.q) rows = rows.filter(x => (x.c.ticker + " " + x.c.name + " " + x.c.sic_desc).toLowerCase().includes(state.q));
   const shown = rows.slice(0, 300);
-  document.getElementById("tbl").innerHTML = `<thead><tr><th class="r">#</th><th>Company</th><th class="hm">Industry</th><th class="r">Moat Score</th><th>Themes improving</th><th>Status</th><th class="hm">Top reason</th></tr></thead><tbody>` +
-    shown.map(x => `<tr class="click" data-cik="${x.c.cik}"><td class="r">${x.rank}</td><td><b>${esc(x.c.ticker || "")}</b> <span class="small">${esc(x.c.name)}</span></td><td class="small hm">${esc(x.c.sic_desc)}</td><td class="r"><b>${f1(x.moat)}</b></td><td>${mini(x)} <span class="small">${x.nImp}/5</span></td>
+  document.getElementById("tbl").innerHTML = `<thead><tr><th class="r">#</th><th class="r" title="Moat Score rank among all scored companies, before the risk gate">Overall rank</th><th>Company</th><th class="hm">Industry</th><th class="r">Moat Score</th><th>Themes improving</th><th>Status</th><th class="hm">Top reason</th></tr></thead><tbody>` +
+    shown.map((x, i) => `<tr class="click" data-cik="${x.c.cik}"><td class="r">${i + 1}</td><td class="r small">${x.rank}</td><td><b>${esc(x.c.ticker || "")}</b> <span class="small">${esc(x.c.name)}</span></td><td class="small hm">${esc(x.c.sic_desc)}</td><td class="r"><b>${f1(x.moat)}</b></td><td>${mini(x)} <span class="small">${x.nImp}/5</span></td>
       <td>${x.removed ? badge("RISK", "Removed") : x.shortlist ? badge("MOAT", "Shortlist") : x.strengthening ? badge("GOOD", "Strengthening") : ""} ${x.flags ? badge("RISK", x.flags + " flag" + (x.flags > 1 ? "s" : "")) : ""} ${x.c.confidence !== "High" ? badge("CONF", x.c.confidence) : ""}</td>
       <td class="small hm">${esc(x.c.reasons[0] || "")}</td></tr>`).join("") + `</tbody>` +
     (rows.length > 300 ? `<caption class="small" style="caption-side:bottom;text-align:left;padding:8px">Showing 300 of ${rows.length}. Search to find others.</caption>` : "");

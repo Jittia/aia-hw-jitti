@@ -563,3 +563,31 @@ save
   - Submit the repo link before Wed 4 Nov 21:00.
   - After the Repair Clinic: design v1.1 in advance (persistence, distance from prior peak), tested only on 2018–2023.
   - Run the track record each quarter (`src/mm_track.py freeze`).
+
+---
+
+## รอบ 13 · 2026-11-03 · Screener: list position vs overall rank, dashboard published
+
+- **ทำอะไร:**
+  - In the Screener table, **#** now counts 1, 2, 3 … within the list being viewed.
+  - A new **Overall rank** column keeps each company's Moat Score rank among all 1,870 companies, with a note under the table explaining the gaps.
+  - Published the web page and all reports as a private claude.ai page, so there is one link to open the dashboard: https://claude.ai/artifact/UNG5354pYDDBbT3NXjJy7g
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser to check the table
+- **Prompt ที่ใช้:**
+
+```text
+show me link of dashboard and all final output document
+```
+
+```text
+Why number in front of each ticker is not sort from 1 to xxx.
+```
+
+- **ผลที่ได้:**
+  - The shortlist now reads 1–25.
+  - The overall rank shows why some numbers were skipped: #1 PROP, #4 MEDP, #9 UAL and #11 MU scored high but were removed by the risk gate (Altman Z'', Beneish, interest cover).
+  - Header and rows checked in the browser (8 columns each, no errors).
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Show both numbers instead of only one.** I found the overall rank confusing as the only number. Keeping it in its own column still shows how the risk gate changes the list.
+  - **Dashboard link through claude.ai.** GitHub shows HTML as source, and a free HTML-hosting service shows a warning page first. The claude.ai page is private until I share it.
+- **ขั้นต่อไป:** Fill the deck placeholders, edit `help.md`, and submit before Wed 4 Nov 21:00.
