@@ -553,5 +553,7 @@ document.getElementById("mver").textContent = "v" + META.methodology;
 (function () { const [v, c] = location.hash.slice(1).split("/"); if (v) state.view = v; if (c) state.cik = +c; render(); })();
 </script>
 <script src="data/proof_data.js" onload="if (state.view === 'proof') render()" onerror="this.remove()"></script>
+<script src="data/track_data.js" onload="if (state.view === 'track') render()" onerror="this.remove()"></script>
+<script src="data/demo_data.js" onload="if (state.view === 'demo') render()" onerror="this.remove()"></script>
 </body>
 </html>

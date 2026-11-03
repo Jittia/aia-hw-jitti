@@ -1,7 +1,7 @@
 ---
 title: Moat Momentum — Phase 1 (US, SEC EDGAR)
 owner: Jitti
-status: draft for approval (step 2 ★)
+status: approved; building (steps 1–5 done)
 methodology: v1.0-draft (locked before the final validation run)
 updated: 2026-11-03
 ---
@@ -100,17 +100,26 @@ Disclaimer on every output: research tool, not investment advice; past results d
 8. **One-offs that are not tagged** in XBRL (only described in the text) cannot be removed automatically in Phase 1;
    they lower data confidence instead.
 
+## 7b. Decision after validation (2026-11-03)
+
+Fundamental validation 2013–2023 (step 5, Proof tab) showed that v1.0 picks high-quality, improving companies that
+stay above their industry 3 years later (+8.3 peer-rank points, +5.4 pp ROIC), but "strengthening" does **not**
+predict further strengthening (hit rate 26.9% vs 48.6% base; false alarms 38.0% vs 21.8%). Jitti chose to **accept
+v1.0** and position it as a screen for **high-quality, improving businesses**, not as a predictor of future
+strengthening. The pitch may only claim what the Proof tab shows. A v1.1 remains possible later, designed in advance
+and tested on years not used to build it.
+
 ## 8. Plan to Wednesday 2026-11-04 21:00 (stops ★ need your approval)
 
 | Order | Step | Status |
 |---|---|---|
 | 1 ★ | Review old project: reuse + false-alarm diagnosis | done 2026-11-03 |
-| 2 ★ | This spec | **waiting for you** |
-| 2b ★ | Brand guide | next |
-| 3 ★ | Data history + cleaning → risk gate → scoring → Sheet → screener → Deep-Dive → Learn / How / Scenarios | |
-| 4 ★ | Spot-check 10 companies × 3 years vs 10-Ks | |
-| 5 ★ | Fundamental validation 2013–2023 + robustness | |
-| 6 ★ | Price-data options for market validation | |
+| 2 ★ | This spec | approved 2026-11-03 |
+| 2b ★ | Brand guide | approved 2026-11-03 |
+| 3 ★ | Data history + cleaning → risk gate → scoring → Sheet → screener → Deep-Dive → Learn / How / Scenarios | done 2026-11-03 |
+| 4 ★ | Spot-check 10 companies × 3 years vs 10-Ks | done: 331/333 found |
+| 5 ★ | Fundamental validation 2013–2023 + robustness | done; v1.0 accepted (7b) |
+| 6 ★ | Price-data options for market validation | Yahoo + SEC bounds chosen |
 | 7 | Start live track record | |
 | 8 | Proof, Track Record, Methodology, Demo tabs | |
 | 9 ★ | Pitch pack | |

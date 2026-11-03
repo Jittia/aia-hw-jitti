@@ -41,6 +41,10 @@
 - Cross-check the OperatingIncomeLoss tag against revenue − CostsAndExpenses; some filers tag a segment total.
 - Fingerprint settings and scoring code before a validation run, and report every variant tried, including results against the hypothesis.
 - Test a "momentum" signal against companies with the same starting level, not only against the industry median; otherwise picking already-strong companies looks like skill.
+- Before any market test, measure how many past picks no longer trade; with free prices, report the result under neutral, worst-case and survivors-only fills.
+- Treat a month above +300% as a Yahoo stitching error only for companies with a bankruptcy 8-K (item 1.03); real jumps (e.g. GME Jan 2021) stay.
+- Compare a screen with a simpler version of itself (e.g. level only) built from the same data and the same price method, not only with an index.
+- Choose demo cases by a rule written down before looking, and include a miss.
 
 ## บันทึกปัญหา
 
@@ -185,3 +189,17 @@
 - **สาเหตุ:** Mean reversion. The screen rewards recent improvement and picks companies near the top of it; improvements tend to fade. The picks were still above their industry 3 years later (+8.3 rank points), but no better than companies that started at the same rank (−3.4).
 - **แก้อย่างไร:** Reported as found (Proof tab). Any v1.1 must be designed in advance and tested on years not used to build it.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Changing weights, blend, risk gate or the confirmation rule (all 17 variants show the same pattern).
+
+### 2026-11-03 · Yahoo joins pre- and post-bankruptcy shares
+
+- **เจออะไร:** The equal-weight universe returned more than the S&P 500 and RSP, which looked wrong. Monthly returns showed CHRD +30,991% (Nov 2020) and AMPY +15,525% (Oct 2016).
+- **สาเหตุ:** After a Chapter 11 reorganisation, Yahoo's adjusted series joins the old equity (worth cents) to the new shares under the same ticker.
+- **แก้อย่างไร:** For companies with a bankruptcy 8-K (item 1.03) in their SEC submissions, months above +300% count as missing and are filled per scenario. 4 months were affected; the conclusion did not change. The universe is still flattered by survivorship, which the report says.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** A flat cap at +300% for every stock would also remove real moves such as GME (+1,625% in Jan 2021).
+
+### 2026-11-03 · The market test showed no excess return
+
+- **เจออะไร:** The shortlist returned 14.3% a year (2013–2026), the same as the S&P 500, with 18.6% volatility against 14.3%.
+- **สาเหตุ:** Consistent with step 5: picks are good companies whose improvement tends to fade, and annual turnover is 81%.
+- **แก้อย่างไร:** Reported in the Proof tab and spec §7b. The product is positioned as a research screen for high-quality improving businesses, not a return predictor.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** —

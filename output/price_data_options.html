@@ -1,0 +1,137 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Price Data Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet"><style>
+:root {
+  --paper:#FFF1E5; --card:#FBE6D4; --ink:#262A33; --ink-2:#66605A; --grid:#E3D3C4; --navy:#1F3A5F; --teal:#0F7B78; --teal-text:#0B6F6C;
+  --good:#2E7D4F; --good-text:#266C44; --good-bg:#E3EFE6; --neutral:#8A847D; --neutral-text:#5A544E; --neutral-bg:#ECE6E0;
+  --risk:#B3261E; --risk-text:#9E2119; --risk-bg:#F6DEDB; --on-solid:#FFFFFF; --hover:#F7DCC6;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif; --sans:"Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --r:4px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper:#1E1B18; --card:#2A2622; --ink:#F2E8DE; --ink-2:#B5AA9E; --grid:#3D3731; --navy:#8FB3E0; --teal:#4FC2BC; --teal-text:#4FC2BC;
+  --good:#6CC28F; --good-text:#6CC28F; --good-bg:#23382B; --neutral:#A8A198; --neutral-text:#C9C1B8; --neutral-bg:#33302C;
+  --risk:#F08A80; --risk-text:#F08A80; --risk-bg:#3E2523; --on-solid:#1E1B18; --hover:#332E29; color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --paper:#1E1B18; --card:#2A2622; --ink:#F2E8DE; --ink-2:#B5AA9E; --grid:#3D3731; --navy:#8FB3E0; --teal:#4FC2BC; --teal-text:#4FC2BC;
+  --good:#6CC28F; --good-text:#6CC28F; --good-bg:#23382B; --neutral:#A8A198; --neutral-text:#C9C1B8; --neutral-bg:#33302C;
+  --risk:#F08A80; --risk-text:#F08A80; --risk-bg:#3E2523; --on-solid:#1E1B18; --hover:#332E29; color-scheme:dark; }
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--paper); color:var(--ink); font:400 16px/1.5 var(--sans); }
+.wrap { max-width:1180px; margin:0 auto; padding:0 16px 48px; }
+h1,h2,h3,h4 { font-family:var(--serif); color:var(--navy); font-weight:600; line-height:1.2; }
+h1 { font-size:clamp(26px,4vw,34px); margin:20px 0 4px; }
+h2 { font-size:22px; margin:28px 0 8px; }
+h3 { font-size:17px; margin:18px 0 6px; }
+p { margin:0 0 10px; max-width:75ch; }
+a { color:var(--teal-text); }
+.num, td.r, .r { font-variant-numeric:tabular-nums lining-nums; }
+.small { font-size:13px; color:var(--ink-2); }
+.muted { color:var(--ink-2); }
+.bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:2px solid var(--navy); }
+.wordmark { display:flex; align-items:center; gap:10px; color:var(--navy); text-decoration:none; }
+.wordmark span { font:600 21px/1 var(--serif); }
+.tagline { font:italic 500 14px/1.3 var(--serif); color:var(--ink-2); }
+.tabs { display:flex; gap:2px; border-bottom:1px solid var(--grid); overflow-x:auto; position:sticky; top:0; background:var(--paper); z-index:5; }
+.tab { font:600 14px/1 var(--sans); padding:13px 12px; color:var(--ink-2); border:0; background:none; border-bottom:3px solid transparent; white-space:nowrap; cursor:pointer; }
+.tab[aria-selected="true"] { color:var(--navy); border-bottom-color:var(--teal); }
+.btn { font:600 14px/1 var(--sans); padding:9px 13px; border-radius:var(--r); border:1px solid var(--navy); background:var(--navy); color:var(--on-solid); cursor:pointer; }
+.btn.ghost { background:transparent; color:var(--navy); }
+.btn.sm { padding:6px 9px; font-size:13px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, .tab:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
+.card { background:var(--card); border:1px solid var(--grid); border-radius:var(--r); padding:16px; min-width:0; }
+.grid { display:grid; gap:14px; }
+.g2 { grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+.g3 { grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); }
+.badge { display:inline-flex; align-items:center; gap:5px; font:700 11px/1 var(--sans); letter-spacing:.5px; text-transform:uppercase; padding:5px 7px; border-radius:3px; border:1px solid transparent; white-space:nowrap; }
+.badge.dot::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.b-good { background:var(--good-bg); color:var(--good-text); border-color:var(--good); }
+.b-neutral { background:var(--neutral-bg); color:var(--neutral-text); border-color:var(--neutral); }
+.b-risk { background:var(--risk-bg); color:var(--risk-text); border-color:var(--risk); }
+.b-moat { background:var(--navy); color:var(--on-solid); }
+.b-conf { color:var(--ink-2); border-color:var(--grid); }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th,td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--grid); vertical-align:top; }
+th { font-weight:600; color:var(--ink-2); font-size:12px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; }
+td.r, th.r { text-align:right; }
+.tbl { overflow-x:auto; }
+tr.click { cursor:pointer; }
+tr.click:hover td { background:var(--hover); }
+.layout { display:grid; grid-template-columns:290px 1fr; gap:18px; align-items:start; margin-top:14px; }
+@media (max-width:900px) { .layout { grid-template-columns:1fr; } }
+.layout > * { min-width:0; }
+@media (max-width:640px) { .hm { display:none; } .tab { padding:12px 9px; } }
+.controls { position:sticky; top:52px; max-height:calc(100vh - 64px); overflow:auto; }
+@media (max-width:900px) { .controls { position:static; max-height:none; } }
+.ctl { margin-bottom:12px; }
+.ctl label { display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:var(--ink); }
+.ctl input[type=range] { width:100%; accent-color:var(--teal); }
+.seg { display:inline-flex; border:1px solid var(--grid); border-radius:var(--r); overflow:hidden; }
+.seg button { font:600 12px/1 var(--sans); padding:6px 8px; color:var(--ink-2); background:transparent; border:0; cursor:pointer; }
+.seg button.on { background:var(--teal); color:var(--on-solid); }
+.rule { display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; padding:7px 0; border-bottom:1px solid var(--grid); font-size:13px; }
+.rule input { width:64px; font:13px var(--sans); padding:3px 5px; border:1px solid var(--grid); border-radius:3px; background:var(--paper); color:var(--ink); }
+input[type=search], select, input[type=text] { font:14px var(--sans); padding:8px 10px; border:1px solid var(--grid); border-radius:var(--r); background:var(--paper); color:var(--ink); }
+.toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+.mini { display:inline-flex; gap:2px; vertical-align:middle; }
+.mini i { display:block; width:9px; height:16px; border-radius:1px; background:var(--grid); }
+.mini i.on { background:var(--teal); }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:12px 0; }
+.kpi { background:var(--card); border:1px solid var(--grid); border-radius:var(--r); padding:12px; }
+.kpi b { display:block; font:600 26px/1.1 var(--serif); color:var(--navy); font-variant-numeric:tabular-nums; }
+.kpi span { font-size:12px; color:var(--ink-2); }
+.chg { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.chart-scroll { overflow-x:auto; }
+svg.chart { width:100%; min-width:420px; height:auto; display:block; }
+svg.chart text { font-family:var(--sans); fill:var(--ink-2); font-size:11px; font-variant-numeric:tabular-nums; }
+.ctitle { font:600 15px/1.3 var(--serif); color:var(--ink); margin:0 0 2px; }
+.csub, .csrc { font-size:12px; color:var(--ink-2); margin:0 0 6px; }
+.csrc { margin-top:4px; }
+.obs { display:grid; grid-template-columns:78px 1fr; gap:10px; padding:9px 0; border-bottom:1px solid var(--grid); font-size:14px; }
+.obs:last-child { border-bottom:0; }
+.funnel-row { display:grid; grid-template-columns:minmax(160px,1fr) 2fr 70px; gap:10px; align-items:center; padding:7px 0; border-bottom:1px solid var(--grid); font-size:14px; }
+.funnel-bar { height:18px; background:var(--navy); border-radius:2px; }
+.funnel-bar.hl { background:var(--teal); }
+.learn h3 { margin-top:0; }
+.formula { font-family:ui-monospace,Menlo,monospace; font-size:13px; background:var(--paper); border:1px solid var(--grid); padding:8px 10px; border-radius:var(--r); overflow-x:auto; }
+.diagram { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:8px 0; font-size:13px; }
+.diagram .box { border:1px solid var(--navy); color:var(--navy); padding:5px 8px; border-radius:3px; background:var(--paper); }
+.diagram .op { color:var(--ink-2); font-weight:700; }
+.empty { border:1px dashed var(--grid); padding:18px; border-radius:var(--r); color:var(--ink-2); }
+.hide { display:none !important; }
+.disclaimer { margin-top:36px; padding-top:12px; border-top:2px solid var(--navy); font-size:12px; color:var(--ink-2); }
+.back { margin:14px 0 0; }
+.score-big { font:600 40px/1 var(--serif); color:var(--navy); font-variant-numeric:tabular-nums; }
+.hdr { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; justify-content:space-between; }
+details summary { cursor:pointer; font-weight:600; color:var(--navy); }
+@media print { body { background:#fff; } .tabs, .controls, .btn, .bar button { display:none !important; } }
+</style></head><body><div class="wrap">
+<header class="bar"><span class="wordmark"><span>Moat Momentum</span></span><span class="tagline">Step 6 · price data for market validation · 2026-11-03</span></header>
+<h1>Price data options for market validation</h1>
+<p class="muted">Market validation (brief §6B) needs monthly prices for every company the screen could have picked since 2013, including companies that no longer trade. Nothing has been bought or signed up for. You choose.</p>
+<h2>How big the survivorship problem is</h2>
+<div class="kpis"><div class="kpi"><b>30.9%</b><span>of past shortlist picks (2013–2023) are not listed today</span></div>
+<div class="kpi"><b>39.5%</b><span>of the past universe (company-years) is not listed today</span></div>
+<div class="kpi"><b>41–51%</b><span>of the 2013–2016 universe is not listed today</span></div></div>
+<p class="small">Source: our validation runs (SEC submissions, exchange listing as of 2026-11-03). Not listed today = acquired, merged, taken private, moved to OTC, or failed. A source with only today's tickers would drop these, which usually makes past returns look better than they were.</p>
+<h2>Options</h2>
+<div class="tbl"><table><thead><tr><th>Option</th><th>Cost</th><th>Companies no longer listed</th><th>History</th><th>Effort</th><th>Verdict</th></tr></thead><tbody>
+<tr><td><b>A. Yahoo Finance (yfinance)</b><br><span class="small">already used in Phase 1</span></td><td>Free</td><td>Mostly missing</td><td>Long</td><td>Low: code exists</td><td><span class="badge b-neutral">Usable with bounds</span></td></tr>
+<tr><td><b>B. Your IBKR account</b><br><span class="small">tested today: TWTR (delisted 2022) returned prices; HWM monthly back to Nov 2016</span></td><td>Free with your account (market-data permissions may apply)</td><td>Some (tested 1)</td><td>About 10 years monthly via the connector</td><td>High: one stock per call in chat. Practical only through the IBKR desktop API running on your Mac</td><td><span class="badge b-neutral">Possible later</span></td></tr>
+<tr><td><b>C. SEC filings for what happened to missing companies</b><br><span class="small">Form 25 (delisting), Form 15, 8-K item 2.01 (acquisition completed)</span></td><td>Free</td><td>Tells acquired vs failed, not the price</td><td>Full</td><td>Medium</td><td><span class="badge b-good">Recommended as a complement</span></td></tr>
+<tr><td><b>D. Paid survivorship-free data</b><br><span class="small">e.g. Norgate Data, Sharadar via Nasdaq Data Link, EODHD; CRSP via WRDS (institutional)</span></td><td>Paid subscription; check prices on the vendor sites</td><td>Included</td><td>Long</td><td>Low once bought</td><td><span class="badge b-neutral">Before the pitch, if A+C is not enough</span></td></tr>
+<tr><td><b>Benchmarks</b>: S&amp;P 500 total return (Yahoo ^SP500TR), AQR “Quality Minus Junk” factor (free download, AQR data library), Kenneth French profitability factor (free)</td><td>Free</td><td>n/a</td><td>Long</td><td>Low</td><td><span class="badge b-good">Use</span></td></tr>
+<tr><td>MSCI USA Quality index</td><td>Index levels on MSCI's site, terms of use apply</td><td>n/a</td><td>Long</td><td>Manual download by you</td><td><span class="badge b-neutral">Optional</span></td></tr>
+</tbody></table></div>
+<h2>Recommendation: A + C with stated bounds, now; D later only if needed</h2><ol>
+<li>Prices from Yahoo for every pick that still trades (about 69% of shortlist picks).</li>
+<li>For picks that stopped trading, read the SEC filings to see what happened, then run the test three ways:
+<ul><li><b>Neutral:</b> the missing stock earned the S&amp;P 500 return after its last filing.</li>
+<li><b>Worst case:</b> a failed company counts as −100%.</li>
+<li><b>Acquired:</b> counts as the S&amp;P 500 return, which ignores any takeover premium, so it is conservative.</li></ul>
+If the conclusion is the same in all three, the missing data does not change it.</li>
+<li>Compare with the S&amp;P 500, an equal-weight universe (same Yahoo + bounds method) and the AQR Quality Minus Junk factor, to see whether the screen adds anything beyond a known quality factor.</li>
+<li>Report CAGR, excess return, volatility, maximum drawdown, hit rate, turnover, results per year and per sector, with the survivorship bound shown next to every number.</li></ol>
+<p><b>Time:</b> A + C ≈ 2–3 hours of work, so it fits before Wednesday. B through the desktop API would need you to run IBKR's TWS or Gateway on your Mac and enable the API, so it is not for this week.</p>
+<p><b>Expectation:</b> the fundamental test (step 5) found that picks were good companies whose improvement tended to fade. A market test may show quality-like returns, but the pitch should not expect alpha from "strengthening" until it is shown.</p>
+<div class="disclaimer">Research tool, not investment advice. No subscription, sign-up or purchase has been made.</div></div></body></html>

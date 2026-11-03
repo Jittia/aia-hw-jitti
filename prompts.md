@@ -452,3 +452,55 @@ Approve, start step 5
   - **Lock first, then report everything.** The defaults were fingerprinted before the final run and every variant is shown. This is the brief's rule against over-fitting, and the result is reported even though it goes against the brief's main insight.
   - **Added "same starting rank" comparison next to the brief's test.** The brief's level test alone would show a pass that comes only from picking already-strong companies. This was added after seeing the first results, and the report says so.
 - **ขั้นต่อไป:** I decide: (a) design v1.1 with 2–3 changes declared in advance, tuned only on 2013–2017 and confirmed on 2018–2023; or (b) accept v1.0, reposition it as a "quality and improving" screen, and go to step 6 (price-data options for market validation).
+
+---
+
+## รอบ 11 · 2026-11-03 · Moat Momentum steps 6–8: market validation, track record, Proof / Track / Demo tabs
+
+- **ทำอะไร:**
+  - **Step 6 ★: price-data options and market validation.**
+    - Wrote the price-data options page (`output/price_data_options.html`). I chose Yahoo + SEC bounds.
+    - Then `src/mm_market.py` ran the market test: equal-weight shortlist bought every 30 June 2013–2025, held 12 months, compared with a "quality only" version of the same engine, the equal-weight universe, the S&P 500 total return, QUAL and RSP.
+  - **Step 7: live track record.** `src/mm_track.py` freezes today's shortlist with a SHA-256 fingerprint in `track_record/2026-11-03.json`.
+  - **Step 8: web page tabs.** Proof got a market section, plus a new Track Record tab and a Demo tab with 3 cases chosen by a fixed rule.
+  - spec.md §7b records the decision to accept v1.0. Old price scripts were archived. The Sheet's Validation Results and Track Record tabs now import their CSVs.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · yfinance (Yahoo) · IBKR connector (read-only test of 2 price histories) · Google Sheets connector · built-in browser
+- **Prompt ที่ใช้:**
+
+```text
+รับผล v1.0 ไปขั้น 6
+```
+
+```text
+Yahoo + SEC bounds
+```
+
+- **ผลที่ได้:**
+  - **Survivorship problem, measured from our validation runs:**
+    - 30.9% of past shortlist picks and 39.5% of the past universe are not listed today; 41–51% of the 2013–2016 universe.
+    - IBKR test: it has delisted stocks (TWTR to Oct 2022) and ~10 years of monthly bars, but the connector returns one stock per call, so it is not practical for ~3,350 companies.
+  - **Market test, Jul 2013 → Oct 2026** (CAGR in the neutral case; range across the worst-case and survivors-only scenarios in brackets):
+
+    | Portfolio | CAGR | Volatility | Max drawdown |
+    |---|---|---|---|
+    | Shortlist | 14.3% (12.5–14.7%) | 18.6% | −32.9% |
+    | Quality only | 13.0% (11.1–13.0%) | 17.2% | −28.4% |
+    | Universe EW | 14.5% (11.8–14.7%) | 16.8% | −26.1% |
+    | S&P 500 TR | 14.3% | 14.3% | −23.9% |
+    | QUAL | 13.5% | 14.5% | −27.8% |
+    | RSP | 11.8% | 15.5% | −26.7% |
+
+    - The shortlist beat the S&P 500 in 5 of 13 years. 48% of picks beat it over their year. Turnover is 81% a year.
+    - **No excess return**, with more risk than the index. Same conclusion in all three scenarios.
+  - **Data error found:** Yahoo joins old and new shares after a Chapter 11 (CHRD +30,991% in one month, AMPY +15,525%). 4 such months were treated as missing.
+  - **Track record:** 2026-11-03 shortlist frozen, fingerprint `86cab85d825dbea2…`, verify OK.
+  - **Demo:** rule fixed before choosing: the two highest 2016 Moat Scores plus the highest-ranked 2016 false alarm. Cases: Scotts Miracle-Gro (hit), Bassett (flat), Rowan Companies (false alarm: peer rank 45 → 15, ROIC 6.7% → −3.3%).
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Accept v1.0 instead of building v1.1 (my choice).** Reasons:
+    - to finish in time for Wednesday;
+    - an honest result is valuable on its own: it shows the tool can test itself even when the result goes against the hypothesis;
+    - a v1.1 built after seeing the results risks fooling myself.
+  - **Yahoo + SEC bounds instead of paid data (my choice).** It is free; I do not want to pay for data at this stage, and it is enough to see the picture. The three scenarios show the missing companies do not change the conclusion.
+  - **"Quality only" baseline from our own engine, plus the QUAL ETF from Yahoo,** to test "beyond the known quality factor" without downloading other files.
+  - **Bankruptcy price jumps treated as data errors only for companies with a bankruptcy 8-K.** This removes the stitching errors while keeping real jumps such as GameStop in January 2021. The rule was set before re-running.
+- **ขั้นต่อไป:** Step 9 ★: pitch pack (whitepaper and one-pager in Google Docs, ~12-slide deck in Google Slides, brand applied). Position the product as a transparent, self-testing research tool; claims limited to what the Proof tab shows. Then update README, help.md and do a final check before Wednesday 21:00.
