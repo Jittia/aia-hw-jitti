@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moat Momentum Brand</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+/* ---- Design tokens (single source for every Moat Momentum output) ---- */
+:root {
+  --paper: #FFF1E5;        /* page background */
+  --card: #FBE6D4;         /* cards, panels */
+  --ink: #262A33;          /* body text */
+  --ink-2: #66605A;        /* secondary text */
+  --grid: #E3D3C4;         /* gridlines, borders */
+  --navy: #1F3A5F;         /* headings, key lines, primary buttons, company line */
+  --teal: #0F7B78;         /* highlights, selected state (fills, lines, large text) */
+  --teal-text: #0B6F6C;    /* teal for small text and links (AA on paper and card) */
+  --good: #2E7D4F;   --good-text: #266C44;   --good-bg: #E3EFE6;
+  --neutral: #8A847D; --neutral-text: #5A544E; --neutral-bg: #ECE6E0;  /* #8A847D = lines/marks only */
+  --risk: #B3261E;   --risk-text: #9E2119;   --risk-bg: #F6DEDB;
+  --on-solid: #FFFFFF;     /* text on navy / teal / good / risk fills */
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --space: 8px;
+  --radius: 4px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1E1B18; --card: #2A2622; --ink: #F2E8DE; --ink-2: #B5AA9E; --grid: #3D3731;
+    --navy: #8FB3E0; --teal: #4FC2BC; --teal-text: #4FC2BC;
+    --good: #6CC28F; --good-text: #6CC28F; --good-bg: #23382B;
+    --neutral: #A8A198; --neutral-text: #C9C1B8; --neutral-bg: #33302C;
+    --risk: #F08A80; --risk-text: #F08A80; --risk-bg: #3E2523;
+    --on-solid: #1E1B18; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1E1B18; --card: #2A2622; --ink: #F2E8DE; --ink-2: #B5AA9E; --grid: #3D3731;
+  --navy: #8FB3E0; --teal: #4FC2BC; --teal-text: #4FC2BC;
+  --good: #6CC28F; --good-text: #6CC28F; --good-bg: #23382B;
+  --neutral: #A8A198; --neutral-text: #C9C1B8; --neutral-bg: #33302C;
+  --risk: #F08A80; --risk-text: #F08A80; --risk-bg: #3E2523;
+  --on-solid: #1E1B18; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.55 var(--sans); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px 64px; }
+h1, h2, h3 { font-family: var(--serif); color: var(--navy); font-weight: 600; line-height: 1.2; }
+h2 { font-size: 26px; margin: 56px 0 8px; padding-top: 24px; border-top: 1px solid var(--grid); }
+h3 { font-size: 18px; margin: 24px 0 8px; }
+p { margin: 0 0 12px; max-width: 70ch; }
+.lead { color: var(--ink-2); }
+a { color: var(--teal-text); }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+.small { font-size: 14px; color: var(--ink-2); }
+
+/* top bar */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 2px solid var(--navy); }
+.wordmark { display: flex; align-items: center; gap: 10px; color: var(--navy); text-decoration: none; }
+.wordmark span { font: 600 22px/1 var(--serif); letter-spacing: .2px; }
+.btn { font: 600 14px/1 var(--sans); padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--navy); background: var(--navy); color: var(--on-solid); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--navy); }
+.btn:focus-visible, .tab:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* hero */
+.hero { padding: 40px 0 8px; }
+.hero h1 { font-size: clamp(32px, 6vw, 48px); margin: 0 0 8px; }
+.tag { font: 500 italic 20px/1.4 var(--serif); color: var(--ink-2); margin-bottom: 16px; }
+
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--card); border: 1px solid var(--grid); border-radius: var(--radius); padding: 20px; min-width: 0; }
+
+/* logo tiles */
+.logo-tile { display: flex; align-items: center; justify-content: center; min-height: 140px; border-radius: var(--radius); border: 1px solid var(--grid); }
+.logo-tile.paper { background: #FFF1E5; color: #1F3A5F; }
+.logo-tile.dark { background: #1E1B18; color: #F2E8DE; border-color: #3D3731; }
+.logo-tile.navy { background: #1F3A5F; color: #FFF1E5; border-color: #1F3A5F; }
+.logo-tile .wm { display: flex; align-items: center; gap: 12px; font: 600 26px/1 var(--serif); }
+
+/* swatches */
+.sw { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--grid); }
+.sw:last-child { border-bottom: 0; }
+.chip { width: 56px; height: 40px; border-radius: var(--radius); border: 1px solid rgba(0,0,0,.12); }
+.sw b { display: block; font-weight: 600; }
+.sw code { font: 13px/1.3 ui-monospace, Menlo, monospace; color: var(--ink-2); }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; text-transform: uppercase; letter-spacing: .4px; }
+td.r, th.r { text-align: right; }
+.tbl { overflow-x: auto; }
+.pass { color: var(--good-text); font-weight: 600; }
+.note { color: var(--risk-text); font-weight: 600; }
+
+/* type specimen */
+.spec-row { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--grid); }
+.spec-row .k { font-size: 13px; color: var(--ink-2); }
+
+/* badges */
+.badge { display: inline-flex; align-items: center; gap: 6px; font: 700 12px/1 var(--sans); letter-spacing: .6px; text-transform: uppercase; padding: 6px 9px; border-radius: 3px; border: 1px solid transparent; }
+.badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.b-good { background: var(--good-bg); color: var(--good-text); border-color: var(--good); }
+.b-neutral { background: var(--neutral-bg); color: var(--neutral-text); border-color: var(--neutral); }
+.b-risk { background: var(--risk-bg); color: var(--risk-text); border-color: var(--risk); }
+.b-moat { background: var(--navy); color: var(--on-solid); }
+.b-moat::before { display: none; }
+.b-conf { background: transparent; color: var(--ink-2); border-color: var(--grid); }
+.b-conf::before { display: none; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0; }
+.obs { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--grid); align-items: start; }
+.obs:last-child { border-bottom: 0; }
+
+/* tabs */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--grid); overflow-x: auto; }
+.tab { font: 600 14px/1 var(--sans); padding: 12px 14px; color: var(--ink-2); border: 0; background: none; border-bottom: 3px solid transparent; white-space: nowrap; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--navy); border-bottom-color: var(--teal); }
+.seg { display: inline-flex; border: 1px solid var(--grid); border-radius: var(--radius); overflow: hidden; }
+.seg span { font: 600 13px/1 var(--sans); padding: 8px 12px; color: var(--ink-2); }
+.seg span.on { background: var(--teal); color: var(--on-solid); }
+
+/* chart */
+.chart-scroll { overflow-x: auto; }
+.chart { width: 100%; min-width: 600px; height: auto; display: block; }
+.chart text { font-family: var(--sans); fill: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+.chart .grid-l { stroke: var(--grid); stroke-width: 1; }
+.chart .co { stroke: var(--navy); stroke-width: 2.5; fill: none; }
+.chart .med { stroke: var(--neutral); stroke-width: 2; fill: none; stroke-dasharray: 5 4; }
+.chart .hurdle { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 2 3; }
+.chart .spread { fill: var(--teal); opacity: .22; }
+.chart .lab-co { fill: var(--navy); font-weight: 700; }
+.chart .lab-med { fill: var(--neutral-text); font-weight: 600; }
+.ctitle { font: 600 17px/1.3 var(--serif); color: var(--ink); margin: 0 0 2px; }
+.csub { font-size: 13px; color: var(--ink-2); margin: 0 0 8px; }
+.csrc { font-size: 12px; color: var(--ink-2); margin-top: 6px; }
+
+/* do / don't */
+.dd { border-top: 4px solid var(--good); }
+.dont { border-top: 4px solid var(--risk); }
+.dd h3, .dont h3 { margin-top: 0; }
+.dd ul, .dont ul { margin: 0; padding-left: 18px; }
+.dd li, .dont li { margin-bottom: 6px; }
+.ex-bad { font: 700 20px/1.2 Impact, "Arial Black", sans-serif; color: #E0115F; background: linear-gradient(90deg,#fffb00,#00e5ff); padding: 10px; border-radius: 12px; }
+
+footer { margin-top: 56px; padding-top: 16px; border-top: 2px solid var(--navy); font-size: 13px; color: var(--ink-2); }
+@media (max-width: 560px) {
+  .spec-row { grid-template-columns: 1fr; gap: 2px; }
+  .bar .btn span { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="bar">
+  <a class="wordmark" href="#" aria-label="Moat Momentum">
+    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13.5" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="8.5,20.5 13,17 16.5,18.5 23.5,11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.5" cy="11" r="2" fill="#0F7B78"/></svg>
+    <span>Moat Momentum</span>
+  </a>
+  <button class="btn ghost" id="themeBtn" type="button" aria-label="Switch light or dark theme">◐ <span>Light / dark</span></button>
+</header>
+
+<section class="hero">
+  <p class="small">Brand guide · v1.0 draft · 3 November 2026 · for approval</p>
+  <h1>Moat Momentum</h1>
+  <p class="tag">Strengthening moats, found in the filings.</p>
+  <p class="lead">Calm, precise and built on evidence, in the manner of a serious financial newspaper. This page sets the one look used by every output: web page, Deep-Dive pages, Google Sheet, Slides, Docs and HTML exports. We use our own name, mark and layout. The only thing we borrow is the idea of a warm “salmon paper” background.</p>
+</section>
+
+<h2>1. Logo</h2>
+<p>The wordmark is the name set in Source Serif 4 semibold. Beside it sits a small abstract mark: a ring (the moat) around a line that rises (the momentum), ending in a teal dot (today). There are no mascots and no stock imagery.</p>
+<div class="grid g3">
+  <div class="logo-tile paper"><div class="wm">
+    <svg width="36" height="36" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13.5" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="8.5,20.5 13,17 16.5,18.5 23.5,11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.5" cy="11" r="2" fill="#0F7B78"/></svg>Moat Momentum</div></div>
+  <div class="logo-tile dark"><div class="wm">
+    <svg width="36" height="36" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13.5" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="8.5,20.5 13,17 16.5,18.5 23.5,11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.5" cy="11" r="2" fill="#4FC2BC"/></svg>Moat Momentum</div></div>
+  <div class="logo-tile navy"><div class="wm">
+    <svg width="48" height="48" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13.5" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="8.5,20.5 13,17 16.5,18.5 23.5,11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.5" cy="11" r="2" fill="#4FC2BC"/></svg></div></div>
+</div>
+<p class="small" style="margin-top:12px">Left to right: on paper (default), on dark, and the mark alone (used for the favicon, the Sheet and slide corners). Leave clear space around the logo at least as wide as the ring. Do not stretch, recolour, outline or add effects to it.</p>
+
+<h2>2. Colour</h2>
+<p>These are defined once as design tokens and used everywhere. Green, grey and red mean only Good, Neutral and Risk; they are never used for decoration.</p>
+<div class="grid g2">
+  <div class="card">
+    <h3 style="margin-top:0">Light (default)</h3>
+    <div class="sw"><div class="chip" style="background:#FFF1E5"></div><div><b>Paper</b><code>#FFF1E5</code> · page background</div></div>
+    <div class="sw"><div class="chip" style="background:#FBE6D4"></div><div><b>Card</b><code>#FBE6D4</code> · cards and panels</div></div>
+    <div class="sw"><div class="chip" style="background:#262A33"></div><div><b>Ink</b><code>#262A33</code> · body text</div></div>
+    <div class="sw"><div class="chip" style="background:#66605A"></div><div><b>Secondary</b><code>#66605A</code> · labels, sources</div></div>
+    <div class="sw"><div class="chip" style="background:#E3D3C4"></div><div><b>Grid</b><code>#E3D3C4</code> · gridlines, borders</div></div>
+    <div class="sw"><div class="chip" style="background:#1F3A5F"></div><div><b>Navy</b><code>#1F3A5F</code> · headings, primary buttons, the company’s line</div></div>
+    <div class="sw"><div class="chip" style="background:#0F7B78"></div><div><b>Teal</b><code>#0F7B78</code> · highlights, selected state · links in <code>#0B6F6C</code></div></div>
+    <div class="sw"><div class="chip" style="background:#2E7D4F"></div><div><b>Good</b><code>#2E7D4F</code> · small text in <code>#266C44</code></div></div>
+    <div class="sw"><div class="chip" style="background:#8A847D"></div><div><b>Neutral</b><code>#8A847D</code> · median lines, marks · text in <code>#5A544E</code></div></div>
+    <div class="sw"><div class="chip" style="background:#B3261E"></div><div><b>Risk</b><code>#B3261E</code> · small text in <code>#9E2119</code></div></div>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Dark</h3>
+    <div class="sw"><div class="chip" style="background:#1E1B18"></div><div><b>Background</b><code>#1E1B18</code></div></div>
+    <div class="sw"><div class="chip" style="background:#2A2622"></div><div><b>Card</b><code>#2A2622</code></div></div>
+    <div class="sw"><div class="chip" style="background:#F2E8DE"></div><div><b>Text</b><code>#F2E8DE</code></div></div>
+    <div class="sw"><div class="chip" style="background:#B5AA9E"></div><div><b>Secondary</b><code>#B5AA9E</code></div></div>
+    <div class="sw"><div class="chip" style="background:#3D3731"></div><div><b>Grid</b><code>#3D3731</code></div></div>
+    <div class="sw"><div class="chip" style="background:#8FB3E0"></div><div><b>Navy (lightened)</b><code>#8FB3E0</code></div></div>
+    <div class="sw"><div class="chip" style="background:#4FC2BC"></div><div><b>Teal (lightened)</b><code>#4FC2BC</code></div></div>
+    <div class="sw"><div class="chip" style="background:#6CC28F"></div><div><b>Good</b><code>#6CC28F</code></div></div>
+    <div class="sw"><div class="chip" style="background:#A8A198"></div><div><b>Neutral</b><code>#A8A198</code></div></div>
+    <div class="sw"><div class="chip" style="background:#F08A80"></div><div><b>Risk</b><code>#F08A80</code></div></div>
+  </div>
+</div>
+
+<h3>Accessibility check (WCAG AA)</h3>
+<p>Normal text needs a contrast of at least 4.5:1. Large text, lines and chart marks need at least 3:1. I measured every pair. Three of the colours from the brief are slightly too light for small text on the card colour, so each gets a slightly deeper “text” version. The brief’s colours stay as they are for fills, lines and large text.</p>
+<div class="tbl"><table class="num">
+  <thead><tr><th>Pair</th><th class="r">On paper</th><th class="r">On card</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td>Ink #262A33</td><td class="r">12.98</td><td class="r">11.89</td><td class="pass">Pass</td></tr>
+    <tr><td>Secondary #66605A</td><td class="r">5.60</td><td class="r">5.13</td><td class="pass">Pass</td></tr>
+    <tr><td>Navy #1F3A5F</td><td class="r">10.37</td><td class="r">9.50</td><td class="pass">Pass</td></tr>
+    <tr><td>Risk #B3261E</td><td class="r">5.90</td><td class="r">5.41</td><td class="pass">Pass</td></tr>
+    <tr><td>Teal #0F7B78</td><td class="r">4.60</td><td class="r">4.21</td><td><span class="note">Small text on card fails</span> → use #0B6F6C (5.41 / 4.96)</td></tr>
+    <tr><td>Good #2E7D4F</td><td class="r">4.56</td><td class="r">4.17</td><td><span class="note">Small text on card fails</span> → use #266C44 (5.73 / 5.25)</td></tr>
+    <tr><td>Neutral #8A847D</td><td class="r">3.34</td><td class="r">3.06</td><td><span class="note">Fails as text</span>: lines and marks only; text in #5A544E (6.03 on its badge)</td></tr>
+    <tr><td>White on navy / teal / good / risk</td><td class="r" colspan="2">11.48 / 5.09 / 5.05 / 6.54</td><td class="pass">Pass (buttons, filled badges)</td></tr>
+    <tr><td>Dark mode: all text colours on #1E1B18</td><td class="r" colspan="2">6.71 – 14.18</td><td class="pass">Pass</td></tr>
+  </tbody>
+</table></div>
+
+<h2>3. Type</h2>
+<p>There are two families, both free on Google Fonts. Numbers always use equal-width (tabular) digits, so columns line up.</p>
+<div class="card">
+  <div class="spec-row"><div class="k">Display · Serif 600 · 40</div><div style="font:600 40px/1.15 var(--serif);color:var(--navy)">Moat Score 78</div></div>
+  <div class="spec-row"><div class="k">H2 · Serif 600 · 26</div><div style="font:600 26px/1.2 var(--serif);color:var(--navy)">Pricing power is improving</div></div>
+  <div class="spec-row"><div class="k">H3 · Serif 600 · 18</div><div style="font:600 18px/1.3 var(--serif);color:var(--navy)">Gross margin vs industry</div></div>
+  <div class="spec-row"><div class="k">Body · Sans 400 · 16</div><div>Gross margin rose in 4 of the last 5 years and is now above the industry median.</div></div>
+  <div class="spec-row"><div class="k">Table · Sans 400 · 14</div><div class="num" style="font-size:14px">ROIC 18.4% · hurdle 9.0% · spread +9.4 pp</div></div>
+  <div class="spec-row"><div class="k">Label · Sans 600 · 13 caps</div><div style="font:600 13px/1 var(--sans);letter-spacing:.4px;text-transform:uppercase;color:var(--ink-2)">Industry median</div></div>
+  <div class="spec-row"><div class="k">Digits</div><div class="num" style="font-size:20px">1,111,111.11<br>9,808,000.00</div></div>
+</div>
+
+<h2>4. Badges and labels</h2>
+<p>Each badge has a dot as well as a colour, so it still reads in greyscale and for colour-blind readers.</p>
+<div class="row">
+  <span class="badge b-good">Good</span>
+  <span class="badge b-neutral">Neutral</span>
+  <span class="badge b-risk">Risk</span>
+  <span class="badge b-moat">Moat strengthening</span>
+  <span class="badge b-conf">Data confidence: High</span>
+  <span class="badge b-conf">Data confidence: Low</span>
+</div>
+<div class="row" style="margin-top:12px">
+  <span class="small">Risk gate switch:</span>
+  <span class="seg"><span>Off</span><span class="on">Flag</span><span>Remove</span></span>
+</div>
+<div class="card" style="margin-top:16px">
+  <p class="small" style="margin:0 0 4px">Key observations: risks come first, and each one gives a number, a period, a comparison and its filing. <i>Illustrative example, not a real company.</i></p>
+  <div class="obs"><span class="badge b-risk">Risk</span><div>Stock-based compensation was <b class="num">11.2%</b> of revenue in FY2025, above the 10% threshold (FY2023: 8.1%). <a href="#">10-K FY2025</a></div></div>
+  <div class="obs"><span class="badge b-good">Good</span><div>Clean ROIC rose from <b class="num">11.0%</b> (FY2021) to <b class="num">18.4%</b> (FY2025), improving in 4 of the last 4 years. Industry median: 9.6%. <a href="#">10-K FY2025</a></div></div>
+  <div class="obs"><span class="badge b-neutral">Neutral</span><div>Asset turnover is flat at <b class="num">0.82x</b> (5-year range 0.79–0.85x), in line with the industry median of 0.80x. <a href="#">10-K FY2025</a></div></div>
+</div>
+
+<h2>5. Charts</h2>
+<p>Charts sit on the paper background with thin gridlines. Navy is the company, dashed grey is the industry median, and teal is a highlight such as the spread above the hurdle. Every chart has three things:</p>
+<ul>
+  <li>a title that states the takeaway;</li>
+  <li>the units;</li>
+  <li>a source line.</li>
+</ul>
+<p>Lines are labelled directly, so no legend is needed.</p>
+<div class="card">
+  <p class="ctitle">Returns on capital have pulled well above the 9% hurdle since FY2021</p>
+  <p class="csub">Clean ROIC, % · fiscal years · <i>illustrative data, not a real company</i></p>
+  <div class="chart-scroll"><svg class="chart" viewBox="0 0 690 260" role="img" aria-label="Illustrative chart: company ROIC rises from 8 to 18 percent while the industry median stays near 9 to 10 percent">
+    <g transform="translate(40,10)">
+      <line class="grid-l" x1="0" x2="520" y1="210" y2="210"/>
+      <line class="grid-l" x1="0" x2="520" y1="157.5" y2="157.5"/>
+      <line class="grid-l" x1="0" x2="520" y1="105" y2="105"/>
+      <line class="grid-l" x1="0" x2="520" y1="52.5" y2="52.5"/>
+      <line class="grid-l" x1="0" x2="520" y1="0" y2="0"/>
+      <text x="-8" y="214" text-anchor="end">0</text><text x="-8" y="161" text-anchor="end">5</text><text x="-8" y="109" text-anchor="end">10</text><text x="-8" y="56" text-anchor="end">15</text><text x="-8" y="4" text-anchor="end">20</text>
+      <!-- x: FY2016..FY2025, step 57.8 ; y = 210 - v*10.5 -->
+      <path class="spread" d="M231.1,115.5 L288.9,94.5 L346.7,73.5 L404.4,63 L462.2,46.2 L520,16.8 L520,115.5 L462.2,115.5 L404.4,115.5 L346.7,115.5 L288.9,115.5 Z"/>
+      <line class="hurdle" x1="0" x2="520" y1="115.5" y2="115.5"/>
+      <text x="420" y="130" text-anchor="middle" style="font-size:11px">Hurdle 9%</text>
+      <polyline class="med" points="0,113.4 57.8,111.3 115.6,109.2 173.3,113.4 231.1,117.6 288.9,111.3 346.7,109.2 404.4,107.1 462.2,109.2 520,109.2"/>
+      <polyline class="co" points="0,126 57.8,121.8 115.6,128.1 173.3,123.9 231.1,115.5 288.9,94.5 346.7,73.5 404.4,63 462.2,46.2 520,16.8"/>
+      <circle cx="520" cy="16.8" r="4" fill="var(--navy)"/>
+      <text class="lab-co" x="528" y="20">Company 18.4%</text>
+      <text class="lab-med" x="528" y="113">Industry 9.6%</text>
+      <text x="0" y="232" text-anchor="middle">FY16</text><text x="115.6" y="232" text-anchor="middle">FY18</text><text x="231.1" y="232" text-anchor="middle">FY20</text><text x="346.7" y="232" text-anchor="middle">FY22</text><text x="462.2" y="232" text-anchor="middle">FY24</text>
+    </g>
+  </svg></div>
+  <p class="csrc">Source: SEC EDGAR, 10-K FY2016–FY2025 (illustrative). Clean ROIC = clean NOPAT ÷ invested capital, tax 21%.</p>
+</div>
+
+<h2>6. Interface</h2>
+<div class="card">
+  <div class="tabs" role="tablist" aria-label="Example tabs">
+    <button class="tab" role="tab" aria-selected="true">Screener</button>
+    <button class="tab" role="tab" aria-selected="false">How it works</button>
+    <button class="tab" role="tab" aria-selected="false">Learn</button>
+    <button class="tab" role="tab" aria-selected="false">Scenarios</button>
+    <button class="tab" role="tab" aria-selected="false">Proof</button>
+    <button class="tab" role="tab" aria-selected="false">Track record</button>
+    <button class="tab" role="tab" aria-selected="false">Methodology</button>
+    <button class="tab" role="tab" aria-selected="false">Demo</button>
+  </div>
+  <div class="row" style="margin-top:16px">
+    <button class="btn" type="button">Re-rank</button>
+    <button class="btn ghost" type="button">Save scenario</button>
+  </div>
+  <div class="tbl" style="margin-top:12px"><table class="num">
+    <thead><tr><th>#</th><th>Company</th><th>Industry</th><th class="r">Moat Score</th><th class="r">Themes improving</th><th>Flags</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><b>Example Co. A</b></td><td>Software</td><td class="r">82</td><td class="r">5 / 5</td><td><span class="badge b-moat">Moat strengthening</span></td></tr>
+      <tr><td>2</td><td><b>Example Co. B</b></td><td>Industrial machinery</td><td class="r">77</td><td class="r">4 / 5</td><td><span class="badge b-risk">SBC</span></td></tr>
+      <tr><td>3</td><td><b>Example Co. C</b></td><td>Medical devices</td><td class="r">71</td><td class="r">3 / 5</td><td><span class="badge b-conf">Confidence: Medium</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="small" style="margin-top:8px">Example rows only.</p>
+</div>
+
+<h2>7. Tone of voice</h2>
+<div class="grid g2">
+  <div class="card dd"><h3>Do</h3><ul>
+    <li>“Gross margin rose from 41.2% to 46.8% over FY2021–FY2025; industry median 38.0%.”</li>
+    <li>Give a number, a period, a comparison and a source for every claim.</li>
+    <li>Say where the signal did not work, with the numbers.</li>
+    <li>Use plain English, short sentences and the same word for the same thing.</li>
+  </ul></div>
+  <div class="card dont"><h3>Don’t</h3><ul>
+    <li>“The next 10-bagger!”, “guaranteed”, “can’t lose”, “explosive”, “hidden gem”.</li>
+    <li>Make a claim with no number, or a number with no source.</li>
+    <li>Personal advice (“you should buy”). The output is the same for every user.</li>
+    <li>Jargon without a link to the Learn tab.</li>
+  </ul></div>
+</div>
+
+<h2>8. Do and don’t: visuals</h2>
+<div class="grid g2">
+  <div class="card dd"><h3>Do</h3>
+    <p class="ctitle" style="font-size:15px">Revenue grew faster than the industry in 4 of 5 years</p>
+    <p class="small">One message per chart. Navy for the company, grey for peers, thin gridlines and a source line.</p>
+  </div>
+  <div class="card dont"><h3>Don’t</h3>
+    <div class="ex-bad">🚀 MOAT ROCKET 🚀</div>
+    <p class="small" style="margin-top:8px">No hype type, gradients, emoji, rainbow series, 3D charts, stock photos or mascots. Never use red or green for decoration.</p>
+  </div>
+</div>
+
+<h2>9. Applying the brand to each output</h2>
+<div class="tbl"><table>
+  <thead><tr><th>Output</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Web page and Deep-Dive pages</td><td>These tokens as CSS variables, with light and dark themes. Max width 1040 px, 16 px side gutter on phones, 8 px spacing grid.</td></tr>
+    <tr><td>Google Sheet</td><td>Header row in navy with white Source Sans 3 bold, frozen. Body uses the default white for readability with paper (#FFF1E5) bands. Numbers: <code>0.0%</code>, <code>#,##0</code>, <code>$#,##0,,"M"</code>. Good/Risk conditional colours use the badge background tints.</td></tr>
+    <tr><td>Google Slides</td><td>Master: paper background, serif titles in navy, the mark in the lower-right corner, and a source line on every chart slide. Section dividers in navy with paper text.</td></tr>
+    <tr><td>Google Docs (whitepaper, one-pager)</td><td>Source Serif 4 for headings, Source Sans 3 11 pt for body, navy headings, and the disclaimer in the footer.</td></tr>
+    <tr><td>HTML exports</td><td>The same as the web page, one self-contained file, printable (it switches to a white background when printed).</td></tr>
+  </tbody>
+</table></div>
+
+<footer>
+  <div class="row" style="margin:0 0 8px"><b style="font-family:var(--serif);color:var(--navy)">Moat Momentum</b><span>· Strengthening moats, found in the filings.</span></div>
+  Research tool, not investment advice. Past results do not guarantee future results. All figures on this page are illustrative.
+</footer>
+</div>
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById('themeBtn'), saved = null;
+  try { saved = localStorage.getItem('mm-theme'); } catch (e) {}
+  if (saved) root.setAttribute('data-theme', saved);
+  btn.addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') === 'dark' ||
+      (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('mm-theme', next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

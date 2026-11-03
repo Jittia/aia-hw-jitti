@@ -1,0 +1,259 @@
+"""Moat Momentum · official live run → data for the web page, the Sheet and the track record.
+
+Run:  .venv/bin/python src/mm_run.py [--as-of 2026-11-03]
+Out:  output/data/results.csv        one row per universe company (scores, gate, confidence, reasons)
+      output/data/site_data.js       everything the web page needs (embedded, works offline)
+      data/cache/mm/run_latest.pkl   full results for the Sheet writer and the track record
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import warnings
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import yaml
+
+from mm_fundamentals import annual_table
+from mm_score import INDICATORS, THEME_NAMES, THEMES, score_as_of
+
+warnings.filterwarnings("ignore")
+ROOT = Path(__file__).resolve().parent.parent
+CACHE = ROOT / "data" / "cache" / "mm"
+OUTD = ROOT / "output" / "data"
+
+SERIES = ["revenue", "gross_profit", "op_income", "one_offs", "clean_oi", "clean_ni", "fcf",
+          "roic", "roic_ex_gw", "incr_roic", "gross_margin", "gp_assets", "gm_stability", "op_margin", "incr_margin",
+          "sga_rev", "asset_turnover", "rev_growth", "rev_excess", "peer_level_rank", "fcf_conv", "accruals",
+          "reinvest_rate", "nd_ebitda", "interest_cover", "altman_z", "shares", "sbc_rev", "gw_assets",
+          "impairment", "restructuring", "litigation", "acq_costs", "gains"]
+MEDIAN_SERIES = ["roic", "gross_margin", "gp_assets", "op_margin", "sga_rev", "asset_turnover", "rev_growth",
+                 "fcf_conv", "accruals", "nd_ebitda", "interest_cover", "altman_z", "sbc_rev"]
+IND_LABEL = {
+    "roic_spread": "Clean ROIC minus hurdle", "incr_roic": "Incremental ROIC (3 yrs)", "gross_margin": "Gross margin",
+    "gp_assets": "Gross profit ÷ assets", "gm_stability": "Gross-margin stability", "incr_margin": "Incremental operating margin (3 yrs)",
+    "sga_rev": "SG&A ÷ revenue", "asset_turnover": "Asset turnover", "rev_excess": "Revenue growth vs industry (3-yr CAGR)",
+    "peer_rank_change": "Peer rank change (3 yrs)", "fcf_conv": "FCF ÷ clean net income", "accruals": "Accruals ÷ assets",
+    "runway": "Reinvestment × incremental ROIC",
+}
+
+
+def filing_url(cik: int, accn: str) -> str:
+    return f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{str(accn).replace('-', '')}/{accn}-index.htm"
+
+
+def pct(x: float | None, d: int = 1) -> str:
+    return "n/a" if x is None or not np.isfinite(x) else f"{x * 100:.{d}f}%"
+
+
+def num(x, d=1, suffix="x"):
+    return "n/a" if x is None or not np.isfinite(x) else f"{x:.{d}f}{suffix}"
+
+
+def usd(x):
+    if x is None or not np.isfinite(x):
+        return "n/a"
+    a = abs(x)
+    return f"${x / 1e9:.1f}B" if a >= 1e9 else f"${x / 1e6:.0f}M"
+
+
+def _hist(panel: pd.DataFrame, cik: int, fy: int, n: int = 10) -> pd.DataFrame:
+    h = panel[(panel["cik"] == cik) & (panel["fy"] <= fy)].sort_values("fy").tail(n)
+    return h.set_index("fy")
+
+
+def _v(h: pd.DataFrame, fy: int, col: str):
+    try:
+        v = h.loc[fy, col]
+        return float(v) if pd.notna(v) else None
+    except KeyError:
+        return None
+
+
+def observations(row: pd.Series, h: pd.DataFrame, med: pd.DataFrame, settings: dict) -> list[dict]:
+    """Deterministic GOOD / NEUTRAL / RISK observations; risks first; at most 10."""
+    fy, cik = int(row["fy"]), int(row["cik"])
+    link = filing_url(cik, row["accn"])
+    src = f"10-K FY{fy}"
+    rg = settings["risk_gate"]
+    m = lambda col: _v(med, fy, col)  # noqa: E731
+    obs = []
+
+    def add(kind, text):
+        obs.append({"kind": kind, "text": text, "link": link, "src": src})
+
+    risk_txt = {
+        "interest_cover": lambda: f"Interest cover was {num(row['interest_cover'])} in FY{fy} (clean operating income ÷ interest), threshold {rg['interest_cover']['below']}x.",
+        "net_debt_ebitda": lambda: (f"Net debt ÷ EBITDA was {num(row['nd_ebitda'])} in FY{fy}, threshold {rg['net_debt_ebitda']['above']}x." if np.isfinite(row['nd_ebitda'])
+                                    else f"EBITDA was zero or negative in FY{fy} while the company had net debt of {usd(row['net_debt'])}."),
+        "altman_z": lambda: f"Altman Z'' was {num(row['altman_z'], 2, '')} in FY{fy}; below {rg['altman_z']['below']} is the distress zone.",
+        "beneish_m": lambda: f"Beneish M-Score was {num(row['beneish_m'], 2, '')} in FY{fy}, above the {rg['beneish_m']['above']} threshold that can signal earnings manipulation.",
+        "dilution": lambda: f"Diluted share count grew {pct(row['dilution'])} a year over 3 years to FY{fy}, threshold {pct(rg['dilution']['above'], 0)}.",
+        "sbc_revenue": lambda: f"Stock-based compensation was {pct(row['sbc_rev'])} of revenue in FY{fy}, threshold {pct(rg['sbc_revenue']['above'], 0)}.",
+        "goodwill_jump": lambda: f"Goodwill added over 3 years equals {pct(row['goodwill_jump'])} of assets (FY{fy}), threshold {pct(rg['goodwill_jump']['above'], 0)}: growth may be bought.",
+    }
+    for rule, fn in risk_txt.items():
+        if row.get(f"gate_{rule}_breach"):
+            add("RISK", fn())
+        elif row.get(f"gate_{rule}_worsening"):
+            add("RISK", fn() + " Not yet over the threshold, but it has worsened 3 years in a row.")
+    oi = row.get("op_income")
+    if pd.notna(oi) and oi != 0 and abs(row["one_offs"]) > 0.25 * abs(oi):
+        add("RISK", f"One-off items of {usd(row['one_offs'])} were added back in FY{fy} ({pct(row['one_offs'] / abs(oi), 0)} of reported operating income); check them in the filing.")
+    if row["confidence"] == "Low":
+        add("RISK", f"Data confidence is Low: only {pct(row['coverage'], 0)} of core items are tagged over the last 5 years.")
+
+    fy4 = fy - 4
+    r0, r4 = _v(h, fy, "roic"), _v(h, fy4, "roic")
+    if r0 is not None and r4 is not None:
+        kind = "GOOD" if r0 > r4 and r0 > settings["hurdle_rate"] else ("RISK" if r0 < r4 - 0.03 else "NEUTRAL")
+        add(kind, f"Clean ROIC moved from {pct(r4)} (FY{fy4}) to {pct(r0)} (FY{fy}); hurdle {pct(settings['hurdle_rate'], 0)}, industry median {pct(m('roic'))}.")
+    g0, g4 = _v(h, fy, "gross_margin"), _v(h, fy4, "gross_margin")
+    if g0 is not None and g4 is not None:
+        kind = "GOOD" if g0 - g4 >= 0.02 else ("RISK" if g0 - g4 <= -0.03 else "NEUTRAL")
+        add(kind, f"Gross margin moved from {pct(g4)} (FY{fy4}) to {pct(g0)} (FY{fy}); industry median {pct(m('gross_margin'))}.")
+    s0, s4 = _v(h, fy, "sga_rev"), _v(h, fy4, "sga_rev")
+    if s0 is not None and s4 is not None:
+        kind = "GOOD" if s4 - s0 >= 0.02 else ("RISK" if s0 - s4 >= 0.03 else "NEUTRAL")
+        add(kind, f"SG&A ÷ revenue moved from {pct(s4)} (FY{fy4}) to {pct(s0)} (FY{fy}); industry median {pct(m('sga_rev'))}.")
+    ex = row.get("rev_excess")
+    if pd.notna(ex):
+        kind = "GOOD" if ex >= 0.05 else ("RISK" if ex <= -0.05 else "NEUTRAL")
+        add(kind, f"Revenue grew {pct(row['rev_cagr3'])} a year over 3 years to FY{fy}, {pct(ex)} versus the industry median.")
+    fc = row.get("fcf_conv")
+    if pd.notna(fc):
+        kind = "GOOD" if fc >= 0.9 else ("RISK" if fc < 0.5 else "NEUTRAL")
+        add(kind, f"Free cash flow was {pct(fc, 0)} of clean net income in FY{fy} ({usd(row['fcf'])} vs {usd(row['clean_ni'])}).")
+    order = {"RISK": 0, "GOOD": 1, "NEUTRAL": 2}
+    return sorted(obs, key=lambda o: order[o["kind"]])[:10]
+
+
+def top_reasons(row: pd.Series, h: pd.DataFrame) -> list[str]:
+    fy = int(row["fy"])
+    scores = {n: row[f"ind_{n}"] for n, *_ in INDICATORS if pd.notna(row.get(f"ind_{n}"))}
+    best = sorted(scores, key=scores.get, reverse=True)[:3]
+    txt = {
+        "roic_spread": lambda: f"Clean ROIC {pct(_v(h, fy - 4, 'roic'))} → {pct(row['roic'])} (FY{fy - 4}–FY{fy})",
+        "incr_roic": lambda: f"Incremental ROIC {'over 200%' if row['incr_roic'] >= 2 else pct(row['incr_roic'], 0)} on capital added over 3 yrs",
+        "gross_margin": lambda: f"Gross margin {pct(_v(h, fy - 4, 'gross_margin'))} → {pct(row['gross_margin'])}",
+        "gp_assets": lambda: f"Gross profit ÷ assets {pct(row['gp_assets'], 0)}",
+        "gm_stability": lambda: "Gross margin among the steadiest in its industry",
+        "incr_margin": lambda: f"Incremental operating margin {pct(row['incr_margin'], 0)} over 3 yrs",
+        "sga_rev": lambda: f"SG&A ÷ revenue {pct(_v(h, fy - 4, 'sga_rev'))} → {pct(row['sga_rev'])}",
+        "asset_turnover": lambda: f"Asset turnover {num(_v(h, fy - 4, 'asset_turnover'), 2)} → {num(row['asset_turnover'], 2)}",
+        "rev_excess": lambda: f"Revenue {pct(row['rev_cagr3'])} a year over 3 yrs, {pct(row['rev_excess'])} vs industry median",
+        "peer_rank_change": lambda: f"Peer rank up {row['peer_rank_change']:.0f} points in 3 yrs",
+        "fcf_conv": lambda: f"FCF {pct(row['fcf_conv'], 0)} of clean net income",
+        "accruals": lambda: f"Low accruals ({pct(row['accruals'])} of assets)",
+        "runway": lambda: f"Reinvests {pct(row['reinvest_rate'], 0)} of NOPAT at {pct(row['incr_roic'], 0)} incremental ROIC",
+    }
+    return [f"{IND_LABEL[n]} — {txt[n]()}" for n in best]
+
+
+def _clean(x):
+    if isinstance(x, (float, np.floating)):
+        return None if not math.isfinite(x) else float(f"{x:.4g}")
+    if isinstance(x, (np.integer,)):
+        return int(x)
+    if isinstance(x, (np.bool_,)):
+        return bool(x)
+    return x
+
+
+def main(as_of: str) -> None:
+    settings = yaml.safe_load((ROOT / "settings.yaml").read_text())
+    facts = pd.read_pickle(CACHE / "facts.pkl")
+    companies = pd.read_pickle(CACHE / "companies.pkl")
+    d = annual_table(facts, as_of, settings["data"]["tax_rate"], settings["data"]["excess_cash_pct_revenue"])
+    out = score_as_of(d, companies, as_of, settings, live=True)
+    res, pctl, panel = out["results"], out["pct"], out["panel"]
+    u = res[res["in_universe"]].copy()
+    u["grp"] = u["industry_group"]
+
+    # industry medians per peer group and fiscal year (for charts and observations)
+    panel = panel.merge(u[["cik", "grp"]], on="cik", how="left")
+    meds = panel[panel["grp"].notna()].groupby(["grp", "fy"])[MEDIAN_SERIES].median()
+
+    comp = companies.set_index("cik")
+    PCT_COLS = [c for c in pctl.columns if c != "industry_group"]
+    rows, deep = [], {}
+    for i, r in u.iterrows():
+        cik, fy = int(r["cik"]), int(r["fy"])
+        h = _hist(panel, cik, fy)
+        h["gw_assets"] = h["goodwill"] / h["assets"]
+        med = meds.loc[r["grp"]] if r["grp"] in meds.index.get_level_values(0) else pd.DataFrame()
+        r["reasons"] = top_reasons(r, h)
+        obs = observations(r, h, med, settings)
+        filings = comp.at[cik, "filings"]
+        links = {}
+        for form, date, accn, doc in filings:
+            if form in ("10-K", "10-Q", "8-K") and form not in links:
+                links[form] = {"date": date, "url": f"https://www.sec.gov/Archives/edgar/data/{cik}/{accn.replace('-', '')}/{doc}"}
+        deep[cik] = {
+            "years": [int(y) for y in h.index],
+            "s": {c: [_clean(v) for v in h[c].to_numpy()] for c in SERIES if c in h},
+            "obs": obs, "links": links,
+            "accn": [str(a) for a in h["accn"]], "filed": [str(f.date()) for f in h["filed"]],
+        }
+        rec = {
+            "cik": cik, "ticker": r["ticker"], "name": r["name"], "sic": int(r["sic"]), "sic_desc": r["sic_desc"],
+            "group": r["grp"], "fy": fy, "fy_end": str(r["end"].date()), "filed": str(r["filed"].date()),
+            "accn": r["accn"], "revenue": r["revenue"], "confidence": r["confidence"], "coverage": r["coverage"],
+            "years": int(r["years"]), "reasons": r["reasons"],
+            "risk": {k: (999.0 if r[f"gate_{k}"] == np.inf else _clean(r[f"gate_{k}"])) for k in ("interest_cover", "net_debt_ebitda", "altman_z", "beneish_m",
+                                                        "dilution", "sbc_revenue", "goodwill_jump")},
+            "worse": [k for k in ("interest_cover", "net_debt_ebitda", "altman_z") if r[f"gate_{k}_worsening"]],
+            "pct": [_clean(pctl.at[i, c]) for c in PCT_COLS],
+            "moat_score": r["moat_score"], "rank": r["rank"], "shortlist": bool(r["shortlist"]),
+            "strengthening": bool(r["moat_strengthening"]), "removed": bool(r["gate_removed"]),
+            "flags": int(r["gate_flags"]), "gate_reasons": r["gate_reasons"],
+            "themes": {t: _clean(r[f"theme_{t}"]) for t in THEMES},
+            "improving": {t: _clean(r[f"improving_{t}"]) for t in THEMES},
+        }
+        rows.append({k: _clean(v) if not isinstance(v, (dict, list)) else v for k, v in rec.items()})
+
+    lt = res
+    funnel = [
+        ["Companies with SEC XBRL data (non-financial SIC, revenue ≥ $50M at least once)", len(companies)],
+        ["Annual report filed in the last 18 months", len(lt)],
+        ["Listed on a US exchange", int(lt["exchange"].isin(settings["universe"]["exchanges"]).sum())],
+        ["Revenue ≥ $100M and ≥ 5 fiscal years (universe)", len(u)],
+        ["Pass the risk gate (no Remove rule hit)", int((~u["gate_removed"]).sum())],
+        ["Moat Strengthening (≥ 3 of 5 themes improving)", int((~u["gate_removed"] & u["moat_strengthening"]).sum())],
+        ["Shortlist", int(u["shortlist"].sum())],
+    ]
+    med_out = {}
+    for g in u["grp"].dropna().unique():
+        mg = meds.loc[g]
+        mg = mg[mg.index >= 2010]
+        med_out[g] = {"years": [int(y) for y in mg.index], **{c: [_clean(v) for v in mg[c].to_numpy()] for c in MEDIAN_SERIES}}
+    meta = {"as_of": as_of, "medians": med_out, "pct_cols": PCT_COLS, "methodology": settings["methodology_version"], "sec_retrieved": settings["data"]["sec_retrieved"],
+            "settings": settings, "funnel": funnel,
+            "indicators": [{"name": n, "theme": t, "comps": c, "label": IND_LABEL[n]} for n, t, _col, _d, c in INDICATORS],
+            "themes": [{"key": t, "name": THEME_NAMES[t]} for t in THEMES],
+            "gate_counts": {k: {"breach": int(u[f"gate_{k}_breach"].sum()), "worsening": int(u[f"gate_{k}_worsening"].sum())}
+                            for k in ("interest_cover", "net_debt_ebitda", "altman_z", "beneish_m", "dilution", "sbc_revenue", "goodwill_jump")},
+            "confidence": u["confidence"].value_counts().to_dict()}
+    OUTD.mkdir(parents=True, exist_ok=True)
+    (OUTD / "site_data.js").write_text(
+        "window.MM = " + json.dumps({"meta": meta, "companies": rows}, separators=(",", ":"), default=str) + ";\n",
+        encoding="utf-8")
+    (OUTD / "deep_data.js").write_text(
+        "window.MM_DEEP = " + json.dumps({str(k): v for k, v in deep.items()}, separators=(",", ":"), default=str) + ";\n",
+        encoding="utf-8")
+    flat = pd.DataFrame([{k: v for k, v in r.items() if not isinstance(v, (dict, list))} | r["risk"] | {
+        **{f"theme_{t}": r["themes"][t] for t in THEMES}, "reasons": " | ".join(r["reasons"])} for r in rows])
+    flat.sort_values("rank").to_csv(OUTD / "results.csv", index=False)
+    res.to_pickle(CACHE / "run_latest.pkl")
+    print(f"as of {as_of}: universe {len(u)}, shortlist {int(u['shortlist'].sum())}; wrote {OUTD}")
+    for name, n in funnel:
+        print(f"  {n:>6,}  {name}")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--as-of", default="2026-11-03")
+    main(ap.parse_args().as_of)

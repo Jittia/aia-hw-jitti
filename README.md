@@ -1,43 +1,25 @@
-# Catalyst-of-Change Radar (US)
+# Moat Momentum (US, SEC EDGAR)
 
-> การบ้าน AI Investor Alpha · Phase 1.5 (US) · reworked from Phase 1
+> การบ้าน AI Investor Alpha · **Strengthening moats, found in the filings.**
 
 | | |
 |---|---|
 | **ชื่อเล่น** | Jitti |
-| **กลุ่ม** | G03 · catalyst-of-change watchlist |
-| **โจทย์ 1 บรรทัด** | Spot companies where a catalyst of change (new TAM, new S-curve, turnaround, new market) has just become visible in their own filings, early enough that ≥5x in 5 years is still ahead (10x as a stretch) |
-| **ลิงก์ผลงาน** | [`output/`](output/): [dashboard](output/dashboard.html) (download and open), [watchlist CSV](output/watchlist.csv), [event study](output/event_study_report.md) |
-| **สถานะ** | พร้อมตรวจ (Phase 1.5: US) |
-
-![Dashboard](output/dashboard.jpg)
+| **กลุ่ม** | G03 |
+| **โจทย์ 1 บรรทัด** | Find US companies whose competitive moat is strengthening in their official SEC filings (returns on capital, pricing power, scale, peer gap), before they become recognised leaders, and prove the signal with point-in-time data |
+| **ลิงก์ผลงาน** | [`spec.md`](spec.md) · [`output/`](output/) (in progress) |
+| **สถานะ** | กำลังทำ (rebuilt from 2026-11-03) |
 
 ---
 
-## Results (Phase 1.5, as of 2026-11-02)
+## Status (2026-11-03)
 
-- **How it works:** every quarter, each company's SEC filings are checked for a **change**: revenue accelerating, gross margin stepping up, turning profitable, or contracted revenue jumping. Each change is dated by its filing.
-  - **Emerging:** a change that beats the industry median, is organic, has limited dilution and still leaves room for 5x.
-  - **Confirmed:** Emerging two quarters in a row.
-  - **AI check:** AI reads the company's filings to confirm the catalyst; code verifies every quote.
-- **Today:** 2,499 companies → 1,084 on Radar → 107 Emerging → 59 Confirmed → **26 Tier A**: 11 new S-curve, 7 new TAM, 5 new market, 3 turnaround; 12 with a 10x-stretch flag.
-  - **Tier B:** 38 Emerging names.
-  - **Vetoed:** 33 Confirmed names the AI found to be a cycle, acquisition or one-off.
-- **Does it work?** Event study 2012→2021 with a true holdout (2018–2021), not used for any choice:
-  - **Confirmed** companies reached ≥5x **1.68x** more often than all companies (8.7% vs 5.1%).
-  - **Emerging:** 1.43x.
-  - **Radar alone:** no edge (0.99x). The filters create the edge, not the raw change.
-  - **Best single signals:** gross-margin step-up and turning profitable.
-  - **No signal:** 8-K officer changes and material agreements.
-- **Phase 1 → 1.5:**
-  - Phase 1 ranked one date for 10x and found 1 confirmed name. Its results are kept in `output/shortlist.csv` and `output/backtest_report.md`.
-  - What changed: a 5x target (enough events to test), dated change events, an industry-cycle filter, an acquisition flag, and an event study.
-- **Limits:**
-  - Survivors only (delisted companies missing).
-  - Emerging is just under the 1.5x goal.
-  - The AI veto is not backtested.
-  - Earnings-call transcripts come next (Phase 1.6). See [`help.md`](help.md).
-- **Method in detail:** [`spec.md`](spec.md) (v2 brief), [`prompts.md`](prompts.md) (all rounds: what, why, results), [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md) (problems and rules), [`src/`](src/) (code), [`tests/`](tests/).
+- **New tool.** The earlier catalyst-of-change radar (Phase 1 / 1.5) gave too many false alarms and no proof, so it was
+  replaced. Its full results are kept in [`archive/phase1.5-catalyst-radar/`](archive/phase1.5-catalyst-radar/) and
+  under the git tag `phase1.5-catalyst-radar`; the diagnosis is in [`prompts.md`](prompts.md) round 9.
+- **Kept and reused:** SEC client (throttle, cache), point-in-time facts, quarter/TTM derivation, ticker → CIK,
+  filing spot-check, price helpers, and the lessons in [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md).
+- **Plan and stop points:** [`spec.md`](spec.md) section 8.
 
 ## ไฟล์ใน repo นี้
 
@@ -48,6 +30,7 @@
 | `PROJECT_MEMORY.md` | ปัญหาที่เจอ, วิธีแก้, และกฎที่ได้จากบทเรียน |
 | `output/` | ภาพหน้าจอ หรือลิงก์ผลงาน |
 | `help.md` | ติดตรงไหน 3 ข้อ ให้ผู้สอนเตรียมคำตอบ |
+| `archive/` | งานรุ่นก่อน (catalyst-of-change radar) เก็บไว้ดูย้อนหลัง |
 | `AGENTS.md` | คำสั่งให้ AI ทุกค่ายทำงานใน repo นี้ (`CLAUDE.md` และ `GEMINI.md` ชี้มาที่ไฟล์นี้) |
 | `.claude/commands/save.md` | ขั้นตอนของคำสั่ง `/save` |
 

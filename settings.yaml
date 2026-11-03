@@ -1,0 +1,45 @@
+# Moat Momentum · Methodology v1.0 default settings (spec.md §6, brief §5).
+# Every value is adjustable in the Sheet / web page. Change log: methodology section of the web page.
+methodology_version: "1.0"
+
+data:
+  sec_retrieved: "2026-11-03"     # bulk companyfacts.zip / submissions.zip download date
+  max_years: 10
+  min_years: 5
+  quarters: 12
+  tax_rate: 0.21                  # one constant rate for every year (spec §7.1)
+  excess_cash_pct_revenue: 0.02   # cash above 2% of revenue is "excess" and leaves invested capital
+
+universe:
+  min_revenue_usd: 100_000_000
+  min_years: 5
+  exclude_sic: [6000, 6799]       # banks, insurers, REITs, other finance
+  latest_10k_within_days: 548     # ~18 months
+  exchanges: [NYSE, Nasdaq, "NYSE American", CBOE, "NYSE Arca"]
+
+hurdle_rate: 0.09                 # same for every sector in v1.0 (spec §7.5)
+
+risk_gate:                        # mode: off | flag | remove; flag subtracts flag_penalty points
+  flag_penalty: 5
+  interest_cover:   {mode: remove, below: 3.0}
+  net_debt_ebitda:  {mode: flag,   above: 3.0}
+  altman_z:         {mode: remove, below: 1.1}     # Z'' (book equity) distress zone (spec §7.2)
+  beneish_m:        {mode: remove, above: -1.78}
+  dilution:         {mode: flag,   above: 0.03}    # diluted shares, per year over 3 years
+  sbc_revenue:      {mode: flag,   above: 0.10}
+  goodwill_jump:    {mode: flag,   above: 0.25}    # goodwill added over 3 years / total assets
+
+scoring:
+  blend: {level: 30, trend: 50, consistency: 20}
+  theme_weights: {value: 25, pricing: 20, scale: 15, peers: 20, quality: 20}
+  min_peers: 8                    # SIC 4-digit → 3 → 2 until at least this many
+  trend_years: 5
+  consistency_years: 4
+  confirm_themes: 3               # "Moat Strengthening" needs this many themes improving ...
+  improving_rank: 60              # ... with a theme improving-score of at least this
+  shortlist_size: 25
+
+validation:
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
+  as_of_month_day: "06-30"        # run date each year: after the main 10-K season
+  horizons: [1, 3, 5]

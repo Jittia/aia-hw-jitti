@@ -310,3 +310,83 @@ Yes, plan Phase 1.5
   - Phase 1.6: GuruFocus transcripts (local only) as an early text signal for Radar.
   - Track this quarter's lists forward.
   - Test whether the AI veto adds value.
+
+---
+
+## รอบ 9 · 2026-11-03 · Moat Momentum: review, spec, brand, first build
+
+- **ทำอะไร:** Started a new tool, **Moat Momentum**, in this repo, replacing the catalyst-of-change radar. Steps of the brief (stops ★ approved by me each time):
+  1. ★ Reviewed the old project: what to reuse, and why it gave false alarms.
+  2. Archived the old work (`archive/phase1.5-catalyst-radar/` + git tag `phase1.5-catalyst-radar`). ★ Wrote the new `spec.md`.
+  3. ★ Brand guide `output/brand_guide.html` (logo, palette with contrast checks, type, badges, chart style, do/don't).
+  4. ★ Built step 3:
+     - `src/mm_extract.py`: SEC bulk files → point-in-time fact store.
+     - `src/mm_fundamentals.py`: clean company-year table.
+     - `src/mm_score.py`: universe, risk gate, five themes, Moat Score, confirmation.
+     - `src/mm_run.py`: live run, observations, Deep-Dive data.
+     - `output/moat_momentum.html`: Screener, Deep-Dive, How it works, Learn, Scenarios, Methodology.
+     - Google Sheet (14 tabs, data via `output/sheet/*.csv`).
+     - `tests/test_moat.py`.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser to check every page (light, dark, phone width) · Google Drive/Sheets connectors
+- **Prompt ที่ใช้:**
+
+```text
+# PROJECT BRIEF — "Moat Momentum" (US, SEC EDGAR) — v4, investor-grade
+(full brief pasted; key lines: "FIRST TASK: review the old project and report (a) what can be reused,
+(b) why it produced false alarms. Do this before building." and "stop for my approval at each ★")
+```
+
+```text
+I still want to use this Repo to be my homework submission.  To replace the previous work.  what should i do
+```
+
+```text
+1. yes
+2. To submit this full project on Wed.  I do my best to put time to work on.
+```
+
+(plus my approvals: spec "อนุมัติทั้งหมด", brand guide "อนุมัติ เริ่มสร้างเลย")
+
+- **ผลที่ได้:**
+  - **Why the old tool gave false alarms (numbers from rounds 1–8):**
+    1. It flagged one-quarter changes, so cycles looked like catalysts (26 cyclical rebounds in the old top 100; Radar lift 0.99x).
+    2. No capital view (no ROIC), so bought growth looked organic (16 of top 100).
+    3. No one-off clean-up (9 of top 100).
+    4. Almost no risk gate: Confirmed names halved more often than average (18.4% vs 14.9%).
+    5. 45% of the score was size and cheapness.
+    6. Peers compared on revenue growth only.
+    7. Target (5x/10x price) too rare to tune on; 56% of Confirmed names were vetoed when read.
+  - **Data:** SEC bulk `companyfacts.zip` (20,540 companies) + `submissions.zip`, read once → 5,176 non-financial candidates, 5.75M fact rows. The store keeps the first filed value and every later restatement, so past runs use only what was public then.
+  - **Live run 2026-11-03:**
+
+    | Stage | Companies |
+    |---|---|
+    | Universe (US-listed, revenue ≥ $100M, ≥ 5 years) | 1,870 |
+    | Pass the risk gate | 1,043 |
+    | Moat Strengthening (≥ 3 of 5 themes improving) | 343 |
+    | Shortlist | 25 |
+
+    The shortlist includes Vertiv, Howmet, Roper, Deckers, NYT, Sprouts, Carpenter, Ralph Lauren, Huron.
+  - **Checks:**
+    - 19 tests pass. They include Apple FY2025 revenue $416,161M and operating income $133,050M matching its 10-K, and a restatement that is invisible before its filing date.
+    - The web page recomputes all 1,870 scores in the browser and matches the Python engine exactly.
+  - **Still open:**
+    - Step 4 spot-check vs 10-Ks, step 5 validation, track record, Proof/Demo tabs and the pitch pack.
+    - Level uses the latest fiscal year, not TTM.
+    - The Sheet's data tabs fill only after this push.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Rebuild in this repo, keep the old work in `archive/` + a git tag (my choice).** I want this to be my homework submission. The instructor reads the process, so the old attempt and why it failed stay visible.
+  - **Aim to submit the full project on Wed (my choice).** If time runs out, the priority is a tested, validated screener; market validation and the pitch pack would go in as scoped drafts.
+  - **Approved the AI's 8 proposals in spec §7:**
+    - One 21% tax rate (avoids a fake 2018 ROIC jump).
+    - Altman Z'' with book equity (EDGAR has no prices).
+    - Missing data = "not tested", never Remove.
+    - Operating leases out of capital (only tagged from 2019).
+    - 9% hurdle for every sector.
+    - Engine → Sheet → web page.
+    - Public repo.
+    - Untagged one-offs lower confidence.
+  - **Brand colours:** three brief colours (teal, green, grey) failed the contrast check for small text on the card colour. They got slightly deeper text versions; the brief colours stay for fills and lines.
+  - **Sheet gets data by `IMPORTDATA` from CSVs in this repo.** Sending 1,870 rows cell by cell through the connector is slow. Importing makes the Sheet refresh after every push and keeps it the same as the web page.
+  - **Not tuned yet, on purpose:** the risk gate removes 44% (interest cover 562, Altman Z'' 511, which also hits buyback companies with negative equity). Some shortlist names may be post-COVID rebounds (LVS, HXL). Step 5 validation and robustness tests decide; defaults are locked before the final test.
+- **ขั้นต่อไป:** Step 4 ★: spot-check cleaned figures for 3 years against the actual 10-Ks of 10 companies in different sectors. Then step 5 ★: fundamental validation 2013–2023 (hit rate, false-alarm rate, lead time) and robustness.

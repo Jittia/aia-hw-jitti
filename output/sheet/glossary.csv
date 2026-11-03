@@ -1,0 +1,19 @@
+Term,Theme,Definition,Formula,Evidence
+Clean ROIC,Value creation,"After-tax operating profit, one-offs removed, per dollar of invested capital",NOPAT / average invested capital,"Mauboussin, Measuring the Moat; McKinsey, Valuation"
+Hurdle rate,Value creation,Minimum return a business should earn on capital,9% (Settings),"McKinsey, Valuation"
+Incremental ROIC,Value creation,Return on capital added over 3 years,Change in NOPAT / change in invested capital (3 yrs),Mauboussin
+Gross margin,Pricing power,"Revenue minus cost of revenue, as a share of revenue",(Revenue - COGS) / revenue,Novy-Marx (2013)
+Gross profit / assets,Pricing power,Gross profit per dollar of assets,Gross profit / average assets,Novy-Marx (2013)
+Incremental operating margin,Scale advantage,Share of extra revenue that became operating profit,Change in clean OI / change in revenue (3 yrs),Mauboussin; Morningstar
+SG&A / revenue,Scale advantage,Overhead per dollar of sales (lower is better),SG&A / revenue,Morningstar
+Asset turnover,Scale advantage,Revenue per dollar of assets,Revenue / average assets,"McKinsey, Valuation"
+Growth vs industry,Peers,Revenue growth above the industry median,3-yr CAGR - industry median,Morningstar; Mauboussin
+Peer rank change,Peers,"Move in industry rank on ROIC, margins, turnover",Rank now - rank 3 yrs ago,Brief v4
+FCF / clean net income,Quality,Share of profit that became free cash,(CFO - capex) / clean NI,Sloan (1996); Piotroski (2000)
+Accruals,Quality,Profit not backed by cash (lower is better),(NI - CFO) / average assets,Sloan (1996)
+Reinvestment runway,Quality,How much is reinvested and at what return,(Change in capital / NOPAT) x incremental ROIC,Mauboussin; Mohanram (2005)
+Interest cover,Risk gate,Operating profit per dollar of interest,Clean OI / interest expense,Rating-agency practice
+Net debt / EBITDA,Risk gate,Years of cash profit to repay net debt (999 = EBITDA zero or negative),(Debt - cash) / EBITDA,Rating-agency practice
+Altman Z'',Risk gate,"Distress score from four ratios, book values",6.56 X1 + 3.26 X2 + 6.72 X3 + 1.05 X4,"Altman (1968, 1995)"
+Beneish M-Score,Risk gate,Eight-ratio earnings-manipulation score,-4.84 + 0.92 DSRI + ... - 0.327 LVGI,Beneish (1999)
+Data confidence,Data,Share of core items tagged over 5 years,"High >= 90%, Medium >= 70%",Brief v4

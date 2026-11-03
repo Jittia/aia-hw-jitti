@@ -31,6 +31,11 @@
 - Every quarter/event row must carry known_date = SEC filing date; point-in-time = filter known_date ≤ date.
 - Reader agents often say they did not check their quotes; always re-verify with code before a label counts.
 - Yahoo records some spin-offs as small "splits" (e.g. MOD 1.086); compare market cap with the screener before adjusting.
+- Rank a company against its full peer group: a wider SIC group includes the companies placed in narrower groups; never rank the leftover few on their own.
+- Compute a "change ÷ change" ratio (incremental ROIC, incremental margin) only when the denominator moved by a meaningful amount (≥ 10%); otherwise leave it blank.
+- Keep "infinite" risk values (e.g. net debt with EBITDA ≤ 0) as a breach in every output; never let them turn into "not tested" when exported.
+- When the web page re-implements a Python calculation, check that both give the same score for every company before calling it done.
+- Serve the web page through a local server (.claude/launch.json "moat-site") to preview it; the browser pane opens a file without its data/*.js files.
 
 ## บันทึกปัญหา
 
@@ -126,3 +131,31 @@
 - **สาเหตุ:** Most changes are noise or cycles. The edge appears only after the filters: beating the industry, organic, limited dilution, room to 5x.
 - **แก้อย่างไร:** Radar triggers limited to numeric events with tuning lift ≥ 1.2; 8-K and insider events shown as context only.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Using every event type as a trigger.
+
+### 2026-11-03 · Moat Momentum: peer groups of 1 gave scores of 100
+
+- **เจออะไร:** In the first scoring run, several companies (Korn Ferry, UPS, Ziff Davis) scored exactly 100, and 124 companies sat in peer groups with fewer than 8 members.
+- **สาเหตุ:** Companies were placed in the narrowest SIC level with ≥ 8 members. Those members were then also removed from the wider group, which left "leftover" groups of 1–7. A group of 1 ranks itself at the 100th percentile.
+- **แก้อย่างไร:** `rank_in_groups()` ranks each company against everyone whose SIC starts with its group code, including companies placed in narrower groups. A test covers it (`tests/test_moat.py`).
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Plain `groupby(group).rank()`.
+
+### 2026-11-03 · Incremental ROIC capped at 200% for many names
+
+- **เจออะไร:** "Incremental ROIC 200%" was the top reason for 8 of 25 shortlist names.
+- **สาเหตุ:** When invested capital barely changed over 3 years, Δ NOPAT ÷ Δ capital explodes and hits the cap.
+- **แก้อย่างไร:** Computed only when capital grew ≥ 10%. The remaining cases are real (profit grew a lot on modestly more capital) and are worded "over 200%".
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Only requiring Δ capital > 0.
+
+### 2026-11-03 · Web page and engine disagreed for 84 companies
+
+- **เจออะไร:** The browser's Moat Score differed from Python by exactly 5 points (one risk flag) for 84 companies.
+- **สาเหตุ:** Net debt ÷ EBITDA is infinite when EBITDA ≤ 0. Python counted it as a breach, but JSON export turned infinity into null, so the page treated it as "not tested".
+- **แก้อย่างไร:** Exported as 999 with the label "EBITDA ≤ 0". After the fix, all 1,870 scores match.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** —
+
+### 2026-11-03 · SEC bulk files are faster than per-company requests
+
+- **เจออะไร:** The old cache (`data/cache/`) was not on this machine, so everything had to be downloaded again.
+- **สาเหตุ:** The cache is git-ignored (correct, it is large), so a fresh clone has none.
+- **แก้อย่างไร:** Downloaded SEC's two bulk files once (1.4 GB + 1.6 GB, ~6 minutes) and extracted all companies in ~2 minutes with 8 processes. No per-company requests, no rate limits. `edgar.py` falls back to the bulk zip, so the old tests still run.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** —

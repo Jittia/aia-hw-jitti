@@ -12,6 +12,8 @@ Source: https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json
 from __future__ import annotations
 
 import argparse
+import json
+import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from functools import lru_cache
@@ -79,6 +81,13 @@ def load_companyfacts(cik: int | str) -> dict | None:
     """Read from cache only; run the fetch step first."""
     path = cache_path(cik)
     if not path.exists():
+        bulk = DATA_CACHE / "bulk" / "companyfacts.zip"  # Moat Momentum keeps the bulk file instead of per-CIK copies
+        if bulk.exists():
+            with zipfile.ZipFile(bulk) as z:
+                try:
+                    return json.loads(z.read(f"CIK{cik10(cik)}.json"))
+                except KeyError:
+                    return None
         raise FileNotFoundError(f"companyfacts not cached for CIK {cik10(cik)}; run: python src/edgar.py")
     return read_cache(path)
 
