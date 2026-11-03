@@ -1,11 +1,8 @@
-"""Day 6: build output/dashboard.html, a single self-contained page (no external scripts).
+"""Build output/dashboard.html (Phase 1.5 radar): one self-contained page, no external scripts.
 
-Inputs (all produced by earlier steps):
-  output/shortlist.csv, output/layer2_review.csv        Layer 2 results (SEC-derived)
-  data/cache/backtest_results.csv, backtest_state.pkl   backtest (SEC + Yahoo)
-  data/private/layer1_scores_<date>.csv                 only the funnel counts and Layer 1 status are used
-Market cap shown = latest Yahoo close × latest SEC share count (quarters.shares_as_of). The licensed
-Stock Analysis market cap is NOT written into the page (public repo).
+Inputs: data/cache/radar_live.pkl (radar_watchlist.py), data/cache/event_study.pkl (event_study.py).
+Market cap shown = latest Yahoo close × latest SEC share count (quarters.shares_as_of); no licensed screener data
+is written into the page (public repo).
 
 Run:  python src/build_dashboard.py
 """
@@ -21,7 +18,7 @@ import yfinance as yf
 from prices import yahoo_ticker
 from quarters import shares_as_of
 from score import load_config
-from sec_client import DATA_CACHE, DATA_PRIVATE, ROOT
+from sec_client import DATA_CACHE, ROOT
 
 warnings.filterwarnings("ignore")
 
@@ -29,23 +26,20 @@ TEMPLATE = ROOT / "src" / "dashboard_template.html"
 OUT = ROOT / "output" / "dashboard.html"
 
 
-def current_market_caps(review: pd.DataFrame, ciks: dict[str, str]) -> tuple[dict[str, float], str]:
-    tickers = review["ticker"].tolist()
-    ytk = {t: yahoo_ticker(t) for t in tickers}
-    data = yf.download(list(ytk.values()), start="2026-01-01", auto_adjust=False, actions=True,
+def current_market_caps(rows: pd.DataFrame) -> tuple[dict[str, float], str]:
+    ytk = {t: yahoo_ticker(t) for t in rows["ticker"]}
+    data = yf.download(list(ytk.values()), start="2026-06-01", auto_adjust=False, actions=True,
                        progress=False, group_by="column")
     caps, last_day = {}, ""
-    for t, y in ytk.items():
+    for (t, y), cik in zip(ytk.items(), rows["cik"]):
         try:
-            close = data["Close"][y].dropna()
-            splits = data["Stock Splits"][y]
+            close, splits = data["Close"][y].dropna(), data["Stock Splits"][y]
         except KeyError:
             continue
-        shares, _ = shares_as_of(ciks[t], date.today().isoformat())
+        shares, _ = shares_as_of(cik, date.today().isoformat())
         if close.empty or shares is None:
             continue
-        # SEC shares can predate a very recent split; such names are reported on build so they can be checked.
-        if (splits[splits.index >= "2026-06-01"] > 0).any():
+        if (splits > 0).any():
             print(f"  split since 2026-06-01, check market cap: {t}")
         caps[t] = float(close.iloc[-1]) * shares
         last_day = max(last_day, close.index[-1].strftime("%Y-%m-%d"))
@@ -54,56 +48,30 @@ def current_market_caps(review: pd.DataFrame, ciks: dict[str, str]) -> tuple[dic
 
 def main() -> None:
     cfg = load_config()
-    d = cfg["universe_date"]
-    review = pd.read_csv(ROOT / "output" / "layer2_review.csv")
-    short = pd.read_csv(ROOT / "output" / "shortlist.csv")
-    scores = pd.read_csv(DATA_PRIVATE / f"layer1_scores_{d}.csv", dtype={"cik": str})
-    uni = pd.read_csv(DATA_PRIVATE / f"universe_with_cik_{d}.csv")
+    live = pd.read_pickle(DATA_CACHE / "radar_live.pkl")
+    study = pd.read_pickle(DATA_CACHE / "event_study.pkl")
+    rows = live["rows"].copy()
+    caps, price_day = current_market_caps(rows)
+    rows["market_cap_usd"] = rows["ticker"].map(caps)
 
-    ciks = dict(zip(scores["ticker"], scores["cik"]))
-    caps, price_day = current_market_caps(review, ciks)
-    review["market_cap_usd"] = review["ticker"].map(caps)
-    short["market_cap_usd"] = short["ticker"].map(caps)
-
-    funnel = [
-        {"label": "US stocks from screener", "n": int(len(uni))},
-        {"label": "File 10-Qs with the SEC", "n": int(uni["include_flag"].sum())},
-        {"label": "Scorable (4+ quarters of data)", "n": int((scores["status"] == "ok").sum())},
-        {"label": "Pass the growth / turnaround gate", "n": int(scores["rank"].notna().sum())},
-        {"label": "Layer 1 top, read by AI", "n": int(cfg["top_n"])},
-        {"label": "Watchlist (tier A + B)", "n": int(len(short))},
-    ]
-
-    res = pd.read_csv(DATA_CACHE / "backtest_results.csv")
-    cur = res[res["variant"] == "config.yaml (current)"]
-    state = pd.read_pickle(DATA_CACHE / "backtest_state.pkl")
-    size = []
-    for w, pop in state["pops"].items():
-        sc = pop[pop["fwd_return"].notna() & (pop["status"] == "ok") & pop["market_cap_usd"].notna()]
-        b = pd.cut(sc["market_cap_usd"], [0, 3e8, 1e9, 1e10, 1e15], labels=["< $300M", "$300M–1B", "$1–10B", "> $10B"])
-        for label, g in (sc["fwd_return"] >= 10).groupby(b, observed=False):
-            size.append({"window": w, "bucket": str(label), "rate": float(g.mean()), "hits": int(g.sum()), "n": int(len(g))})
-
-    def records(df: pd.DataFrame) -> list[dict]:
-        return json.loads(df.to_json(orient="records"))
+    res = study["results"]
+    groups = ["stage entry: confirmed", "stage entry: emerging", "stage entry: radar", "event: gm_step",
+              "event: turn_positive", "event: rev_accel", "event: contract_jump", "event: insider_cluster",
+              "event: officer_change", "event: material_deal", "all company-quarters"]
+    lift = res[res["group"].isin(groups)][["group", "window", "n", "hit_5x", "hit_10x", "median", "halved", "lift_5x", "base_5x"]]
 
     payload = {
-        "asOf": d, "priceDay": price_day, "built": date.today().isoformat(),
-        "funnel": funnel,
-        "watchlist": records(short),
-        "review": records(review),
-        "backtest": records(cur[["window", "hits_top100", "tenbaggers_priced", "recall_top100", "precision_top100",
-                                 "base_rate", "lift", "fivex_top100", "median_ret_top100", "median_ret_scorable",
-                                 "loser_share_top100"]]),
-        "variants": records(res[["variant", "window", "hits_top100", "lift", "fivex_top100", "median_ret_top100",
-                                 "loser_share_top100"]]),
-        "size": size,
-        "weights": cfg["weights"],
+        "asOf": cfg["universe_date"], "priceDay": price_day, "built": date.today().isoformat(),
+        "counts": live["counts"], "universe": 2499,
+        "rows": json.loads(rows.drop(columns=["cik"]).to_json(orient="records")),
+        "timelines": {t: live["timelines"].get(c, []) for t, c in zip(rows["ticker"], rows["cik"])},
+        "lift": json.loads(lift.to_json(orient="records")), "groups": groups,
+        "study": cfg["radar"]["study"], "stages": cfg["radar"]["stages"], "radarEvents": cfg["radar"]["radar_events"],
     }
-    html = TEMPLATE.read_text(encoding="utf-8").replace("/*__DATA__*/null", json.dumps(payload))
-    OUT.write_text(html, encoding="utf-8")
-    print(f"dashboard: {OUT.relative_to(ROOT)} · watchlist {len(short)} · reviewed {len(review)} · "
-          f"market caps {len(caps)}/{len(review)} (Yahoo close {price_day})")
+    OUT.write_text(TEMPLATE.read_text(encoding="utf-8").replace("/*__DATA__*/null", json.dumps(payload)), encoding="utf-8")
+    c = live["counts"]
+    print(f"dashboard: {OUT.relative_to(ROOT)} · tier A {c['tier_a']} · tier B {c['tier_b']} · vetoed {c['vetoed']} · "
+          f"market caps {len(caps)}/{len(rows)} (Yahoo close {price_day})")
 
 
 if __name__ == "__main__":

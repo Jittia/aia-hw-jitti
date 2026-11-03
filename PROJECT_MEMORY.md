@@ -27,6 +27,10 @@
 - Get share counts only through `quarters.shares_as_of()` (fallbacks + age limit); never use the latest `dei` value blindly.
 - Open every generated page in the browser (light, dark, narrow) before calling it done; the data can be right while the layout is broken.
 - Copy identifiers (CIK, ticker) into tests from the data files, never from memory; a wrong CIK silently points at another company.
+- Choose thresholds and event types on the tuning window only; never re-tune after looking at the holdout.
+- Every quarter/event row must carry known_date = SEC filing date; point-in-time = filter known_date ≤ date.
+- Reader agents often say they did not check their quotes; always re-verify with code before a label counts.
+- Yahoo records some spin-offs as small "splits" (e.g. MOD 1.086); compare market cap with the screener before adjusting.
 
 ## บันทึกปัญหา
 
@@ -101,3 +105,24 @@
 - **สาเหตุ:** `dei:EntityCommonStockSharesOutstanding` is missing from companyfacts for many filers (often multi-class companies), or was last tagged years ago. The code took the latest value without checking its age. The Day 4 backtest used the same lookup.
 - **แก้อย่างไร:** `quarters.shares_as_of()`: cover page → `CommonStockSharesOutstanding` → quarterly diluted weighted shares, nothing older than 400 days. Result: market caps 100/100, all within 25% of the screener. Backtest rerun (holdout 10x hits 4 → 3).
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Cover-page shares only.
+
+### 2026-11-02 · Filings dated before their own period end
+
+- **เจออะไร:** 7 of ~106,000 history rows had a filing date before the quarter they report (e.g. VTOL tagging a September quarter in a June filing).
+- **สาเหตุ:** Mis-tagged period dates in the XBRL.
+- **แก้อย่างไร:** Rows where known_date ≤ quarter end are dropped (`history.py`, `events.py`); a test checks known_date > end for every row.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** —
+
+### 2026-11-02 · The best in-sample threshold was the worst out of sample
+
+- **เจออะไร:** In the threshold grid, industry excess ≥30% gave the best tuning lift (2.6x) but only 1.26x in the holdout. The thresholds set before the study gave 1.68x (Confirmed).
+- **สาเหตุ:** Overfitting: with a few hundred entries, the best of 40 combinations is partly luck.
+- **แก้อย่างไร:** Kept the a-priori thresholds; the report shows the full grid so the sensitivity is visible.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Picking the grid maximum.
+
+### 2026-11-02 · Raw "something changed" has no edge on its own
+
+- **เจออะไร:** Radar (any numeric change) had a 0.99x holdout lift, and 8-K officer changes and material agreements ~1.0x in both windows. With 8-K items included, Radar was worse than random (0.86x / 0.91x).
+- **สาเหตุ:** Most changes are noise or cycles. The edge appears only after the filters: beating the industry, organic, limited dilution, room to 5x.
+- **แก้อย่างไร:** Radar triggers limited to numeric events with tuning lift ≥ 1.2; 8-K and insider events shown as context only.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Using every event type as a trigger.

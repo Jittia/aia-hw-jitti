@@ -1,40 +1,43 @@
-# 10-Bagger Catalyst Watchlist Scanner
+# Catalyst-of-Change Radar (US)
 
-> การบ้าน AI Investor Alpha · Phase 1 (US)
+> การบ้าน AI Investor Alpha · Phase 1.5 (US) · reworked from Phase 1
 
 | | |
 |---|---|
 | **ชื่อเล่น** | Jitti |
-| **กลุ่ม** | G03 · 10-bagger catalyst watchlist |
-| **โจทย์ 1 บรรทัด** | Find companies that could return 10x in 5 years because of a *new* catalyst (new TAM, new S-curve, turnaround, new market), proven by the numbers first, not by the news |
-| **ลิงก์ผลงาน** | [`output/`](output/): [dashboard](output/dashboard.html) (download and open), [watchlist CSV](output/shortlist.csv), [backtest report](output/backtest_report.md) |
-| **สถานะ** | พร้อมตรวจ (Phase 1: US) |
+| **กลุ่ม** | G03 · catalyst-of-change watchlist |
+| **โจทย์ 1 บรรทัด** | Spot companies where a catalyst of change (new TAM, new S-curve, turnaround, new market) has just become visible in their own filings, early enough that ≥5x in 5 years is still ahead (10x as a stretch) |
+| **ลิงก์ผลงาน** | [`output/`](output/): [dashboard](output/dashboard.html) (download and open), [watchlist CSV](output/watchlist.csv), [event study](output/event_study_report.md) |
+| **สถานะ** | พร้อมตรวจ (Phase 1.5: US) |
 
 ![Dashboard](output/dashboard.jpg)
 
 ---
 
-## Results (Phase 1, as of 2026-11-02)
+## Results (Phase 1.5, as of 2026-11-02)
 
-- **Pipeline:**
-  - **Layer 1:** 3,073 US stocks → 2,499 companies that file quarterly 10-Qs → scored on SEC XBRL numbers (revenue growth and acceleration, margin change, turnaround, dilution, size and 10x plausibility, acquisition penalty).
-  - **Layer 2:** AI reads the top 100 companies' own filings; every quote is verified by code → **20-name watchlist**.
-- **Watchlist:**
-  - **Tier A (confirmed catalyst):** 1 name, DERM (new product Emrosi = 44% of product revenue).
-  - **Tier B (watch next quarter):** 19 names.
-  - Most of the top 100 were *not* new catalysts: 32 cyclical rebounds, 13 one-offs, 23 with no clear driver.
-- **Backtest** (point-in-time, survivors only):
-  - The top 100 held 5 / 3 ten-baggers in the 2019 / 2018 windows, **3.4x / 2.3x better than random**, with 13 / 15 names returning 5x+.
-  - Small companies (< $300M) became 10-baggers ~10x more often than $1–10B companies.
-- **Accuracy:**
-  - TTM revenue matches an independent screener within 1% for 96.5% of companies.
-  - 19/19 hand-checked inputs for DERM, TRT and AAPL match their filings.
-  - 7 tests pass.
+- **How it works:** every quarter, each company's SEC filings are checked for a **change**: revenue accelerating, gross margin stepping up, turning profitable, or contracted revenue jumping. Each change is dated by its filing.
+  - **Emerging:** a change that beats the industry median, is organic, has limited dilution and still leaves room for 5x.
+  - **Confirmed:** Emerging two quarters in a row.
+  - **AI check:** AI reads the company's filings to confirm the catalyst; code verifies every quote.
+- **Today:** 2,499 companies → 1,084 on Radar → 107 Emerging → 59 Confirmed → **26 Tier A**: 11 new S-curve, 7 new TAM, 5 new market, 3 turnaround; 12 with a 10x-stretch flag.
+  - **Tier B:** 38 Emerging names.
+  - **Vetoed:** 33 Confirmed names the AI found to be a cycle, acquisition or one-off.
+- **Does it work?** Event study 2012→2021 with a true holdout (2018–2021), not used for any choice:
+  - **Confirmed** companies reached ≥5x **1.68x** more often than all companies (8.7% vs 5.1%).
+  - **Emerging:** 1.43x.
+  - **Radar alone:** no edge (0.99x). The filters create the edge, not the raw change.
+  - **Best single signals:** gross-margin step-up and turning profitable.
+  - **No signal:** 8-K officer changes and material agreements.
+- **Phase 1 → 1.5:**
+  - Phase 1 ranked one date for 10x and found 1 confirmed name. Its results are kept in `output/shortlist.csv` and `output/backtest_report.md`.
+  - What changed: a 5x target (enough events to test), dated change events, an industry-cycle filter, an acquisition flag, and an event study.
 - **Limits:**
-  - About half of all 10-baggers could not be caught on the start date (revenue still falling, or no revenue yet).
-  - The backtest ignores delisted companies.
-  - Weights were chosen on the same two windows, so the real test is tracking this list forward. See [`help.md`](help.md).
-- **Method in detail:** [`spec.md`](spec.md) (the brief), [`prompts.md`](prompts.md) (7 rounds: what, why, results), [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md) (problems and rules learned), [`src/`](src/) (code).
+  - Survivors only (delisted companies missing).
+  - Emerging is just under the 1.5x goal.
+  - The AI veto is not backtested.
+  - Earnings-call transcripts come next (Phase 1.6). See [`help.md`](help.md).
+- **Method in detail:** [`spec.md`](spec.md) (v2 brief), [`prompts.md`](prompts.md) (all rounds: what, why, results), [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md) (problems and rules), [`src/`](src/) (code), [`tests/`](tests/).
 
 ## ไฟล์ใน repo นี้
 
@@ -96,7 +99,7 @@ repo นี้ใครก็เปิดดูได้ ห้ามใส่�
 
 - [x] repo เป็น Public และเปิดได้จากหน้าต่าง incognito (checked 2026-11-02: page loads without login)
 - [x] `spec.md` ครบ 5 หัวข้อ
-- [x] `prompts.md` มีบันทึกอย่างน้อย 3 รอบ และทุก commit มี entry คู่กัน (7 rounds)
+- [x] `prompts.md` มีบันทึกอย่างน้อย 3 รอบ และทุก commit มี entry คู่กัน (8 rounds)
 - [x] `PROJECT_MEMORY.md` มีปัญหาหรือบทเรียนอย่างน้อย 1 ข้อ
 - [x] `output/` มีภาพหรือลิงก์อย่างน้อย 1 ชิ้น
 - [ ] `help.md` เขียนครบ 3 ข้อ (AI draft written; Jitti to review and edit)

@@ -54,6 +54,14 @@ METRICS: dict[str, tuple[str, str, list[str]]] = {
         "PaymentsToAcquireBusinessesGross",
     ]),
     "goodwill": ("us-gaap", "USD", ["Goodwill"]),  # instant; jumps when a company is bought, even for stock
+    # Contracted future revenue (Phase 1.5): signed but not yet earned. Instants.
+    "rpo": ("us-gaap", "USD", ["RevenueRemainingPerformanceObligation"]),
+    "contract_liab": ("us-gaap", "USD", [
+        "ContractWithCustomerLiability",
+        "ContractWithCustomerLiabilityCurrent",
+        "DeferredRevenue",              # pre-ASC 606 name
+        "DeferredRevenueCurrent",
+    ]),
     "shares_outstanding": ("dei", "shares", ["EntityCommonStockSharesOutstanding"]),
 }
 

@@ -239,3 +239,74 @@ Start Day 7
   - `help.md` was drafted by the AI from the real open problems of this week (half of 10-baggers not catchable by the numbers-first rule, survivorship bias, too few confirmed catalysts / small samples). It is marked as a draft and the checklist item stays unticked until I review it.
   - The spec status stays `draft` and Phase 2 is not started; whether to continue (Taiwan monthly revenue was the idea) is my decision after the instructor's feedback.
 - **ขั้นต่อไป:** Edit `help.md` in my own words, submit the repo link via the class Google Form, and wait for instructor comments in Issues (5–6 Nov) and the Repair Clinic (7 Nov). Possible Phase 2: Taiwan (monthly revenue as an early signal) or forward-tracking this watchlist each quarter.
+
+---
+
+## รอบ 8 · 2026-11-02 · Phase 1.5 rework: catalyst-of-change radar
+
+- **ทำอะไร:** Phase 1 did not meet my objective, so I asked the AI to reflect on what we learned, propose a rework, and plan it with me in Plan mode. Then it built the radar:
+  - `spec.md` v2 and a `radar` section in `config.yaml`.
+  - `src/history.py`: every company's full quarterly history, computed once, each row dated by its SEC filing.
+  - `src/events.py`: numeric change events.
+  - `src/insiders.py`: insider cluster buys from SEC Form 4 data sets.
+  - `src/filing_events.py`: 8-K items.
+  - `src/stages.py`: Radar → Emerging → Confirmed.
+  - `src/prices_monthly.py` and `src/event_study.py`: test 2012→2021.
+  - `src/radar_watchlist.py`: the live list, with AI review of the Confirmed names (3 reader agents).
+  - New `output/dashboard.html`, `output/watchlist.csv`, `output/event_study_report.md`, and `tests/test_events.py`.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 (Plan mode, then build), 3 reader agents on Sonnet 5.5, built-in browser
+- **Prompt ที่ใช้:**
+
+```text
+I want to understand the learning after you run through all this work. Compare with my original objective, what you found, what shall be adjust to make this tool works better, anything we build as our source database for future use ?
+```
+
+```text
+Back to original objective to find the catalyst of change which could turn company around and grow much faster (if we need to reduce from 10X to lower number to make it reasonable but stretch. that could be revised. From this learning, suggest to me how could we rework to make usable tool for this screening objective. Any additional data we need eg. transcript ?
+```
+
+```text
+Yes, plan Phase 1.5
+```
+
+(plus my plan answers: "What we built so far do not meet my expectation. So I want to rework on it prior to send to Repair Clinic." · target "5x in 5y + 10x flag" · transcripts in Phase 1.6)
+
+- **ผลที่ได้:**
+  - **Data:**
+    - History for 2,268 companies (105,842 company-quarters, quarters ending 2008-06 → 2026-10). Its TTM revenue equals Phase 1's for all 2,135 comparable companies.
+    - Events: 19,371 numeric, 4,637 insider cluster buys (from 100,578 open-market purchases), 48,660 8-K items.
+    - Monthly prices 2012→2026 and a share-count history for market cap on any past date.
+  - **Event study (5-year forward returns, lift vs all companies in the same months):**
+
+    | Group | Tune 2012–17 | Holdout 2018–21 |
+    |---|---|---|
+    | Confirmed | 2.07x | **1.68x** (8.7% reached ≥5x vs 5.1%) |
+    | Emerging | 1.82x | 1.43x |
+    | Radar | 1.30x | 0.99x |
+    | Gross-margin step-up | 1.39x | 1.48x |
+    | Turned profitable | 1.33x | 1.67x |
+    | Revenue acceleration | 1.45x | 1.05x |
+    | Contracted revenue | 1.79x | 1.09x |
+    | Insider cluster | 1.01x | 1.37x |
+    | 8-K items | ~1.0x | ~1.0x |
+
+    The baseline (all company-quarters) is 1.03x / 1.04x, which confirms the method is fair.
+  - **Live as of 2026-11-02:**
+    - 1,084 Radar → 107 Emerging → 59 Confirmed → AI read 45 new Confirmed names (161/162 quotes verified across all reviews).
+    - **26 Tier A**: 11 new S-curve, 7 new TAM, 5 new market, 3 turnaround.
+    - 38 Tier B; 33 Confirmed names vetoed by the AI as cycle, acquisition or one-off.
+    - 12 Tier A names carry a 10x-stretch flag. Median Tier A market cap $4.0B (8 under $1B).
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Target 5x in 5 years, with a 10x flag (my choice).** 10x is ~1.4% of stocks, too few to test; 5x is ~5%, so the tests mean something.
+  - **Rework on `main` before the deadline (my choice).** Phase 1 did not meet my expectation, and I want the instructor to review the reworked tool.
+  - **Two-key evidence rule.** Any event can put a company on Radar; only numbers can promote it. This keeps my "proof first" principle while watching every quarter, so changes are caught as they appear.
+  - **Each history computed once, dated by filing.** This makes a 10-year test possible: one pass instead of one run per date.
+  - **Triggers chosen on the tuning window only.** 8-K items and insider buys were dropped as Radar triggers because their tune lift was ~1.0. Insider buys looked good in the holdout (1.37x), but using the holdout to choose would be cheating.
+  - **Kept the thresholds set before the study.** The grid's best tuning result (≥30% industry excess, 2.6x) fell to 1.26x in the holdout, a clear case of overfitting. The a-priori values hold better (Confirmed 1.68x).
+  - **AI reads only Confirmed names.** That cuts cost, and Confirmed is the stage with the edge. Tier B stays "numbers only".
+  - **Transcripts deferred to Phase 1.6 (my choice).** Prove the free SEC signals first.
+- **ขั้นต่อไป:**
+  - Edit `help.md` and submit the link before Wed 4 Nov 21:00.
+  - Phase 1.6: GuruFocus transcripts (local only) as an early text signal for Radar.
+  - Track this quarter's lists forward.
+  - Test whether the AI veto adds value.

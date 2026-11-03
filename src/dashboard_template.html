@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>10-Bagger Catalyst Watchlist</title>
+<title>Catalyst-of-Change Radar</title>
 <style>
 :root {
   color-scheme: light;
@@ -102,75 +102,74 @@ details summary { cursor: pointer; color: var(--accent); font-size: 14px; margin
 .theme-toggle { float: right; }
 ul.plain { margin: 6px 0 0; padding-left: 18px; color: var(--text-2); font-size: 14px; }
 footer { color: var(--text-3); font-size: 12.5px; margin-top: 24px; }
+.tier-vetoed { background: var(--surface-2); color: var(--critical); }
+.timeline { list-style: none; margin: 4px 0 0; padding: 0; font-size: 13px; }
+.timeline li { padding: 3px 0; border-bottom: 1px dashed var(--border); display: flex; gap: 10px; }
+.timeline .d { color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.timeline .ctx { color: var(--text-3); }
+.flag { font-size: 12px; color: var(--accent); font-weight: 600; white-space: nowrap; }
 </style>
 </head>
 <body>
 <main>
   <button class="chip theme-toggle" id="theme" type="button" aria-label="Toggle light or dark theme">Theme</button>
-  <h1>10-Bagger Catalyst Watchlist · US</h1>
-  <p class="sub">US companies whose <b>numbers already show</b> an inflection (growth, margins, turnaround), ranked by a
-    backtested score, then read by AI in their own SEC filings to separate new catalysts from cycles, acquisitions and
-    one-offs. Research watchlist, not investment advice.</p>
+  <h1>Catalyst-of-Change Radar · US</h1>
+  <p class="sub">Every quarter, each US company's SEC filings are checked for a <b>change</b>: revenue accelerating,
+    gross margin stepping up, turning profitable, contracted revenue jumping. A company that changes faster than its
+    industry, grows organically and still has room to <b>5x</b> becomes <b>Emerging</b>; two quarters in a row makes it
+    <b>Confirmed</b>. AI then reads its filings to confirm the catalyst. Research watchlist, not investment advice.</p>
   <p class="meta" id="meta"></p>
 
-  <div class="funnel" id="funnel" aria-label="Screening funnel"></div>
+  <div class="funnel" id="funnel" aria-label="Radar funnel"></div>
 
-  <section aria-labelledby="wl-h">
-    <h2 id="wl-h">Watchlist</h2>
-    <p class="section-note"><b>Tier A</b> = confirmed structural catalyst: research now. <b>Tier B</b> = plausible
-      catalyst that is early or carries red flags: check again next quarter. Click a row for the filing quote and link.</p>
-    <div class="controls" role="toolbar" aria-label="Filter watchlist">
-      <button class="chip" data-tier="all" aria-pressed="true" type="button">All</button>
-      <button class="chip" data-tier="A" aria-pressed="false" type="button">Tier A</button>
-      <button class="chip" data-tier="B" aria-pressed="false" type="button">Tier B</button>
-      <select id="cat-filter" aria-label="Catalyst type"><option value="all">All catalyst types</option></select>
-    </div>
-    <div class="table-wrap"><table id="wl"></table></div>
+  <section aria-labelledby="a-h">
+    <h2 id="a-h">Tier A · Confirmed catalyst</h2>
+    <p class="section-note">Two quarters of numbers <b>and</b> an AI reading of the filing found a structural catalyst
+      (quote verified by code). Research these now. Click a row for the evidence and the event timeline.</p>
+    <div class="table-wrap"><table id="tA"></table></div>
   </section>
 
-  <section aria-labelledby="rv-h">
-    <h2 id="rv-h">What the AI found in the Layer 1 top 100</h2>
-    <p class="section-note">Most companies with strong numbers did <b>not</b> have a new catalyst. Each label is backed by a
-      verbatim quote from the company's latest 10-Q/10-K or earnings release, checked by code.</p>
-    <div class="chart" id="cat-chart"></div>
-    <details>
-      <summary>Show all 100 reviewed companies</summary>
-      <div class="table-wrap"><table id="rv"></table></div>
-    </details>
+  <section aria-labelledby="b-h">
+    <h2 id="b-h">Tier B · Emerging</h2>
+    <p class="section-note">The numbers show a company-specific change that passes every filter, but not yet for two
+      quarters, or not yet read by AI. Check again next quarter.</p>
+    <div class="controls" role="toolbar" aria-label="Filter Tier B">
+      <button class="chip" data-f="all" aria-pressed="true" type="button">All</button>
+      <button class="chip" data-f="stretch" aria-pressed="false" type="button">10x stretch only</button>
+    </div>
+    <div class="table-wrap"><table id="tB"></table></div>
   </section>
 
-  <section aria-labelledby="bt-h">
-    <h2 id="bt-h">Does the Layer 1 score work? Backtest</h2>
-    <p class="section-note">The score was run as of a past date using only filings public at that time, then compared with
-      the stocks that went on to return ≥10x over the next 5 years.</p>
-    <div class="kpis" id="kpis"></div>
-    <div class="two-col">
-      <div>
-        <h2 style="font-size:15px">10-bagger rate by market cap at the start</h2>
-        <div class="legend" id="size-legend"></div>
-        <div class="chart" id="size-chart"></div>
-      </div>
-      <div>
-        <h2 style="font-size:15px">Weight variants tested</h2>
-        <div class="table-wrap"><table id="variants"></table></div>
-      </div>
-    </div>
-    <p class="callout"><b>Survivorship bias:</b> only companies still listed today are included, so hit rates are optimistic.
-      <b>Small sample:</b> ~25 ten-baggers per window, so 1–2 hits between variants is noise. Weights were chosen by looking
-      at both windows; the honest next test is tracking this watchlist forward.</p>
+  <section aria-labelledby="v-h">
+    <h2 id="v-h">Confirmed by numbers, vetoed by AI</h2>
+    <p class="section-note">The numbers passed, but the filing shows the change is a cycle, an acquisition, a one-off or
+      has no clear driver. Listed so the veto can be checked.</p>
+    <details><summary>Show vetoed companies</summary><div class="table-wrap"><table id="tV"></table></div></details>
+  </section>
+
+  <section aria-labelledby="s-h">
+    <h2 id="s-h">Does it work? Event study 2012 → 2021</h2>
+    <p class="section-note">Every signal and stage entry since 2012, dated by its SEC filing, followed for 5 years.
+      <b>Lift</b> = how much more often it reached ≥5x than all companies from the same months (1.0 = random).
+      Rules were set on <span id="tuneW"></span>; the <b>holdout</b> (<span id="holdW"></span>) was not used to choose anything.</p>
+    <div class="legend" id="lift-legend"></div>
+    <div class="chart" id="lift-chart"></div>
+    <details><summary>Show the numbers</summary><div class="table-wrap"><table id="tS"></table></div></details>
+    <p class="callout"><b>Survivorship bias:</b> only companies listed today are included, so hit rates are optimistic;
+      lifts compare like with like. <b>Radar alone shows no holdout edge</b>: the edge comes from the Emerging filters.</p>
   </section>
 
   <section aria-labelledby="m-h">
     <h2 id="m-h">Method and sources</h2>
     <ul class="plain">
-      <li><b>Numbers:</b> SEC EDGAR XBRL companyfacts (data.sec.gov), quarters derived point-in-time; TTM revenue matches an
-        independent screener within 1% for 96.5% of companies.</li>
-      <li><b>Score (Layer 1):</b> <span id="weights"></span>; penalties for &gt;25% dilution, lumpy revenue, acquisition-driven
-        growth and 10x outcomes above $1T.</li>
-      <li><b>Catalyst review (Layer 2):</b> AI readers restricted to the filing text; every quote and URL verified by code.</li>
-      <li><b>Prices / market cap:</b> Yahoo Finance close × SEC cover-page shares.</li>
-      <li>Code, logs and the full backtest report: this repository (<code>src/</code>, <code>prompts.md</code>,
-        <code>output/backtest_report.md</code>).</li>
+      <li><b>Changes:</b> SEC EDGAR XBRL (first-reported values, dated by filing). Radar triggers: <span id="rEv"></span>.
+        Insider cluster buys (SEC Form 4 data sets) and 8-K items are shown as context only: they had no edge in the tuning period.</li>
+      <li><b>Emerging filters:</b> TTM growth ≥ industry median + <span id="exc"></span>; organic (acquisition flags off);
+        dilution ≤ <span id="dil"></span>; revenue growth needed for 5x ≤ <span id="rq"></span>/yr at a sector sales multiple.
+        <b>10x stretch</b> = the same test passes for 10x.</li>
+      <li><b>AI review:</b> readers restricted to the company's own filing text; every quote and link checked by code.</li>
+      <li><b>Prices / market cap:</b> Yahoo Finance close × SEC share count. Code, logs and the full event-study report are
+        in this repository (<code>src/</code>, <code>prompts.md</code>, <code>output/event_study_report.md</code>).</li>
     </ul>
   </section>
   <footer id="footer"></footer>
@@ -181,13 +180,15 @@ const DATA = /*__DATA__*/null;
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pct = (v, d = 0) => v == null || isNaN(v) ? "—" : (v * 100).toFixed(d) + "%";
-const pp = v => v == null || isNaN(v) ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + " pp";
 const money = v => v == null || isNaN(v) ? "—" : v >= 1e9 ? "$" + (v / 1e9).toFixed(1) + "B" : "$" + Math.round(v / 1e6) + "M";
-const signed = v => v == null || isNaN(v) ? "—" : `<span class="${v < 0 ? "neg" : "pos"}">${v >= 0 ? "+" : ""}${(v * 100).toFixed(0)}%</span>`;
+const signed = (v, d = 0) => v == null || isNaN(v) ? "—" : `<span class="${v < 0 ? "neg" : "pos"}">${v >= 0 ? "+" : ""}${(v * 100).toFixed(d)}%</span>`;
+const EV = { rev_accel: "Revenue accelerating", gm_step: "Gross-margin step-up", turn_positive: "Turned profitable / FCF+",
+  contract_jump: "Contracted revenue jump", insider_cluster: "Insider cluster buy", officer_change: "8-K officer change",
+  material_deal: "8-K material agreement" };
 const CAT = { new_tam: "New TAM", new_s_curve: "New S-curve", turnaround: "Turnaround", new_market: "New market",
   acquisition: "Acquisition", cyclical_recovery: "Cyclical recovery", one_off: "One-off", insufficient: "No clear driver" };
+const evList = s => String(s || "").split("+").filter(Boolean).map(e => EV[e] || e).join(", ");
 
-// Theme toggle (remembered per viewer when storage is available)
 (() => {
   const root = document.documentElement, btn = document.getElementById("theme");
   try { const t = localStorage.getItem("theme"); if (t) root.dataset.theme = t; } catch (e) {}
@@ -198,181 +199,133 @@ const CAT = { new_tam: "New TAM", new_s_curve: "New S-curve", turnaround: "Turna
   });
 })();
 
+const C = DATA.counts;
 document.getElementById("meta").textContent =
-  `Universe as of ${DATA.asOf} · market caps at Yahoo close ${DATA.priceDay} · page built ${DATA.built}`;
-document.getElementById("funnel").innerHTML = DATA.funnel.map((f, i) =>
-  `<div class="tile${i === DATA.funnel.length - 1 ? " final" : ""}"><div class="n">${f.n.toLocaleString()}</div><div class="l">${esc(f.label)}</div></div>`).join("");
-document.getElementById("weights").textContent = Object.entries(DATA.weights).filter(([, w]) => w > 0)
-  .map(([k, w]) => `${k.replace(/_/g, " ")} ${Math.round(w * 100)}%`).join(", ");
+  `Stages as of ${DATA.asOf} · market caps at Yahoo close ${DATA.priceDay} · page built ${DATA.built}`;
+document.getElementById("funnel").innerHTML = [
+  [DATA.universe, "US companies that file 10-Qs"], [C.fresh, "Reported a quarter in the last ~200 days"],
+  [C.radar, "Radar: a change event"], [C.emerging, "Emerging: passes every filter"],
+  [C.confirmed, "Confirmed: two quarters running"], [C.tier_a, "Tier A: AI-verified catalyst"],
+].map(([n, l], i, a) => `<div class="tile${i === a.length - 1 ? " final" : ""}"><div class="n">${n.toLocaleString()}</div><div class="l">${l}</div></div>`).join("");
+document.getElementById("tuneW").textContent = `${DATA.study.start} → ${DATA.study.tune_end}`;
+document.getElementById("holdW").textContent = `after ${DATA.study.tune_end} → ${DATA.study.end}`;
+document.getElementById("rEv").textContent = DATA.radarEvents.map(e => EV[e]).join(", ");
+document.getElementById("exc").textContent = Math.round(DATA.stages.industry_excess_pp * 100) + " pp";
+document.getElementById("dil").textContent = pct(DATA.stages.max_dilution);
+document.getElementById("rq").textContent = pct(DATA.stages.max_required_cagr);
 
-// ---------- Watchlist table ----------
+// ---------- tables ----------
+function timelineHtml(t) {
+  const items = (DATA.timelines[t] || []).slice(0, 12);
+  if (!items.length) return "<div>No events since 2024</div>";
+  return `<ul class="timeline">${items.map(e => `<li><span class="d">${esc(e.known_date)}</span>
+    <span class="${DATA.radarEvents.includes(e.event) ? "" : "ctx"}">${esc(EV[e.event] || e.event)}${DATA.radarEvents.includes(e.event) ? "" : " (context)"}</span>
+    <a href="${esc(e.url)}" target="_blank" rel="noopener">filing ↗</a></li>`).join("")}</ul>`;
+}
 function detailRow(r, span) {
-  const flags = String(r.red_flags || "").split(";").map(s => s.trim()).filter(Boolean);
-  return `<tr class="detail"><td colspan="${span}"><div class="detail-grid"><div>
-    <div class="k">Evidence from the filing</div><blockquote>“${esc(r.evidence_quote)}”</blockquote>
-    <a href="${esc(r.evidence_url)}" target="_blank" rel="noopener">Open SEC filing ↗</a>
-    <div class="k">Why this verdict</div><div>${esc(r.reason)}</div></div><div>
-    <div class="k">Red flags</div>${flags.length ? `<ul class="plain">${flags.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : "<div>None noted</div>"}
-    <div class="k">Numbers</div><div>Revenue vs earlier peak ${signed(r.rev_vs_peak)} · gross margin ${pp(r.gm_delta)} ·
-      ${r.organic === false ? "growth partly from acquisitions" : "organic growth"} · latest quarter ${esc(r.q0_end)}</div>
-    <a href="${esc(r.rev_url)}" target="_blank" rel="noopener">Revenue source (SEC XBRL filing) ↗</a></div></div></td></tr>`;
+  const ai = r.ai_verdict ? `<div class="k">AI reading of the filing · ${esc(CAT[r.ai_catalyst_type] || r.ai_catalyst_type)} · ${esc(r.ai_confidence)} confidence</div>
+    <div>${esc(r.ai_driver)}</div><blockquote>“${esc(r.ai_evidence_quote)}”</blockquote>
+    <a href="${esc(r.ai_evidence_url)}" target="_blank" rel="noopener">Open SEC filing ↗</a>
+    <div class="k">Verdict</div><div>${esc(r.ai_reason)}</div>
+    ${r.ai_red_flags ? `<div class="k">Red flags</div><div>${esc(r.ai_red_flags)}</div>` : ""}`
+    : `<div class="k">AI reading</div><div>Not reviewed yet (numbers only). It will be read when it reaches Confirmed.</div>`;
+  return `<tr class="detail"><td colspan="${span}"><div class="detail-grid"><div>${ai}</div><div>
+    <div class="k">Change events (newest first)</div>${timelineHtml(r.ticker)}
+    <div class="k">Latest quarter</div><div>Quarter ending ${esc(r.end)}, public ${esc(r.known_date)} ·
+      <a href="${esc(r.url)}" target="_blank" rel="noopener">revenue source ↗</a></div></div></div></td></tr>`;
 }
-
-const WL_COLS = `<thead><tr><th>Tier</th><th>Ticker</th><th>Catalyst</th><th>Confidence</th><th>What is driving it</th>
-  <th class="num">Mkt cap</th><th class="num">TTM revenue</th><th class="num">Growth</th><th class="num">Accel.</th>
-  <th class="num">Op. margin Δ</th><th class="num">Dilution</th><th class="num">L1 rank</th></tr></thead>`;
-let tierF = "all", catF = "all";
-const cats = [...new Set(DATA.watchlist.map(r => r.catalyst_type))];
-document.getElementById("cat-filter").innerHTML += cats.map(c => `<option value="${c}">${CAT[c] || c}</option>`).join("");
-
-function renderWatchlist() {
-  const rows = DATA.watchlist.filter(r => (tierF === "all" || r.tier === tierF) && (catF === "all" || r.catalyst_type === catF));
-  const body = rows.map((r, i) => `<tr class="row" tabindex="0" data-i="${DATA.watchlist.indexOf(r)}" aria-expanded="false">
-    <td><span class="badge tier-${r.tier}">Tier ${r.tier}</span></td><td class="ticker">${esc(r.ticker)}</td>
-    <td><span class="badge cat">${CAT[r.catalyst_type] || esc(r.catalyst_type)}</span></td><td class="conf">${esc(r.confidence)}</td>
-    <td class="driver">${esc(r.driver)}</td><td class="num">${money(r.market_cap_usd)}</td><td class="num">${money(r.rev_ttm)}</td>
-    <td class="num">${signed(r.rev_growth)}</td><td class="num">${r.rev_accel == null ? "—" : (r.rev_accel >= 0 ? "+" : "") + Math.round(r.rev_accel * 100) + " pp"}</td>
-    <td class="num">${pp(r.om_delta)}</td><td class="num">${r.share_growth == null ? "—" : (r.share_growth >= 0 ? "+" : "") + (r.share_growth * 100).toFixed(0) + "%"}</td>
-    <td class="num">${Math.round(r.layer1_rank)}</td></tr>`).join("");
-  const t = document.getElementById("wl");
-  t.innerHTML = WL_COLS + `<tbody>${body || `<tr><td colspan="12">No companies match this filter.</td></tr>`}</tbody>`;
-  bindExpand(t, DATA.watchlist, 12);
-}
-function bindExpand(table, source, span) {
+function bindExpand(table, rows, span) {
   table.querySelectorAll("tr.row").forEach(tr => {
     const toggle = () => {
       const open = tr.getAttribute("aria-expanded") === "true";
       if (open) tr.nextElementSibling.remove();
-      else tr.insertAdjacentHTML("afterend", detailRow(source[+tr.dataset.i], span));
+      else tr.insertAdjacentHTML("afterend", detailRow(rows[+tr.dataset.i], span));
       tr.setAttribute("aria-expanded", String(!open));
     };
     tr.addEventListener("click", toggle);
     tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
   });
 }
-document.querySelectorAll("[data-tier]").forEach(b => b.addEventListener("click", () => {
-  tierF = b.dataset.tier;
-  document.querySelectorAll("[data-tier]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-  renderWatchlist();
-}));
-document.getElementById("cat-filter").addEventListener("change", e => { catF = e.target.value; renderWatchlist(); });
-renderWatchlist();
-
-// ---------- Review table (all 100) ----------
-(() => {
-  const t = document.getElementById("rv");
-  t.innerHTML = `<thead><tr><th class="num">L1 rank</th><th>Ticker</th><th>Verdict</th><th>Catalyst</th><th>Confidence</th>
-    <th>What is driving it</th><th class="num">Mkt cap</th><th class="num">Growth</th></tr></thead><tbody>` +
-    DATA.review.map((r, i) => `<tr class="row" tabindex="0" data-i="${i}" aria-expanded="false"><td class="num">${Math.round(r.layer1_rank)}</td>
-      <td class="ticker">${esc(r.ticker)}</td><td>${esc(r.verdict)}</td><td><span class="badge cat">${CAT[r.catalyst_type] || esc(r.catalyst_type)}</span></td>
-      <td class="conf">${esc(r.confidence)}</td><td class="driver">${esc(r.driver)}</td><td class="num">${money(r.market_cap_usd)}</td>
-      <td class="num">${signed(r.rev_growth)}</td></tr>`).join("") + "</tbody>";
-  bindExpand(t, DATA.review, 8);
-})();
-
-// ---------- Charts (hand-written SVG; tooltip per mark) ----------
-function tooltip(container) {
-  const tip = document.createElement("div"); tip.className = "tip"; tip.setAttribute("role", "status");
-  container.appendChild(tip);
-  return {
-    show(html, evt) {
-      tip.innerHTML = html; tip.style.opacity = 1;
-      const box = container.getBoundingClientRect();
-      let x = evt.clientX - box.left + 12, y = evt.clientY - box.top - 34;
-      x = Math.min(x, box.width - tip.offsetWidth - 4);
-      tip.style.left = Math.max(0, x) + "px"; tip.style.top = Math.max(0, y) + "px";
-    },
-    hide() { tip.style.opacity = 0; }
-  };
+const HEAD = `<thead><tr><th>Ticker</th><th>Catalyst / change</th><th class="num">Mkt cap</th><th class="num">TTM revenue</th>
+  <th class="num">Growth</th><th class="num">vs industry</th><th class="num">Gross margin</th><th class="num">Op. margin</th>
+  <th class="num">Dilution</th><th class="num">Growth needed for 5x</th></tr></thead>`;
+function rowHtml(r, i) {
+  const what = r.ai_driver && r.tier !== "B" ? `<span class="badge cat">${esc(CAT[r.ai_catalyst_type] || r.ai_catalyst_type)}</span> ${esc(r.ai_driver)}`
+    : esc(evList(r.recent_events));
+  return `<tr class="row" tabindex="0" data-i="${i}" aria-expanded="false"><td class="ticker">${esc(r.ticker)}
+    ${r.stretch_10x ? '<div class="flag">10x stretch</div>' : ""}</td><td class="driver">${what}</td>
+    <td class="num">${money(r.market_cap_usd)}</td><td class="num">${money(r.rev_ttm)}</td><td class="num">${signed(r.yoy_ttm)}</td>
+    <td class="num">${signed(r.excess_yoy)}</td><td class="num">${pct(r.gm_ttm)}</td><td class="num">${pct(r.om_ttm)}</td>
+    <td class="num">${r.dilution == null ? "—" : signed(r.dilution)}</td><td class="num">${pct(r.req_cagr)}/yr</td></tr>`;
 }
-
-// Horizontal bars: catalyst type counts among the 100 reviewed (single series).
+function renderTier(id, rows, empty) {
+  const t = document.getElementById(id);
+  t.innerHTML = HEAD + `<tbody>${rows.map(rowHtml).join("") || `<tr><td colspan="10">${empty}</td></tr>`}</tbody>`;
+  bindExpand(t, rows, 10);
+}
+const A = DATA.rows.filter(r => r.tier === "A"), Ball = DATA.rows.filter(r => r.tier === "B"), V = DATA.rows.filter(r => r.tier === "vetoed");
+renderTier("tA", A, "No company is Confirmed and AI-verified this quarter.");
+let bF = "all";
+const renderB = () => renderTier("tB", bF === "stretch" ? Ball.filter(r => r.stretch_10x) : Ball, "No company matches.");
+document.querySelectorAll("[data-f]").forEach(b => b.addEventListener("click", () => {
+  bF = b.dataset.f; document.querySelectorAll("[data-f]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); renderB();
+}));
+renderB();
 (() => {
-  const el = document.getElementById("cat-chart");
-  const counts = {};
-  DATA.review.forEach(r => counts[r.catalyst_type] = (counts[r.catalyst_type] || 0) + 1);
-  const STRUCT = new Set(["new_tam", "new_s_curve", "turnaround", "new_market"]);
-  const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  const W = 640, bh = 18, gap = 10, left = 150, right = 70, H = rows.length * (bh + gap);
-  const max = Math.max(...rows.map(r => r[1]));
-  const x = v => (W - left - right) * v / max;
-  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Catalyst type counts among the 100 reviewed companies">`;
-  rows.forEach(([k, v], i) => {
-    const y = i * (bh + gap), w = Math.max(x(v), 2);
-    svg += `<text x="${left - 10}" y="${y + bh / 2 + 4}" text-anchor="end">${CAT[k] || k}</text>
-      <path d="M${left},${y} h${w - 4} a4,4 0 0 1 4,4 v${bh - 8} a4,4 0 0 1 -4,4 h${-(w - 4)} z" fill="var(--series-1)"
-        opacity="${STRUCT.has(k) ? 1 : 0.45}" data-k="${k}" data-v="${v}"/>
-      <rect x="${left}" y="${y - gap / 2}" width="${W - left}" height="${bh + gap}" fill="transparent" data-k="${k}" data-v="${v}"/>
-      <text class="val" x="${left + w + 6}" y="${y + bh / 2 + 4}">${v}${STRUCT.has(k) ? " · structural" : ""}</text>`;
-  });
-  el.innerHTML = svg + "</svg>";
-  const tip = tooltip(el);
-  el.querySelectorAll("[data-k]").forEach(m => {
-    m.addEventListener("mousemove", e => tip.show(`<b>${CAT[m.dataset.k]}</b> · ${m.dataset.v} of 100 companies`, e));
-    m.addEventListener("mouseleave", () => tip.hide());
-  });
+  const t = document.getElementById("tV");
+  t.innerHTML = `<thead><tr><th>Ticker</th><th>AI found</th><th>Why vetoed</th><th class="num">Growth</th></tr></thead><tbody>` +
+    V.map((r, i) => `<tr class="row" tabindex="0" data-i="${i}" aria-expanded="false"><td class="ticker">${esc(r.ticker)}</td>
+      <td><span class="badge tier-vetoed">${esc(CAT[r.ai_catalyst_type] || r.ai_catalyst_type)}</span></td>
+      <td class="driver">${esc(r.ai_reason)}</td><td class="num">${signed(r.yoy_ttm)}</td></tr>`).join("") + "</tbody>";
+  bindExpand(t, V, 4);
 })();
 
-// Grouped bars: 10-bagger rate by size bucket, two windows (2 series, legend + direct labels).
+// ---------- lift chart: horizontal grouped bars, tune vs holdout (2 series) ----------
 (() => {
-  const el = document.getElementById("size-chart");
-  const WIN = { tune: { label: "2019 → 2024", color: "var(--series-1)" }, holdout: { label: "2018 → 2023", color: "var(--series-2)" } };
-  document.getElementById("size-legend").innerHTML = Object.values(WIN)
-    .map(w => `<span><span class="sw" style="background:${w.color}"></span>${w.label}</span>`).join("");
-  const buckets = [...new Set(DATA.size.map(s => s.bucket))];
-  const W = 460, H = 220, left = 36, bottom = 28, top = 18;
-  const max = Math.max(...DATA.size.map(s => s.rate)) * 1.15;
-  const y = v => top + (H - top - bottom) * (1 - v / max);
-  const gw = (W - left) / buckets.length, bw = Math.min(28, gw / 3);
-  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Share of companies that became 10-baggers by starting market cap">`;
-  [0, 0.02, 0.04].forEach(t => svg += `<line class="grid" x1="${left}" x2="${W}" y1="${y(t)}" y2="${y(t)}"/>
-    <text x="${left - 6}" y="${y(t) + 4}" text-anchor="end">${t * 100}%</text>`);
-  buckets.forEach((b, i) => {
-    const cx = left + gw * i + gw / 2;
+  const el = document.getElementById("lift-chart");
+  const W = { tune: { label: "Tuning 2012–2017", color: "var(--series-1)" }, holdout: { label: "Holdout 2018–2021", color: "var(--series-2)" } };
+  document.getElementById("lift-legend").innerHTML = Object.values(W).map(w => `<span><span class="sw" style="background:${w.color}"></span>${w.label}</span>`).join("");
+  const NAME = g => g === "all company-quarters" ? "All companies (baseline)" : g.startsWith("stage entry: ")
+    ? "Stage: " + g.slice(13)[0].toUpperCase() + g.slice(14) : EV[g.slice(7)] || g;
+  const groups = DATA.groups, bh = 10, gap = 14, left = 190, right = 56, Wd = 680;
+  const H = groups.length * (2 * bh + 2 + gap);
+  const max = Math.max(2.2, ...DATA.lift.map(d => d.lift_5x || 0));
+  const x = v => left + (Wd - left - right) * v / max;
+  let svg = `<svg viewBox="0 0 ${Wd} ${H + 18}" role="img" aria-label="Lift in reaching 5x by signal and stage, tuning vs holdout">`;
+  [0, 1, 2].forEach(t => svg += `<line class="grid" x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H}" ${t === 1 ? 'stroke-dasharray="4 3"' : ""}/>
+    <text x="${x(t)}" y="${H + 14}" text-anchor="middle">${t}x</text>`);
+  groups.forEach((g, i) => {
+    const y0 = i * (2 * bh + 2 + gap);
+    svg += `<text x="${left - 10}" y="${y0 + bh + 4}" text-anchor="end">${NAME(g)}</text>`;
     ["tune", "holdout"].forEach((w, j) => {
-      const s = DATA.size.find(d => d.bucket === b && d.window === w); if (!s) return;
-      const x0 = cx - bw - 1 + j * (bw + 2), y0 = y(s.rate), h = y(0) - y0;
-      svg += `<path d="M${x0},${y(0)} v${-(Math.max(h, 4) - 4)} a4,4 0 0 1 4,-4 h${bw - 8} a4,4 0 0 1 4,4 v${Math.max(h, 4) - 4} z"
-        fill="${WIN[w].color}" data-b="${b}" data-w="${w}"/>
-        <rect x="${x0 - 1}" y="${top}" width="${bw + 2}" height="${y(0) - top}" fill="transparent" data-b="${b}" data-w="${w}"/>`;
+      const d = DATA.lift.find(r => r.group === g && r.window === w); if (!d) return;
+      const y = y0 + j * (bh + 2), wpx = Math.max(x(d.lift_5x) - left, 2);
+      svg += `<path d="M${left},${y} h${wpx - 3} a3,3 0 0 1 3,3 v${bh - 6} a3,3 0 0 1 -3,3 h${-(wpx - 3)} z" fill="${W[w].color}"/>
+        <rect x="${left}" y="${y - 1}" width="${Wd - left}" height="${bh + 2}" fill="transparent" data-g="${g}" data-w="${w}"/>`;
+      if (g.startsWith("stage entry: c") || g === "all company-quarters")
+        svg += `<text class="val" x="${left + wpx + 5}" y="${y + bh - 1}">${d.lift_5x.toFixed(2)}x</text>`;
     });
-    if (i === 0) {  // one combined direct label for the headline pair, so the two values never collide
-      const pair = ["tune", "holdout"].map(w => DATA.size.find(d => d.bucket === b && d.window === w));
-      const yTop = y(Math.max(...pair.map(s => s.rate)));
-      svg += `<text class="val" x="${cx}" y="${yTop - 6}" text-anchor="middle">${pair.map(s => (s.rate * 100).toFixed(1) + "%").join(" / ")}</text>`;
-    }
-    svg += `<text x="${cx}" y="${H - 8}" text-anchor="middle">${b}</text>`;
   });
   el.innerHTML = svg + "</svg>";
-  const tip = tooltip(el);
-  el.querySelectorAll("[data-b]").forEach(m => {
-    const s = DATA.size.find(d => d.bucket === m.dataset.b && d.window === m.dataset.w);
-    m.addEventListener("mousemove", e => tip.show(`<b>${s.bucket}</b> · ${WIN[s.window].label}<br>${s.hits} of ${s.n} became 10-baggers (${(s.rate * 100).toFixed(1)}%)`, e));
-    m.addEventListener("mouseleave", () => tip.hide());
+  const tip = document.createElement("div"); tip.className = "tip"; el.appendChild(tip);
+  el.querySelectorAll("[data-g]").forEach(m => {
+    const d = DATA.lift.find(r => r.group === m.dataset.g && r.window === m.dataset.w);
+    m.addEventListener("mousemove", e => {
+      tip.innerHTML = `<b>${NAME(d.group)}</b> · ${W[d.window].label}<br>lift ${d.lift_5x.toFixed(2)}x · ${pct(d.hit_5x, 1)} reached ≥5x (base ${pct(d.base_5x, 1)}) · ${d.n.toLocaleString()} entries`;
+      tip.style.opacity = 1; const b = el.getBoundingClientRect();
+      tip.style.left = Math.max(0, Math.min(e.clientX - b.left + 12, b.width - tip.offsetWidth - 4)) + "px"; tip.style.top = (e.clientY - b.top - 40) + "px";
+    });
+    m.addEventListener("mouseleave", () => tip.style.opacity = 0);
   });
-})();
-
-// KPIs + variants table
-(() => {
-  const bt = Object.fromEntries(DATA.backtest.map(r => [r.window, r]));
-  const k = [
-    [`${bt.tune.hits_top100} / ${bt.holdout.hits_top100}`, "10-baggers in the top 100 (2019 / 2018 window)"],
-    [`${bt.tune.lift.toFixed(1)}x / ${bt.holdout.lift.toFixed(1)}x`, "better than picking at random"],
-    [`${bt.tune.fivex_top100} / ${bt.holdout.fivex_top100}`, "top-100 names that returned 5x or more"],
-    [`${pct(bt.tune.loser_share_top100)} / ${pct(bt.holdout.loser_share_top100)}`, "top-100 names that lost half or more"],
-  ];
-  document.getElementById("kpis").innerHTML = k.map(([n, l]) => `<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
-  const by = {};
-  DATA.variants.forEach(v => (by[v.variant] ||= {})[v.window] = v);
-  document.getElementById("variants").innerHTML = `<thead><tr><th>Variant</th><th class="num">10x hits</th><th class="num">5x+</th>
-    <th class="num">Halved</th></tr></thead><tbody>` + Object.entries(by).map(([name, w]) =>
-    `<tr><td>${name === "config.yaml (current)" ? "<b>Current (chosen)</b>" : esc(name.replace(/_/g, " "))}</td>
-     <td class="num">${w.tune.hits_top100} / ${w.holdout.hits_top100}</td><td class="num">${w.tune.fivex_top100} / ${w.holdout.fivex_top100}</td>
-     <td class="num">${pct(w.tune.loser_share_top100)} / ${pct(w.holdout.loser_share_top100)}</td></tr>`).join("") + "</tbody>";
+  document.getElementById("tS").innerHTML = `<thead><tr><th>Signal / stage</th><th>Window</th><th class="num">Entries</th>
+    <th class="num">≥5x</th><th class="num">≥10x</th><th class="num">Median</th><th class="num">Halved</th><th class="num">Lift</th></tr></thead><tbody>` +
+    DATA.lift.map(d => `<tr><td>${esc(NAME(d.group))}</td><td>${d.window}</td><td class="num">${d.n.toLocaleString()}</td>
+      <td class="num">${pct(d.hit_5x, 1)}</td><td class="num">${pct(d.hit_10x, 1)}</td><td class="num">${d.median.toFixed(2)}x</td>
+      <td class="num">${pct(d.halved)}</td><td class="num"><b>${d.lift_5x.toFixed(2)}x</b></td></tr>`).join("") + "</tbody>";
 })();
 
 document.getElementById("footer").textContent =
-  "Sources: SEC EDGAR (data.sec.gov, sec.gov/Archives), Yahoo Finance. Values in each row link to the filing they came from. Course homework, AI Investor Alpha.";
+  "Sources: SEC EDGAR (data.sec.gov, sec.gov/Archives, Insider Transactions Data Sets), Yahoo Finance. Course homework, AI Investor Alpha · Phase 1.5.";
 </script>
 </body>
 </html>

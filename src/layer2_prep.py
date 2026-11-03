@@ -94,7 +94,7 @@ def build_pack(sec: SecClient, row: pd.Series) -> str:
              f"- Operating margin now {row['om']:.1%}, change {row['om_delta'] * 100:+.1f} pp" if pd.notna(row["om_delta"]) else "- Operating margin: n/a",
              f"- Turnaround flag: {row['turnaround_type'] or 'none'}",
              f"- Diluted shares YoY: {row['share_growth']:+.1%}" if pd.notna(row["share_growth"]) else "- Diluted shares YoY: n/a",
-             f"- Layer 1 rank: {int(row['rank'])}", ""]
+             f"- Layer 1 rank: {int(row['rank']) if pd.notna(row['rank']) else 'not ranked (radar candidate)'}", ""]
 
     periodic = latest(recent, {"10-Q", "10-K"})
     if periodic:
@@ -130,9 +130,14 @@ def build_pack(sec: SecClient, row: pd.Series) -> str:
 
 
 def main() -> None:
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tickers", nargs="*", help="build packs for these tickers instead of the Layer 1 top N")
+    args = ap.parse_args()
     cfg = load_config()
     df = pd.read_csv(DATA_PRIVATE / f"layer1_scores_{cfg['universe_date']}.csv", dtype={"cik": str})
-    top = df[df["rank"] <= cfg["top_n"]].sort_values("rank")
+    top = (df[df["ticker"].isin(args.tickers)] if args.tickers
+           else df[df["rank"] <= cfg["top_n"]].sort_values("rank"))
     PACKS.mkdir(parents=True, exist_ok=True)
     sec = SecClient()
 
@@ -147,7 +152,8 @@ def main() -> None:
     s = pd.Series(sizes)
     no_mda = [t for t in s.index if "(MD&A not found)" in (PACKS / f"{t}.md").read_text()]
     no_pr = [t for t in s.index if "Earnings release" not in (PACKS / f"{t}.md").read_text()]
-    (DATA_CACHE / "layer2" / "manifest.json").write_text(json.dumps(top[["ticker", "cik", "rank"]].to_dict("records")))
+    if not args.tickers:
+        (DATA_CACHE / "layer2" / "manifest.json").write_text(json.dumps(top[["ticker", "cik", "rank"]].to_dict("records")))
     print(f"packs: {len(s)} · median chars {int(s.median()):,} · total {int(s.sum()):,}")
     print(f"MD&A not found: {no_mda}")
     print(f"no earnings release found: {no_pr}")
