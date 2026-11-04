@@ -1413,3 +1413,54 @@ For 10-Q. Which page it show revenue 12 months at 1,145 billion ?
   - Decide whether held-to-maturity securities should count as cash.
   - Check ZLAB's market value: it uses a 2021 cover-page share count.
   - Small wording fixes in the sheet.
+
+---
+
+## รอบ 29 · 2026-11-05 · Excel download on the public link; Calculation check explained in Introduction, Methodology and How to Use
+
+- **ทำอะไร:**
+  - **Public link checked:**
+    - GitHub Pages already serves the dashboard at https://jittia.github.io/aia-hw-jitti/output/moat_momentum.html, with no login.
+    - The Screener, the Deep-Dive and the calculation table work there.
+    - **Download as Excel** was missing there, because it needed claude.ai's download feature.
+  - **Fix:**
+    - New `saveMode`, `browserSave` and `fileSaver` in `output/moat_momentum.html`.
+    - Outside claude.ai the page saves the file as a normal browser download; inside claude.ai it uses the claude.ai prompt as before.
+    - Also used for the pitch deck's Download .html.
+    - 2 new tests.
+  - **Design tabs:**
+    - *Introduction:* the pain point now reads "Numbers you cannot check"; a new section "Every number can be checked"; a new line in "You get".
+    - *Methodology:* new section 8 "Checking the calculation": the 3 workbook tabs, how page numbers are found (with the shares placed), the honesty test, and the held-to-maturity gap.
+    - *How to Use:* a new workflow step "Check the numbers" and a 6-step guide "Check a number yourself: Download as Excel".
+    - All three show the same worked example: DUOL 12-month revenue $1,145,002,000 = 10-K 2025 $1,037,589,000 (page 84) + 6 months 2026 $590,421,000 (10-Q page 7) − 6 months 2025 $483,008,000 (10-Q page 6).
+  - README: public dashboard link at the top; Download as Excel described.
+  - Dashboard republished on claude.ai as versions 22 and 23.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser · local server (`.claude/launch.json`, moat-site)
+- **Prompt ที่ใช้:**
+
+```text
+Can my teacher open to see this output htmp without download and login ?
+```
+
+```text
+Update this new feature as key benefit and show example in all 3 sections under group tab Design (Introduction, Methodology, How to use) too.  Specific for other to use Download as  Excel calculation sheet   Then Save and Push to Github Repo.
+```
+
+- **ผลที่ได้:**
+  - Tested on a local server with no claude.ai, the way GitHub Pages serves the page: Download as Excel saves `CRMD_calculation_check_2026-11-03.xlsx` (14 KB).
+  - The three Design tabs show the new sections and the example, with no sideways scroll.
+  - 203 tests pass.
+  - **Not yet seen on GitHub Pages:** it updates a minute or two after this push.
+  - **Still private:** the Google Sheets in Jitti's Drive. Readers use Download as Excel instead.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti:**
+    - The teacher should be able to open the work with no download and no login.
+    - Make the calculation check a key benefit in the Design tabs, focused on Download as Excel for other readers.
+  - **Claude's choices:**
+    - **Fall back to a plain browser download only when there is no claude.ai runtime,** because inside claude.ai a plain download link is blocked and the claude.ai prompt is the only way.
+    - **One example, shared by all three tabs:** DUOL revenue, a single number traced to three printed pages. It answers the question Jitti asked in round 28 ("which page shows 1,145?"), and one shared block keeps the three tabs consistent.
+    - **The example's figures are fixed and dated (data as of 2026-11-03),** with source and XBRL tag. It explains the method, so it does not need to move with each data refresh.
+- **ขั้นต่อไป:**
+  - Look at the public page after the push.
+  - Read the instructor's comments in Issues.
+  - Decide on held-to-maturity securities as cash; check ZLAB's share count.

@@ -71,6 +71,7 @@
 - Google Slides: an inserted image keeps a tiny base size and is shown through its scale; to resize it, set the scale to the target size ÷ that base size (read it first), never a small ratio such as 0.9. Check every slide as an image (Slides thumbnails work when no PDF renderer is installed).
 - When showing how a number was calculated, recompute it from the raw SEC parts and test every company against the stored value; never just display the stored value.
 - A page number shown for a value comes from its Inline XBRL tag; if it cannot be found, write "not located", never a guess.
+- The public copy (GitHub Pages) has no claude.ai runtime: every feature that uses `claude.use(...)` needs a plain-browser fallback or must say it only works in claude.ai; test it on the local server, not the file preview.
 
 ## บันทึกปัญหา
 
@@ -353,3 +354,10 @@
   - Trimmed and split the export into 16 parts.
   - Added footer patterns, plus "#N" or "cover page" when no number is printed, and "not located" when not found.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Checking a few sample companies only; text search for the number in the filing.
+
+### 2026-11-05 · Download as Excel was missing on the public GitHub Pages link
+
+- **เจออะไร:** On https://jittia.github.io/… the Calculation check had no Download as Excel button, while its message told the reader to use it.
+- **สาเหตุ:** The download used claude.ai's `downloads` feature, which exists only when the page runs inside claude.ai. The built-in browser's file preview could not show the problem either: it opens a snapshot with no data files.
+- **แก้อย่างไร:** Use a plain browser download (Blob + link) when there is no claude.ai runtime. Tested on a local server (`python -m http.server`, moat-site in `.claude/launch.json`), which behaves like GitHub Pages.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Opening the HTML as a file preview to test.

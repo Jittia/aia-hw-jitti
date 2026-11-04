@@ -26,7 +26,7 @@ def run_js(expr: str):
     m = re.search(r"^const SECTOR_RANGES = \[.*?^\];\n", src, re.S | re.M)
     code = pre + m.group(0) + "".join(_fn(src, n) for n in ("pctRanks", "groupLists", "overlap", "riskPass", "sectorOf", "ddNotes", "makeWlStore", "buildDeck",
                                                  "auditMeasures", "ddCalcRows", "auditWorkbook",
-                                                 "driveErrorText", "auditLinkState")) + \
+                                                 "driveErrorText", "auditLinkState", "saveMode", "browserSave")) + \
         f"\nPromise.resolve({expr}).then(v => console.log(JSON.stringify(v)));"
     out = subprocess.run([NODE, "-e", code], capture_output=True, text=True, check=True)
     return json.loads(out.stdout)
@@ -391,7 +391,7 @@ class Workbook(unittest.TestCase):
         ev = (HTML.parent.parent / "tests" / "js" / "xleval.js").resolve()
         code = "const MM = {}; const ok = v => v !== null && v !== undefined && isFinite(v);\n" + "".join(
             _fn(src, n) for n in ("riskPass", "auditMeasures", "ddCalcRows", "auditWorkbook",
-                                                 "driveErrorText", "auditLinkState")) + f"""
+                                                 "driveErrorText", "auditLinkState", "saveMode", "browserSave")) + f"""
 const fs = require("fs"), vm = require("vm"), {{evalWorkbook}} = require({json.dumps(str(ev))});
 const ctx = {{window: {{}}}}; vm.createContext(ctx);
 for (const f of fs.readdirSync({json.dumps(str(AUDIT))}).filter(x => /^a\d+\.js$/.test(x))) vm.runInContext(fs.readFileSync({json.dumps(str(AUDIT))} + "/" + f, "utf8"), ctx);
@@ -455,6 +455,23 @@ class DriveSheet(unittest.TestCase):
         st = run_js("[auditLinkState(null, '2026-11-03'), auditLinkState({url: 'u', built: '2026-11-03'}, '2026-11-03'), "
                     "auditLinkState({url: 'u', built: '2026-08-01'}, '2026-11-03'), auditLinkState({built: '2026-11-03'}, '2026-11-03')]")
         self.assertEqual(st, ["create", "open", "rebuild", "create"])
+
+    def test_save_mode(self):  # public copy (GitHub Pages, no claude.ai runtime) saves with a plain browser download
+        got = run_js("[saveMode(false, null), saveMode(true, {save(){}}), saveMode(true, null)]")
+        self.assertEqual(got, ["browser", "runtime", None])
+
+    def test_browser_save_clicks_a_download_link(self):
+        got = run_js("""(() => { const log = {}; const a = {click() { log.clicked = true; }, remove() { log.removed = true; }};
+          const doc = {createElement: t => (log.tag = t, a), body: {appendChild: () => { log.appended = true; }}};
+          const U = {createObjectURL: b => (log.type = b.type, log.size = b.size, "blob:x"), revokeObjectURL: u => { log.revoked = u; }};
+          browserSave("DUOL_calc.xlsx", new Uint8Array([1, 2, 3]), "application/x-test", doc, U, f => f());
+          return Object.assign(log, {download: a.download, href: a.href}); })()""")
+        self.assertEqual(got["tag"], "a")
+        self.assertEqual(got["download"], "DUOL_calc.xlsx")
+        self.assertEqual(got["href"], "blob:x")
+        self.assertEqual((got["type"], got["size"]), ("application/x-test", 3))
+        self.assertTrue(got["clicked"] and got["appended"] and got["removed"])
+        self.assertEqual(got["revoked"], "blob:x")
 
 
 if __name__ == "__main__":

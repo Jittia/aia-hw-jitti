@@ -328,6 +328,8 @@ tr.click:hover td, .lists3 tr.on td { background:var(--hover); }
 .quote::before { content:"“"; position:absolute; left:0; top:-12px; font:700 72px/1 var(--serif); color:var(--teal); opacity:.85; }
 .quote blockquote { font-size:clamp(19px, 2vw, 23px); line-height:1.4; }
 .grid3 .card h3, .q4 .card h3 { margin-top:0; }
+.calcex .calcsum td { border-top:2px solid var(--ink-2); font-size:inherit; font-weight:600; }
+.calcex td.num, .calcex th.num { text-align:right; white-space:nowrap; }
 ol.steps { padding-left:22px; } ol.steps li { padding-left:4px; }
 .timeline { gap:14px; } .tl-item { box-shadow:none; }
 .disclaimer { font-size:12px; line-height:1.5; }
@@ -822,17 +824,29 @@ async function createAuditSheet(cik) {
 }
 async function downloadAuditXlsx(cik) {
   if (_calcBusy) return; _calcBusy = true;
-  try { const dl = await deckDownloads(); if (!dl) { calcMsg("Downloads are not available in this view."); return; }
+  try { const dl = await fileSaver(); if (!dl) { calcMsg("Downloads are not available in this view."); return; }
     const model = auditModel(cik), bytes = await xlsxBytes(model);
-    await dl.save({filename: `${(MM_AUDIT.co[cik].t || cik)}_calculation_check_${MM_AUDIT.meta.as_of}.xlsx`, data: bytes});
+    await dl.save({filename: `${(MM_AUDIT.co[cik].t || cik)}_calculation_check_${MM_AUDIT.meta.as_of}.xlsx`, data: bytes, type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
     calcMsg("Saved.");
   } catch (e) { calcMsg(e && e.code === "unavailable" ? "Downloads are not available in this view." : "The file was not saved."); }
   finally { _calcBusy = false; }
 }
+// Save a file: the claude.ai downloads capability when the page runs there; a plain browser download on a public copy
+// (e.g. GitHub Pages), where there is no claude.ai runtime; none when claude.ai runs the page without downloads.
+function saveMode(hasClaude, dl) { return dl ? "runtime" : hasClaude ? null : "browser"; }
+function browserSave(filename, data, type, doc, U, later) {
+  const url = U.createObjectURL(new Blob([data], {type})), a = doc.createElement("a");
+  a.href = url; a.download = filename; a.rel = "noopener"; doc.body.appendChild(a); a.click(); a.remove();
+  later(() => U.revokeObjectURL(url));
+}
+async function fileSaver() {
+  const dl = await deckDownloads(), m = saveMode(!!(window.claude && window.claude.use), dl);
+  return m === "runtime" ? dl : m === "browser" ? {save: async ({filename, data, type}) => browserSave(filename, data, type || "application/octet-stream", document, URL, f => setTimeout(f, 30000))} : null;
+}
 function calcMsg(t) { const m = document.getElementById("calc-msg"); if (m) m.textContent = t; }
 async function renderCalcActions(cik) {
   const box = document.getElementById("calc-actions"); if (!box || +box.dataset.cik !== cik) return;
-  const st = await auditLinks.get(cik), mode = auditLinkState(st, MM_AUDIT.meta.as_of), dl = await deckDownloads();
+  const st = await auditLinks.get(cik), mode = auditLinkState(st, MM_AUDIT.meta.as_of), dl = await fileSaver();
   if (+box.dataset.cik !== cik || !document.body.contains(box)) return;
   const create = `<button type="button" class="btn" data-calc="create">${mode === "rebuild" ? "Rebuild calculation sheet (newer data)" : "Create calculation sheet"}</button>`;
   box.innerHTML = (mode === "open" ? `<a class="btn" href="${esc(st.url)}" target="_blank" rel="noopener">Open calculation sheet</a> <button type="button" class="btn ghost sm" data-calc="create">Rebuild</button>`
@@ -1551,9 +1565,9 @@ function openDeck(cik) {
   document.addEventListener("keydown", key, true);
   ov.addEventListener("click", async e => { const b = e.target.closest("[data-k]"); if (!b) return; const k = b.dataset.k;
     if (k === "prev") go2(-1); else if (k === "next") go2(1); else if (k === "close") close();
-    else if (k === "dl") { const dl = await deckDownloads(); if (!dl) return; try { await dl.save({filename: name, data: html}); } catch (err) { if (err && err.code && err.code !== "declined" && err.code !== "cancelled") wlToast("Download not available here."); } } });
+    else if (k === "dl") { const dl = await fileSaver(); if (!dl) return; try { await dl.save({filename: name, data: html, type: "text/html"}); } catch (err) { if (err && err.code && err.code !== "declined" && err.code !== "cancelled") wlToast("Download not available here."); } } });
   ov.querySelector("[data-k=close]").focus();
-  deckDownloads().then(dl => { if (dl) ov.querySelector("[data-k=dl]").classList.remove("hide"); });
+  fileSaver().then(dl => { if (dl) ov.querySelector("[data-k=dl]").classList.remove("hide"); });
 }
 // ---------- DESIGN ----------
 const SRC = {
@@ -1606,6 +1620,20 @@ const FOURQ = [
   {k: "g3", q: "Is pricing power strengthening as it grows?", sees: "Whether customers accept better prices or the cost position improves while sales grow: the moat getting wider.", misses: "Margin moves with product mix and input costs; some service companies report no gross margin.", src: "novymarx"},
   {k: "g4", q: "Is it a high-return business at a cheap price?", sees: "Quality and price together: the only one of the four that looks at the stock price.", misses: "Cheap can be cheap for a reason; one year of earnings.", src: "greenblatt"},
 ];
+// Worked example shared by Introduction, Methodology and How to Use: one number traced back to the filed pages
+// (Duolingo, data as of 2026-11-03; values and pages as in the DUOL calculation sheet built on 2026-11-05).
+const CALC_EX_CIK = 1562088;
+function calcExampleHtml() {
+  const r = (lab, v, f, pg, cls = "") => `<tr${cls}><td>${lab}</td><td class="num">${v}</td><td>${f}</td><td class="num">${pg}</td></tr>`;
+  return `<div class="card calcex"><p class="eyebrow">Example · Duolingo (DUOL) · revenue, 12 months to 30 Jun 2026</p>
+    <p style="margin-top:0">The Screener shows DUOL's 12-month revenue as <b>$1,145.0M</b>. No single filing prints that number, so the calculation sheet rebuilds it from three filed figures, each with the page where you can read it:</p>
+    <div class="tbl"><table><thead><tr><th>Step</th><th class="num">US$</th><th>Filing</th><th class="num">Page</th></tr></thead><tbody>
+    ${r("Last fiscal year (2025)", "1,037,589,000", "10-K for 2025", "84")}
+    ${r("+ This year to date (6 months 2026)", "590,421,000", "10-Q, Jun 2026", "7")}
+    ${r("− Same 6 months a year earlier (2025)", "483,008,000", "10-Q, Jun 2025", "6")}
+    ${r("= Revenue, 12 months", "<b>1,145,002,000</b>", "formula in the sheet", "", ' class="calcsum"')}</tbody></table></div>
+    <p class="small" style="margin-bottom:0">The same sheet carries every input (operating income, one-offs, D&amp;A, cash flow, equity, cash, debt, shares, price) the same way, then recomputes all 11 results and shows <b>“Same as dashboard? Yes”</b> beside each. Source: SEC EDGAR XBRL filings filed on or before 2026-11-03; XBRL tag RevenueFromContractWithCustomerExcludingAssessedTax. <a href="#deepdive/${CALC_EX_CIK}">Open DUOL's Calculation check</a>.</p></div>`;
+}
 function viewIntro(m) {
   const D = scrDefaultRun(), P = SCR.meta;
   const glance = [[Object.keys(SCR.co).length, "US companies covered"], [D.U.kept.length, "pass the risk check"], [D.atLeast(2), "top-right in 2+ Moat Screeners"], [D.atLeast(3), "top-right in 3+ Moat Screeners"]];
@@ -1619,7 +1647,7 @@ function viewIntro(m) {
   <div class="grid3">
     <div class="card"><h3>Too many companies</h3><p>Thousands of listed companies, a few analysts. Most time goes to finding names, not judging them.</p></div>
     <div class="card"><h3>The wrong first filter</h3><p>Common screens sort by cheapness or past growth. Neither tells you whether a business has a lasting advantage, the thing that drives long-term returns.</p></div>
-    <div class="card"><h3>Inconsistent evidence</h3><p>Each analyst builds a case from different numbers and dates, so ideas are hard to compare and hard to check later.</p></div>
+    <div class="card"><h3>Numbers you cannot check</h3><p>Each analyst builds a case from different numbers and dates, and screener figures arrive without the arithmetic behind them, so ideas are hard to compare and hard to trust.</p></div>
   </div>
   ${quoteHtml(QUOTES[2])}
   <h2>What the tool does</h2>
@@ -1629,19 +1657,22 @@ function viewIntro(m) {
   <h2>Four questions, one view</h2>
   <div class="q4">${FOURQ.map((f, i) => { const G = SGROUPS[i]; return `<div class="card"><p class="eyebrow">${esc(G.n)}</p><h3>${esc(f.q)}</h3><p><b>Sees:</b> ${esc(f.sees)}</p><p class="small"><b>Misses:</b> ${esc(f.misses)}</p><p class="small">${srcLink(f.src)}</p></div>`; }).join("")}</div>
   <p>No single measure captures a moat. Together the four cover value creation now, its runway, its direction and the price paid. A company that passes several is a stronger candidate than one that looks great on any single number.</p>
+  <h2>Every number can be checked</h2>
+  <p>Trust has to be earned, so the tool shows its work. At the bottom of every company's Deep-Dive, the <b>Calculation check</b> lists each of the 11 measures with its formula, the dollar amounts it used and the result. One click on <b>Download as Excel</b> gives anyone, with no account or login, a workbook for that company that recomputes every measure with live formulas from the values as filed with the SEC, each with its XBRL tag, filing and printed page number. For all ${Object.keys(SCR.co).length.toLocaleString()} companies the workbook's results equal what the Screener shows (tested before publishing).</p>
+  ${calcExampleHtml()}
   ${quoteHtml(QUOTES[1])}
   <h2>How we got here, honestly</h2>
   <p>We first tried to <i>predict</i> future compounders: a moat score (v1.0–v1.1), a compounder signal (v2.0) and a movement map (v3.0). Each was tested on years it had not seen, using only filings public at the time. None held up as a reliable predictor: the v1.0 shortlist matched the S&amp;P 500 with more risk, and v2.0 and v3.0 failed the tests we set in advance. One small sample did better (the v1.1 top 25), but too few companies to rely on (details in <a href="#archive">Archive</a>). The lesson: strong numbers tend to fade, and no formula replaced judgment.</p>
   <p>So we changed direction. The tool no longer claims to forecast. It does what screening does well, reliably and transparently: it points the analyst at the right companies and shows the evidence. The analyst decides.</p>
   <h2>What you get, and what it is not</h2>
-  <div class="grid2"><div class="card note-scn"><h3>You get</h3><ul><li>A short list from the whole market in one sitting.</li><li>The same evidence, sources and dates for every company.</li><li>A shared Watchlist with priority, notes and a 5-slide pitch deck per company.</li><li>Clear warnings where data is missing or a check could not be run.</li></ul></div>
+  <div class="grid2"><div class="card note-scn"><h3>You get</h3><ul><li>A short list from the whole market in one sitting.</li><li>The same evidence, sources and dates for every company.</li><li>A calculation sheet for any company (Download as Excel): every input traced to the page of the SEC filing it came from.</li><li>A shared Watchlist with priority, notes and a 5-slide pitch deck per company.</li><li>Clear warnings where data is missing or a check could not be run.</li></ul></div>
     <div class="card note-exp"><h3>It is not</h3><ul><li>A buy or sell signal, or investment advice.</li><li>A forecast: none of the four Moat Screeners has been back-tested here.</li><li>A replacement for reading the filings and talking to the business.</li></ul></div></div>`;
 }
 function viewMethodology(m) {
   const P = SCR.meta, d = P.defaults, L = P.lines;
   const def = (t, body, f, src) => `<div class="card defn"><h3>${t}</h3><p>${body}</p>${f ? `<div class="formula">${esc(f)}</div>` : ""}${src ? `<p class="small" style="margin-bottom:0">Source: ${src}</p>` : ""}</div>`;
   m.innerHTML = `${pageHead("Design", "Methodology", `How the Moat Screener works, what each measure means, where the data comes from, and what it cannot see. It produces candidates for a deeper look, not a final answer.`)}
-  <nav class="toc jumpnav" aria-label="Methodology sections">${["Key concepts", "Screener Scope", "The four Moat Screeners", "How they fit together", "Data sources", "Strengths and blind spots", "Definitions"].map((t, i) => `<a href="#" data-to="ms${i}">${t}</a>`).join("")}</nav>
+  <nav class="toc jumpnav" aria-label="Methodology sections">${["Key concepts", "Screener Scope", "The four Moat Screeners", "How they fit together", "Data sources", "Strengths and blind spots", "Definitions", "Checking the calculation"].map((t, i) => `<a href="#" data-to="ms${i}">${t}</a>`).join("")}</nav>
   <h2 id="ms0">1 · Key concepts</h2>
   <div class="grid2 c2">
     ${def("12-month figures (TTM)", "Every measure uses the last 12 months, built from the latest 10-Q or 10-K: last fiscal year + year to date − the same period a year earlier. Trends compare that figure with the same figure 1–4 quarters earlier (period ends matched within ±20 days).", "TTM = FY + YTD − prior YTD", srcLink("sec"))}
@@ -1685,7 +1716,16 @@ function viewMethodology(m) {
     ${def("Gross-margin change", "Gross margin now minus 4 quarters earlier, in percentage points. Rising while revenue grows suggests pricing power.", null, srcLink("novymarx"))}
     ${def("Percentile rank", "A company's position among the companies shown, 0–100, for each measure; ① ranks by the average of the two.", null, null)}
     ${def("Not tested", "A check that could not run because the figure is missing in the filings (for example no interest expense tagged). It is not a failure.", null, null)}
-  </div>`;
+  </div>
+  <h2 id="ms7">8 · Checking the calculation</h2>
+  <p>Every result on the Screener can be rebuilt by hand. The <b>Calculation check</b> at the bottom of each Deep-Dive shows, for the latest 12-month point, each measure's formula, the numbers used (in $M, with the period) and the result against the current lines. <b>Download as Excel</b> produces the same check as a workbook anyone can open; inside claude.ai, <b>Create calculation sheet</b> puts it straight into your Google Drive.</p>
+  <div class="grid3">
+    <div class="card"><h3>Tab 1 · Calculation check</h3><p>Settings (21% tax, 2% operating cash, the lines and risk thresholds), building blocks now / 4 / 12 quarters back, then each measure: result, what the dashboard shows and <b>Same as dashboard?</b> Every result is a formula.</p></div>
+    <div class="card"><h3>Tab 2 · SEC inputs</h3><p>Each 12-month item split into last fiscal year + year to date − the same months a year earlier; balance-sheet items at period end; price and shares. Each value has its XBRL tag, filing ID and page.</p></div>
+    <div class="card"><h3>Tab 3 · Sources</h3><p>One row per filing (form, period, filed date, accession) linking to the EDGAR filing index, plus the Yahoo Finance price page and the SEC company-facts file.</p></div></div>
+  ${calcExampleHtml()}
+  <p><b>Page numbers.</b> Filings are Inline XBRL, so each number on a page carries its tag. We split each 10-K and 10-Q at its page breaks and find the page holding that tag, value and period, then read the number printed at the foot of the page (e.g. “84” or “F-3”). Of 86,592 values, 92.9% have a printed page, 3.9% sit on unnumbered pages and show “#N” (the Nth page of the filing), 1.7% are cover-page share counts, and 1.5% are marked “not located”, never guessed.</p>
+  <p><b>Honesty test.</b> Before publishing, the measures are recomputed from the filed inputs for every company, in Python and in the page's own code, and must equal the Screener's stored values within rounding; every company's workbook is also calculated and must say “Yes” on every row. <b>Known gap shown, not fixed:</b> held-to-maturity securities (Duolingo: $133.0M) are not in the cash list; the sheet shows a what-if with them counted as cash.</p>`;
   m.querySelector(".toc").addEventListener("click", e => { const a = e.target.closest("[data-to]"); if (a) { e.preventDefault(); document.getElementById(a.dataset.to).scrollIntoView({behavior: "smooth"}); } });
 }
 function wireframeSvg() {
@@ -1722,12 +1762,24 @@ function viewHowTo(m) {
     <li><b>Read each Moat Screener</b> (Section 2): the chart shows where companies stand; the three lists show who is already in the top-right and who is moving there fastest. Adjust the lines if your view of the hurdle differs.</li>
     <li><b>Compare</b> (Section 3, Summary): choose ①, ② or ③; companies in more Moat Screeners rise to the top. Sort by any column.</li>
     <li><b>Understand</b> (Deep-Dive): the business in brief, key numbers, all four results with their trend, why to look deeper and what to watch.</li>
+    <li><b>Check the numbers</b> (Deep-Dive, Calculation check at the bottom): read each formula and its inputs, or press <b>Download as Excel</b> for the full calculation sheet with SEC page references.</li>
     <li><b>Decide and share</b> (Watchlist): add with ☆, set Priority A/B/C, write your thinking in the note, and build a 5-slide pitch deck.</li></ol>
   <h2>The Screener page at a glance</h2>${wireframeSvg()}
   <div class="grid3"><div class="card"><h3>1 · Screener Scope</h3><p>Who is in the race. Counts update as you click; the line at the top shows how many reach the Moat Screeners.</p></div>
     <div class="card"><h3>2 · Moat Screener</h3><p>Four questions. Click a dot or a list row to see the company's values and 4-quarter trail. Edit the two line values to change what counts as top-right.</p></div>
     <div class="card"><h3>3 · Screener Summary</h3><p>Everyone in the chosen list across the four, with # of moats, percentile per Moat Screener and the key measures.</p></div></div>
   <h2>Example</h2>${ex}
+  <h2>Check a number yourself: Download as Excel</h2>
+  <p>Anyone can do this from the public dashboard, with no account or login.</p>
+  <ol class="steps">
+    <li>Open the company's <b>Deep-Dive</b> (search its ticker, e.g. <a href="#deepdive/${CALC_EX_CIK}">DUOL</a>) and scroll to <b>Calculation check</b> at the bottom.</li>
+    <li>Press <b>Download as Excel</b>. A file such as <code>DUOL_calculation_check_${esc(SCR.meta.price_date || "")}.xlsx</code> is saved by your browser.</li>
+    <li>Open it in Excel, Numbers, or Google Sheets (upload it to Google Drive, then open with Google Sheets). The formulas calculate when the file opens.</li>
+    <li><b>Tab “Calculation check”:</b> every row should say <b>Same as dashboard? Yes</b>. Click a result to see its formula.</li>
+    <li><b>Tab “SEC inputs”:</b> pick any value, note its filing ID (F1, F2…) and page.</li>
+    <li><b>Tab “Sources”:</b> follow that filing's EDGAR link, open the 10-K or 10-Q document and go to the page: the number is printed there.</li></ol>
+  ${calcExampleHtml()}
+  <p class="small">Inside claude.ai the same section also offers <b>Create calculation sheet</b>, which builds it as a Google Sheet in your own Google Drive. Blue cells are values from a source; black cells are formulas. Change a setting (for example the tax rate) to see how the results move; “Same as dashboard?” then shows No, as it should.</p>
   <h2>Tips</h2><ul><li><b>“Not tested”</b> means a figure is missing in the filings, not that the company failed.</li><li><b>Dots with a dashed outline</b> are off the chart and drawn at the edge; read their value in the side box.</li><li><b>List ② and ③ need history:</b> a company without a figure 4 quarters back can only appear in ①.</li><li><b>Everything is dated:</b> filings retrieved ${esc(SCR.meta.sec_retrieved || "")}, prices close ${esc(SCR.meta.price_date || "")}.</li><li>Definitions and sources are in <a href="#method">Methodology</a>.</li></ul>`;
 }
 

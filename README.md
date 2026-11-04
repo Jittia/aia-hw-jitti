@@ -7,8 +7,8 @@
 | **ชื่อเล่น** | Jitti |
 | **กลุ่ม** | G03 |
 | **โจทย์ 1 บรรทัด** | Screen ~1,900 US companies for a real and strengthening competitive moat using only SEC filings, and explain why each one deserves a deeper look |
-| **ลิงก์ผลงาน** | Dashboard: download the [`output/`](output/) folder and open `output/moat_momentum.html` in a browser (no server needed) · [spec (original brief)](spec.md) · [current design](docs/specs/2026-11-04-dashboard-pivot-design.md) · [work log](prompts.md) · [lessons](PROJECT_MEMORY.md) |
-| **สถานะ** | พร้อมตรวจ (2026-11-04): Moat Screener, Deep-Dive, Watchlist with 5-slide pitch decks; Calculation check with a Google Sheet per company (2026-11-05); 201 automated tests pass |
+| **ลิงก์ผลงาน** | **Dashboard, open in any browser, no login:** https://jittia.github.io/aia-hw-jitti/output/moat_momentum.html · or download the [`output/`](output/) folder and open `output/moat_momentum.html` in a browser (no server needed) · [spec (original brief)](spec.md) · [current design](docs/specs/2026-11-04-dashboard-pivot-design.md) · [work log](prompts.md) · [lessons](PROJECT_MEMORY.md) |
+| **สถานะ** | พร้อมตรวจ (2026-11-04): Moat Screener, Deep-Dive, Watchlist with 5-slide pitch decks; Calculation check with a downloadable Excel calculation sheet per company (2026-11-05); 203 automated tests pass |
 
 ![Moat Momentum Screener](output/dashboard_screener.png)
 
@@ -28,8 +28,8 @@ The project started as an attempt to **predict** future compounders and ended as
 
     A summary ranks companies by how many of the four they pass.
   - **Deep-Dive:** each company's business description from its 10-K, key numbers, all four results with their 4-quarter trend, and rule-based "why look deeper / what to watch".
-    A **Calculation check** at the bottom shows each measure's formula, the numbers used and the result, and builds a
-    Google Sheet (or .xlsx) for that company that recomputes every measure with live formulas from the values as filed
+    A **Calculation check** at the bottom shows each measure's formula, the numbers used and the result, and **Download as Excel** gives anyone (no login) a
+    workbook for that company (inside claude.ai it can also be created as a Google Sheet) that recomputes every measure with live formulas from the values as filed
     with the SEC: each input split into fiscal year + year to date − a year earlier, with its XBRL tag, filing and the
     page number printed in the filing (`src/mm_audit.py`, `src/mm_pages.py`). For all 1,870 companies the recomputed
     measures equal what the Screener shows (tested).
