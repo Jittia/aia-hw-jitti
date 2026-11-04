@@ -939,3 +939,69 @@ I want to change Screener section in to new way.  First adjust layout as below:
 - **ขั้นต่อไป:**
   - Redesign the Screener (brainstorm first).
   - Fill the deck placeholders, edit `help.md`, submit the repo link.
+
+---
+
+## รอบ 20 · 2026-11-04 · Screener rebuilt: risk pre-screen + four 2×2 groups + overlap
+
+- **ทำอะไร:**
+  - **Brainstorm → spec → plan → build (with approval at each step).** Spec `docs/specs/2026-11-04-screener-design.md` (reading copy `output/screener_spec.html`), plan `docs/plans/2026-11-04-screener.md`.
+  - **New Action › Screener page** (the site now opens on it):
+    1. Master filter: market-value chips (several at once) and a searchable industry checklist with counts.
+    2. Risk pre-screen: interest cover ≥ 3×, net debt ÷ EBITDA ≤ 3×, operating cash flow ÷ debt ≥ 20%; editable, Filter / Not filter, counts per check, Reset.
+    3. Four 2×2 groups, one under another: ① ROIC vs growth (McKinsey), ② reinvestment vs return on new capital (Mauboussin & Callahan), ③ gross-margin change vs growth (Novy-Marx), ④ Magic Formula (Greenblatt). Each has a chart (click a dot → name and values), a side box with the trend over the last 4 quarters (all 12-month figures), and three lists of 25: now top-right, improving fastest on Y, improving fastest on X.
+    4. Overlap: choose ①/②/③ and see which companies appear in the most groups.
+  - **Terminology:** 6 new entries (3 risk checks, Groups 2–4) with source links, plus a McKinsey link on the Moat Map entry.
+  - **Code:** `src/mm_screener.py` (new) computes risk measures and each group's X/Y now and at the 4 previous quarter-ends; `src/mm_run.py` writes it into `site_data.js` (`MM.scr`). Tests: `tests/test_screener.py` (12) and `tests/test_screener_js.py` (10, runs the page's list and risk rules in Node).
+  - Dashboard republished at the same link (version 12).
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 (build) · Opus subagent (independent final review) · built-in browser and Claude in Chrome (to open source pages)
+- **Prompt ที่ใช้:**
+
+```text
+I find the 2 X 2 quadrant approach (current snap shot, progress, price reflection) is good concept.  But I want to create 4 groups of combination, each one answer unique question which support Moat Momentum, user can use this 4 groups independently to generate outcome, then user can compare output of targeted company from each outcome to see overlap (repetitive).  This will help narrowdown short list prior to go deepdive.   But initial screening is the Risk which I want to use one button to screen out companies and focus on Debt Risk, Interest Payment risk.  Suggest me what would be the combination of those.  User can adjust value of that area and screen out company first before go to each 4 group.
+
+One of 4 groups is ROIC vs Growth (McKinsey Value Matrix).  I prefer to have clear reference from well known organization or study like this, to gain credibility of our selected criteria.  Give me up to 10 suggested Group, it's reference, what it is try to answer , overlap and your suggestion 5.  So I will narrow down to 3 to combine with ROIC vs Growth.
+```
+
+```text
+Part 1:  I agree with those 3.  Put that in Terminology with clear reference methodology , link to those study to get credible.
+
+Part 2 : I go with A , B, C
+
+Use this to build in Screener Tab.  It shall flow in section as below:
+
+* Master filter :  Market Cap (show few ranges), Industry (allow to combine multiple industry together) 
+* Risk Factor :  Show default threshold and allow to adjust.  Then click to Filter / Not Filter company which meet minimum risk requirement.
+* Four of  2X2 groups flow in one by one (vertical layout)
+* Each group : Show header with those name 2 indicator with key message eg. Is growth creating value right now ?   . Remark in lighter color text , Reference research eg McKinsey.   In graph, when I select any dot of company, it should show name and that's value.  Then the right hand side of graph in separate box will show those company current result from 2X2, and trend from previous 4 periods (all with TTM).  Below this part, it will show list of company name in 3 sub groups from 2X2.  1:  Current Top Right hand box.  2: Improving fastest to the Top Right hand box from lower score in Y axis.  3:  Improving fastest to the Top Right hand box from lower score in X axis.
+* The last section will be comparing list of Top Right corner block from each 2X2 Group.  List rank by company with shown in highest number of Group.
+```
+
+```text
+Section 4. Overlap:  It should have selection which will summary list of each outcome from 3 lists under each chart from Section 3. e.g. 1. Now in Top right, 2. Improving fastest Y, 3. Improving fastest X.
+
+Correct your assumption:  No need back test, i just want to have screener tool for now. 
+
+Line :  Do as your proposed.
+```
+
+- **ผลที่ได้:**
+  - **Today (1,870 companies, prices close 2026-11-03):** both values now — Group 1 83%, Group 2 38% (needs capital growth ≥ 10%), Group 3 77%, Group 4 84%. Group 4 lines (medians): ROIC 9.1%, earnings yield 4.6%. With default risk thresholds 1,105 remain; 551 have a check "not tested" (missing data, kept by default).
+  - **v1.1 unchanged:** 0 differences in rank, shortlist, score and Moat Map after the change.
+  - **Sources checked 4 Nov 2026:** Damodaran (NYU Stern ratings table, Jan 2026 data), Mauboussin & Callahan (Morgan Stanley page, 15 Oct 2024 edition), Novy-Marx (DOI, JFE 108(1) 2013), Greenblatt (magicformulainvesting.com), McKinsey *Valuation* 8th ed. **S&P has no link:** its criteria need a sign-in, so the entry names the document and says so.
+  - **Independent review:** 0 critical, 3 important (all fixed, each with a failing test first), 8 minor (listed under ขั้นต่อไป). 110 tests pass. Light, dark and 375 px checked; no errors.
+  - **Still missing:** none of the four groups is tested. The page says so and links to Proof.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti: four 2×2 groups instead of one score.** Each answers its own question about the moat and can be used alone; companies that appear in several groups make a short list before the Deep-Dive.
+  - **Jitti: risk check first, with adjustable thresholds.** Remove weak debt or interest-paying capacity before looking at quality.
+  - **Jitti: groups from well-known research (McKinsey, Mauboussin & Callahan, Novy-Marx, Greenblatt), with links.** For credibility.
+  - **Jitti: no back-test.** "I just want to have screener tool for now"; it is labelled as untested.
+  - **Jitti: lines as Claude proposed** (10% growth, 9% hurdle, 50% reinvestment, 0 margin change, medians for Group 4).
+  - **Claude's choices during the build (logged so they can be reversed):**
+    - Past earnings yield: that quarter's month-end price, with splits after the share-count date undone (fixed AMCR's 1-for-5 reverse split, which made its yield 5× too high), and the same share-count fallback and sanity range as the existing valuation.
+    - Risk rules after review: a missing figure is "not tested", never a failure (it had hidden LLY, JNJ, MRK, PFE, IBM, KLAC); interest cover is tested whenever interest is reported, even for net-cash companies (loss-makers like WOLF passed before); interest reported but no debt tagged → the two debt checks are "not tested" (149 companies passed everything before).
+    - SEC tagging errors left as filed (e.g. BDL debt $5.7B in one quarter); the chart pins outliers at the edge.
+    - List ① shows the average percentile (its ranking key) instead of a 4-quarter change; both changes are in the side box.
+- **ขั้นต่อไป:**
+  - Deferred minor issues from review: price caches refresh only for new tickers; past prices include dividend adjustment; very small EV gives extreme yields in lists (MBLY); return on new capital when capital 12 quarters back was ≤ 0; Group 3 change shown as "%" not points; an emptied threshold box keeps the old value; the "Unknown" industry tick; the same split-timing gap in v3.0 `value_at`.
+  - Fill the deck placeholders, edit `help.md`, submit the repo link.

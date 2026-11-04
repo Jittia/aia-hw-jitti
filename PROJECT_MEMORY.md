@@ -60,6 +60,9 @@
 - Leave prices, volumes and the funding ask as marked placeholders for the founder; never invent them.
 - Before sending a generated Slides batch, compact it (round colours, drop default styles); per-cell table styling can be several times the size of the content.
 - In any ranked table, label which rank a number is (position in this list vs overall rank); a filtered list with gaps reads as a bug.
+- In a risk filter, a missing figure is "not tested", never a failure; show how many are not tested and let the user decide whether to drop them.
+- When pairing a split-adjusted price with a share count, undo only the splits dated after the day the shares were counted, not after the price month.
+- Page logic that decides membership (filters, lists) gets unit tests too: extract the pure JS functions and run them in Node, not only by hand in the browser.
 
 ## บันทึกปัญหา
 
@@ -282,3 +285,17 @@
 - **แก้อย่างไร:** Shipped as a description, labelled failed; lists frozen for the live record.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Strong current numbers, alone or with a price gap, as a guide to becoming a compounder.
 
+
+### 2026-11-04 · Screener risk filter removed companies for missing data
+
+- **เจออะไร:** The independent review found LLY, JNJ, MRK, PFE, IBM and KLAC (114 companies) removed by the risk pre-screen and counted as failures, although their numbers were only missing. Net-cash loss-makers (e.g. WOLF −5.1×) and 149 companies with interest but no debt tagged passed everything.
+- **สาเหตุ:** The pass rules treated a missing value as a fail, let net cash skip interest cover, and read "no debt tagged" as "no debt". My browser checks only used made-up rows that had every value.
+- **แก้อย่างไร:** Missing → "not tested" (kept by default, can be removed); interest cover tested whenever interest is reported; interest without debt → the two debt checks "not tested". Each fix started with a failing test in `tests/test_screener_js.py`.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Checking the rules by hand in the browser console only.
+
+### 2026-11-04 · Reverse split between quarter-end and share count (AMCR)
+
+- **เจออะไร:** AMCR's past earnings yield was 5× too high for one quarter.
+- **สาเหตุ:** A 1-for-5 reverse split (Jan 2026) fell between the quarter-end price and the cover-page share count filed after it; I undid splits after the price month, so the price was pre-split and the shares post-split.
+- **แก้อย่างไร:** Undo only splits dated after the share-count date (test `test_past_yield_split_between_quarter_end_and_share_count`). The same gap exists in v3.0 `value_at`; left for later.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Undoing splits relative to the price month (the v3.0 fix), which is correct only when the count is from before the split.

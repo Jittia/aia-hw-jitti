@@ -1,0 +1,255 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Screener Spec</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet"><style>
+:root {
+  --paper:#FFF1E5; --card:#FBE6D4; --ink:#262A33; --ink-2:#66605A; --grid:#E3D3C4; --navy:#1F3A5F; --teal:#0F7B78; --teal-text:#0B6F6C;
+  --good:#2E7D4F; --good-text:#266C44; --good-bg:#E3EFE6; --neutral:#8A847D; --neutral-text:#5A544E; --neutral-bg:#ECE6E0;
+  --risk:#B3261E; --risk-text:#9E2119; --risk-bg:#F6DEDB; --on-solid:#FFFFFF; --hover:#F7DCC6;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif; --sans:"Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --r:4px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper:#1E1B18; --card:#2A2622; --ink:#F2E8DE; --ink-2:#B5AA9E; --grid:#3D3731; --navy:#8FB3E0; --teal:#4FC2BC; --teal-text:#4FC2BC;
+  --good:#6CC28F; --good-text:#6CC28F; --good-bg:#23382B; --neutral:#A8A198; --neutral-text:#C9C1B8; --neutral-bg:#33302C;
+  --risk:#F08A80; --risk-text:#F08A80; --risk-bg:#3E2523; --on-solid:#1E1B18; --hover:#332E29; color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --paper:#1E1B18; --card:#2A2622; --ink:#F2E8DE; --ink-2:#B5AA9E; --grid:#3D3731; --navy:#8FB3E0; --teal:#4FC2BC; --teal-text:#4FC2BC;
+  --good:#6CC28F; --good-text:#6CC28F; --good-bg:#23382B; --neutral:#A8A198; --neutral-text:#C9C1B8; --neutral-bg:#33302C;
+  --risk:#F08A80; --risk-text:#F08A80; --risk-bg:#3E2523; --on-solid:#1E1B18; --hover:#332E29; color-scheme:dark; }
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--paper); color:var(--ink); font:400 16px/1.5 var(--sans); }
+.wrap { max-width:1180px; margin:0 auto; padding:0 16px 48px; }
+h1,h2,h3,h4 { font-family:var(--serif); color:var(--navy); font-weight:600; line-height:1.2; }
+h1 { font-size:clamp(26px,4vw,34px); margin:20px 0 4px; }
+h2 { font-size:22px; margin:28px 0 8px; }
+h3 { font-size:17px; margin:18px 0 6px; }
+p { margin:0 0 10px; max-width:75ch; }
+a { color:var(--teal-text); }
+.num, td.r, .r { font-variant-numeric:tabular-nums lining-nums; }
+.small { font-size:13px; color:var(--ink-2); }
+.muted { color:var(--ink-2); }
+.bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:2px solid var(--navy); }
+.wordmark { display:flex; align-items:center; gap:10px; color:var(--navy); text-decoration:none; }
+.wordmark span { font:600 21px/1 var(--serif); }
+.tagline { font:italic 500 14px/1.3 var(--serif); color:var(--ink-2); }
+.tabs { display:flex; gap:2px; border-bottom:1px solid var(--grid); overflow-x:auto; position:sticky; top:0; background:var(--paper); z-index:5; }
+.tab { font:600 14px/1 var(--sans); padding:13px 12px; color:var(--ink-2); border:0; background:none; border-bottom:3px solid transparent; white-space:nowrap; cursor:pointer; }
+.tab[aria-selected="true"] { color:var(--navy); border-bottom-color:var(--teal); }
+.btn { font:600 14px/1 var(--sans); padding:9px 13px; border-radius:var(--r); border:1px solid var(--navy); background:var(--navy); color:var(--on-solid); cursor:pointer; }
+.btn.ghost { background:transparent; color:var(--navy); }
+.btn.sm { padding:6px 9px; font-size:13px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, .tab:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
+.card { background:var(--card); border:1px solid var(--grid); border-radius:var(--r); padding:16px; min-width:0; }
+.grid { display:grid; gap:14px; }
+.g2 { grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+.g3 { grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); }
+.badge { display:inline-flex; align-items:center; gap:5px; font:700 11px/1 var(--sans); letter-spacing:.5px; text-transform:uppercase; padding:5px 7px; border-radius:3px; border:1px solid transparent; white-space:nowrap; }
+.badge.dot::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.b-good { background:var(--good-bg); color:var(--good-text); border-color:var(--good); }
+.b-neutral { background:var(--neutral-bg); color:var(--neutral-text); border-color:var(--neutral); }
+.b-risk { background:var(--risk-bg); color:var(--risk-text); border-color:var(--risk); }
+.b-moat { background:var(--navy); color:var(--on-solid); }
+.b-conf { color:var(--ink-2); border-color:var(--grid); }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th,td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--grid); vertical-align:top; }
+th { font-weight:600; color:var(--ink-2); font-size:12px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; }
+td.r, th.r { text-align:right; }
+.tbl { overflow-x:auto; }
+th.sort { cursor:pointer; user-select:none; }
+th.sort:hover { color:var(--ink); }
+th.sort[aria-sort="ascending"] button::after { content:" ▲"; }
+th.sort[aria-sort="descending"] button::after { content:" ▼"; }
+th.sort button { all:inherit; cursor:pointer; }
+.note-exp { border-left:4px solid var(--risk); }
+tr.click { cursor:pointer; }
+tr.click:hover td { background:var(--hover); }
+.layout { display:grid; grid-template-columns:290px 1fr; gap:18px; align-items:start; margin-top:14px; }
+@media (max-width:900px) { .layout { grid-template-columns:1fr; } }
+.layout > * { min-width:0; }
+.layout.noset { grid-template-columns:1fr; }
+.layout.noset > .controls { display:none; }
+.tgroup { display:flex; flex-direction:column; padding:0 6px; }
+.tgroup + .tgroup { border-left:1px solid var(--grid); }
+.tglabel { font:600 10px/1 var(--sans); text-transform:uppercase; letter-spacing:.6px; color:var(--ink-2); padding:8px 12px 0; }
+.tgroup > div { display:flex; gap:2px; }
+.note-scn { border-left:4px solid var(--teal); }
+.tot { font-size:12px; margin:-2px 0 8px; color:var(--ink-2); }
+.tot.bad { color:var(--risk); font-weight:600; }
+.ctlnote { font-size:13px; background:var(--paper); border:1px solid var(--grid); border-left:3px solid var(--teal); padding:8px 10px; border-radius:var(--r); margin-bottom:10px; }
+fieldset.ctl-set { border:0; padding:0; margin:0; min-width:0; }
+fieldset.ctl-set[disabled] { opacity:.45; }
+.scn-eval { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-top:10px; }
+.scn-eval div { background:var(--paper); border:1px solid var(--grid); border-radius:var(--r); padding:8px 10px; }
+.scn-eval b { display:block; font:600 18px/1.2 var(--serif, var(--sans)); color:var(--navy); }
+.scn-eval span { font-size:12px; color:var(--ink-2); }
+.listwrap { max-height:calc(100vh - 110px); overflow:auto; scroll-margin-top:84px; border:1px solid var(--grid); border-radius:var(--r); }
+.listwrap thead th { position:sticky; top:0; background:var(--card); z-index:2; box-shadow:0 1px 0 var(--grid); }
+.topscroll { overflow-x:auto; overflow-y:hidden; height:14px; margin-bottom:4px; }
+.topscroll > div { height:1px; }
+.mapsvg { width:100%; height:auto; display:block; }
+.mapsvg text { font:11px var(--sans); fill:var(--ink-2); }
+.mapsvg .ql { font:600 12px var(--sans); fill:var(--ink-2); opacity:.75; }
+.mapsvg circle.dot { cursor:pointer; stroke:var(--paper); stroke-width:.6; }
+.mapsvg circle.dot.sel { stroke:var(--ink); stroke-width:2; }
+.mapsvg .pin { stroke:var(--ink); stroke-width:1.2; stroke-dasharray:2 1.5; }
+.maplegend { display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--ink-2); margin:6px 0 0; }
+.maplegend i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; vertical-align:-1px; }
+.mapinfo { font-size:14px; margin-top:8px; }
+td.reason { max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@media (max-width:640px) { .hm { display:none; } .tab { padding:12px 9px; } }
+.controls { position:sticky; top:72px; max-height:calc(100vh - 84px); overflow:auto; }
+@media (max-width:900px) { .controls { position:static; max-height:none; } }
+.ctl { margin-bottom:12px; }
+.ctl label { display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:var(--ink); }
+.ctl input[type=range] { width:100%; accent-color:var(--teal); }
+.seg { display:inline-flex; border:1px solid var(--grid); border-radius:var(--r); overflow:hidden; }
+.seg button { font:600 12px/1 var(--sans); padding:6px 8px; color:var(--ink-2); background:transparent; border:0; cursor:pointer; }
+.seg button.on { background:var(--teal); color:var(--on-solid); }
+.rule { display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; padding:7px 0; border-bottom:1px solid var(--grid); font-size:13px; }
+.rule input { width:64px; font:13px var(--sans); padding:3px 5px; border:1px solid var(--grid); border-radius:3px; background:var(--paper); color:var(--ink); }
+input[type=search], select, input[type=text] { font:14px var(--sans); padding:8px 10px; border:1px solid var(--grid); border-radius:var(--r); background:var(--paper); color:var(--ink); }
+.toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+.mini { display:inline-flex; gap:2px; vertical-align:middle; }
+.mini i { display:block; width:9px; height:16px; border-radius:1px; background:var(--grid); }
+.mini i.on { background:var(--teal); }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:12px 0; }
+.kpi { background:var(--card); border:1px solid var(--grid); border-radius:var(--r); padding:12px; }
+.kpi b { display:block; font:600 26px/1.1 var(--serif); color:var(--navy); font-variant-numeric:tabular-nums; }
+.kpi span { font-size:12px; color:var(--ink-2); }
+.chg { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.chart-scroll { overflow-x:auto; }
+svg.chart { width:100%; min-width:420px; height:auto; display:block; }
+svg.chart text { font-family:var(--sans); fill:var(--ink-2); font-size:11px; font-variant-numeric:tabular-nums; }
+.ctitle { font:600 15px/1.3 var(--serif); color:var(--ink); margin:0 0 2px; }
+.csub, .csrc { font-size:12px; color:var(--ink-2); margin:0 0 6px; }
+.csrc { margin-top:4px; }
+.obs { display:grid; grid-template-columns:78px 1fr; gap:10px; padding:9px 0; border-bottom:1px solid var(--grid); font-size:14px; }
+.obs:last-child { border-bottom:0; }
+.funnel-row { display:grid; grid-template-columns:minmax(160px,1fr) 2fr 70px; gap:10px; align-items:center; padding:7px 0; border-bottom:1px solid var(--grid); font-size:14px; }
+.funnel-bar { height:18px; background:var(--navy); border-radius:2px; }
+.funnel-bar.hl { background:var(--teal); }
+.learn h3 { margin-top:0; }
+.formula { font-family:ui-monospace,Menlo,monospace; font-size:13px; background:var(--paper); border:1px solid var(--grid); padding:8px 10px; border-radius:var(--r); overflow-x:auto; }
+.diagram { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:8px 0; font-size:13px; }
+.diagram .box { border:1px solid var(--navy); color:var(--navy); padding:5px 8px; border-radius:3px; background:var(--paper); }
+.diagram .op { color:var(--ink-2); font-weight:700; }
+.empty { border:1px dashed var(--grid); padding:18px; border-radius:var(--r); color:var(--ink-2); }
+.hide { display:none !important; }
+.disclaimer { margin-top:36px; padding-top:12px; border-top:2px solid var(--navy); font-size:12px; color:var(--ink-2); }
+.back { margin:14px 0 0; }
+.score-big { font:600 40px/1 var(--serif); color:var(--navy); font-variant-numeric:tabular-nums; }
+.hdr { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; justify-content:space-between; }
+details summary { cursor:pointer; font-weight:600; color:var(--navy); }
+@media print { body { background:#fff; } .tabs, .controls, .btn, .bar button { display:none !important; } }
+</style></head>
+<body><div class="wrap"><header class="bar"><span class="wordmark"><span>Moat Momentum</span></span><span class="tagline">Screener design spec · reading copy of docs/specs/2026-11-04-screener-design.md</span></header>
+<h1>Moat Momentum · Screener (four 2×2 groups) — design spec</h1>
+<p>Status: design agreed with Jitti in chat, 2026-11-04. Written spec for review; no code yet.</p>
+<p>Reading copy: <code>output/screener_spec.html</code>.</p>
+<h2>1. Purpose</h2>
+<p>A screening tool in the <b>Action</b> group: narrow the universe to a short list worth a Deep-Dive.</p>
+<ol>
+<li>Remove companies with weak debt or interest-paying capacity (risk pre-screen).</li>
+<li>Look at the remaining companies through four 2×2 groups, each answering one question about the moat.</li>
+<li>Compare the groups and keep the companies that show up in several.</li>
+</ol>
+<p><b>It is not a tested signal.</b> None of the four groups has been back-tested in our data. The page says so, and links to the Proof tab for what has been tested. Scenarios (Evaluation) keeps the tested methods unchanged. The site opens on the Screener once it ships.</p>
+<h2>2. Data</h2>
+<ul>
+<li><b>Basis:</b> live run only (no back-test).</li>
+<li><b>Figures:</b> 12-month figures (TTM) from each company&#x27;s latest 10-Q or 10-K (<code>mm_quarterly.ttm_panel</code>), and the points at the previous 4 quarter-ends (matched within ±20 days).</li>
+<li><b>Prices:</b> Yahoo Finance close of the previous trading day for &quot;now&quot; (existing <code>prices_daily</code>). For past quarter-ends: the Yahoo month-end close of that quarter&#x27;s last month, with later splits undone (<code>split_factor_after</code>), × cover-page shares filed by then (<code>cover_at</code>).</li>
+<li><b>Universe:</b> today&#x27;s universe (Scenarios universe B: US-listed, revenue ≥ $100M, ≥ 5 years, not finance).</li>
+<li><b>Missing values:</b> a company with a missing value is left out of that chart and that group&#x27;s lists only. The page shows how many were left out.</li>
+</ul>
+<h2>3. Section 1 · Master filter (applies to every section below)</h2>
+<ul>
+<li><b>Market value:</b> chips, several may be chosen.</li>
+<ul>
+<li>Mega ≥ $200B · Large $10–200B · Mid $2–10B · Small $300M–2B · Micro &lt; $300M · Not available</li>
+<li>None chosen = all.</li>
+</ul>
+<li><b>Industry:</b> a searchable list of SIC industries with company counts. Several may be ticked. &quot;Clear&quot; resets to all.</li>
+<li><b>Count:</b> a line shows how many companies remain.</li>
+</ul>
+<h2>4. Section 2 · Risk pre-screen</h2>
+<div class="tbl"><table><thead><tr><th>Check</th><th>Formula (12 months)</th><th>Default</th><th>Reference (linked in Terminology)</th></tr></thead><tbody><tr><td>Interest cover</td><td>clean operating income ÷ interest expense</td><td>≥ 3.0×</td><td>Damodaran, interest coverage ratio → synthetic rating table (NYU Stern, updated yearly)</td></tr><tr><td>Net debt ÷ EBITDA</td><td>(debt − cash) ÷ (clean operating income + depreciation &amp; amortisation)</td><td>≤ 3.0×</td><td>S&amp;P Global Ratings, *Corporate Methodology: Ratios and Adjustments* (core leverage ratio table)</td></tr><tr><td>Operating cash flow ÷ debt</td><td>cash from operations ÷ total debt</td><td>≥ 20%</td><td>Same S&amp;P table (FFO/debt; operating cash flow used as the FFO proxy)</td></tr></tbody></table></div>
+<p><b>How companies are treated:</b></p>
+<ul>
+<li><b>Net cash</b> (cash ≥ debt) passes the two debt checks.</li>
+<li><b>Net debt with EBITDA ≤ 0</b> fails the net-debt check.</li>
+<li><b>No debt</b> passes the cash-flow-to-debt check.</li>
+<li><b>Debt but no interest tagged:</b> &quot;not tested&quot; for interest cover. Kept by default, with a setting to remove these instead.</li>
+</ul>
+<p><b>Controls:</b></p>
+<ul>
+<li>each value is editable (number box);</li>
+<li>a switch, <b>Filter</b> / <b>Not filter</b> (default Filter);</li>
+<li><b>Reset to defaults</b>.</li>
+</ul>
+<p><b>Counts:</b> removed by each check, not tested, and remaining. The groups below use the remaining companies when Filter is on.</p>
+<h2>5. Section 3 · Four 2×2 groups (one under another)</h2>
+<p>Each group shows:</p>
+<ul>
+<li><b>Header:</b> the two measures and its question.</li>
+<li><b>Remark</b> (lighter text): the reference.</li>
+<li><b>Chart</b> (scatter, the existing Moat Map drawing):</li>
+<ul>
+<li>lines labelled, quadrant names shown;</li>
+<li>outliers pinned at the edge and marked, axes capped at the 2nd and 98th percentiles;</li>
+<li>dot size = market value; no colour coding (one neutral colour, top-right dots in the accent colour).</li>
+</ul>
+<li><b>Clicking a dot:</b></li>
+<ul>
+<li>shows its name and values next to the dot;</li>
+<li>the <b>side box</b> (right of the chart; below it on a phone) shows the company&#x27;s current values and quadrant, plus a 5-point trend table: now and 1–4 quarters back, both measures, all 12-month figures;</li>
+<li>the box links to the Deep-Dive.</li>
+</ul>
+<li><b>Three lists under the chart (25 each):</b></li>
+<ol>
+<li><b>Now in the top-right.</b> Ranked by the average of the two measures&#x27; percentile ranks (0–100 among companies shown).</li>
+<li><b>Improving fastest toward the top-right on the Y axis.</b> Already right of the X line, below the Y line, Y rose over the last 4 quarters (&gt; 0). Ranked by the rise in Y.</li>
+<li><b>Improving fastest toward the top-right on the X axis.</b> Already above the Y line, left of the X line, X rose over the last 4 quarters (&gt; 0). Ranked by the rise in X.</li>
+</ol>
+</ul>
+<p>  Each list row: company, X, Y, change over 4 quarters, market value; click → Deep-Dive.</p>
+<div class="tbl"><table><thead><tr><th>Group</th><th>Question</th><th>X axis (line)</th><th>Y axis (line)</th><th>Reference</th></tr></thead><tbody><tr><td><b>1 · Value creation: ROIC vs growth</b></td><td>Is growth creating value right now?</td><td>3-year revenue growth a year (10%)</td><td>clean ROIC − 9% (0)</td><td>Koller, Goedhart &amp; Wessels, *Valuation* (McKinsey &amp; Company), value matrix</td></tr><tr><td><b>2 · Compounding runway: reinvestment vs return on new capital</b></td><td>Can it keep compounding?</td><td>Reinvestment rate = (invested capital now − 4 quarters earlier) ÷ NOPAT (50%)</td><td>Return on new capital = (NOPAT now − 12 quarters earlier) ÷ (invested capital now − 12 quarters earlier), only when capital grew ≥ 10% (9%)</td><td>Mauboussin &amp; Callahan, &quot;Measuring the Moat&quot; (Credit Suisse, 2013; updated 2016)</td></tr><tr><td><b>3 · Pricing power: gross-margin change vs growth</b></td><td>Is pricing power rising while it grows?</td><td>3-year revenue growth a year (10%)</td><td>Gross margin now − 4 quarters earlier, in points (0)</td><td>Novy-Marx (2013), &quot;The other side of value&quot;, *Journal of Financial Economics*</td></tr><tr><td><b>4 · Good and cheap: Magic Formula</b></td><td>Is it a good business at a cheap price?</td><td>Return on capital = clean ROIC (median of all companies with both values)</td><td>Earnings yield = clean operating income ÷ EV (median of all companies with both values)</td><td>Greenblatt (2005), *The Little Book That Beats the Market*</td></tr></tbody></table></div>
+<p><b>Notes:</b></p>
+<ul>
+<li><b>Group 2:</b> NOPAT ≤ 0 → no reinvestment rate. Capital growth below 10% → no return on new capital (about 40% of companies have one); the count is shown.</li>
+<li><b>Group 4:</b> the medians are fixed for the day (computed on the whole universe), so the lines do not move while filtering. Greenblatt&#x27;s return on capital uses net working capital + net fixed assets; ours is the clean ROIC used everywhere else, stated in the remark. EV ≤ 0 → no earnings yield.</li>
+</ul>
+<h2>6. Section 4 · Overlap</h2>
+<ul>
+<li><b>Selector:</b> ① Now in the top-right · ② Improving fastest on Y · ③ Improving fastest on X.</li>
+<li><b>Table:</b> every company in the chosen list of any group:</li>
+<ul>
+<li>company;</li>
+<li>number of groups (1–4);</li>
+<li>which groups (badges);</li>
+<li>average percentile rank;</li>
+<li>market value;</li>
+<li>link to the Deep-Dive.</li>
+</ul>
+<li><b>Sorting:</b> by number of groups, then average rank. Column headers can re-sort.</li>
+</ul>
+<h2>7. Terminology</h2>
+<p>New entries, each with a plain-language explanation, formula, default threshold and a <b>link to the source</b>:</p>
+<ul>
+<li>the three risk checks (Damodaran; S&amp;P core ratios);</li>
+<li>Groups 2, 3 and 4 (Mauboussin &amp; Callahan; Novy-Marx; Greenblatt).</li>
+</ul>
+<p>Group 1 already has its Moat Map entry; it gains a link to the McKinsey *Valuation* book page. Every link is opened and checked during the build. A source that has no stable public page is cited without a link and says so.</p>
+<h2>8. Product rules</h2>
+<ul>
+<li><b>Labels and sources:</b> plain-language labels. Every number carries its source and date: SEC EDGAR bulk retrieved date; Yahoo close date.</li>
+<li><b>Browser checks:</b> light, dark and 375 px phone width (no horizontal page scroll); no console errors.</li>
+<li><b>Out of scope:</b> Scenarios, Proof and Track record do not change. No Sheet tab, no freeze, no back-test (not requested).</li>
+</ul>
+<h2>9. Components</h2>
+<div class="tbl"><table><thead><tr><th>Unit</th><th>Does</th></tr></thead><tbody><tr><td><code>mm_screener.py</code> (new)</td><td>For each company: risk measures; the 4 groups&#x27; X/Y now and at the previous 4 quarter-ends; changes over 4 quarters; Group 4 medians; percentile ranks. Writes a <code>scr</code> block into <code>site_data.js</code></td></tr><tr><td><code>mm_run.py</code> (updated)</td><td>Calls it in the live run</td></tr><tr><td><code>output/moat_momentum.html</code> (updated)</td><td>Screener view: master filter, risk pre-screen, 4 group sections (scatter + side box + 3 lists), overlap section; Terminology entries; site opens on Screener</td></tr></tbody></table></div>
+<p><b>Testing:</b></p>
+<ul>
+<li>unit tests for each group&#x27;s X/Y formulas, the 4-quarter changes, the three list rules (including the &quot;already right of / above the line&quot; conditions), the risk checks with net cash / no interest / negative EBITDA, and the past-quarter earnings yield (split undone, shares as filed then);</li>
+<li>browser checks of filtering, the risk switch, dot click, side box and overlap ranking.</li>
+</ul></div></body></html>

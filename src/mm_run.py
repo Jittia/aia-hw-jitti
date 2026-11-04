@@ -269,10 +269,21 @@ def main(as_of: str) -> None:
     # one-time 2021–2023 test (output/data/v3_test.json) and are shown as a description, labelled failed
     from mm_market import prices_daily
     from mm_moatmap import leading_at, map_at, top25, value_at
-    mmap = map_at(facts, companies, as_of, settings, live=True)
+    from mm_quarterly import ttm_panel
+    tpanel = ttm_panel(facts, as_of, settings["data"]["tax_rate"], settings["data"]["excess_cash_pct_revenue"])
+    mmap = map_at(facts, companies, as_of, settings, live=True, panel=tpanel)
     daily = prices_daily(sorted({t.replace(".", "-") for t in mmap["ticker"].dropna()}))
     mmap = value_at(mmap.assign(ticker=mmap["ticker"].map(lambda t: t.replace(".", "-") if isinstance(t, str) else t)),
                     as_of, px, pd.read_pickle(CACHE / "cover_shares.pkl"), live=True, daily=daily)
+
+    # Screener (spec docs/specs/2026-11-04-screener-design.md): risk measures and four 2×2 groups, now and 4 quarters
+    # back. Untested screening tool; filters, thresholds and lists are computed in the page.
+    from mm_market import splits_history
+    from mm_screener import screener_block
+    scr = screener_block(tpanel, mmap[["cik", "ticker", "ev"]], px, splits_history(sorted(mmap["ticker"].dropna().unique())),
+                         pd.read_pickle(CACHE / "cover_shares.pkl"), as_of)
+    scr["meta"] |= {"price_date": daily.attrs.get("date"), "prices_retrieved": daily.attrs.get("retrieved"),
+                    "sec_retrieved": settings["data"]["sec_retrieved"]}
     mmap = leading_at(mmap, pd.read_pickle(CACHE / "leading.pkl"), as_of)
     for rule in ("r1", "r2", "r3"):
         mmap[f"top_{rule}"] = mmap.index.isin(top25(mmap, rule).index)
@@ -375,7 +386,7 @@ def main(as_of: str) -> None:
             "confidence": u["confidence"].value_counts().to_dict()}
     OUTD.mkdir(parents=True, exist_ok=True)
     (OUTD / "site_data.js").write_text(
-        "window.MM = " + json.dumps({"meta": meta, "companies": rows}, separators=(",", ":"), default=str) + ";\n",
+        "window.MM = " + json.dumps({"meta": meta, "companies": rows, "scr": scr}, separators=(",", ":"), default=str) + ";\n",
         encoding="utf-8")
     (OUTD / "deep_data.js").write_text(
         "window.MM_DEEP = " + json.dumps({str(k): v for k, v in deep.items()}, separators=(",", ":"), default=str) + ";\n",
