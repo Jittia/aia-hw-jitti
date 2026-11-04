@@ -1312,3 +1312,19 @@ Watchlist Tab, adjust sliding bar both horisontal / vertical to be in same way a
   - Share the deck with the group.
   - Optionally switch on GitHub Pages for a public dashboard link.
   - Review `help.md`; deferred items from round 22.
+
+---
+
+## รอบ 26 · 2026-11-04 · help.md cleared before submission
+
+- **ทำอะไร:** Pulled the iMac's rounds 9–25 onto the laptop (`git pull`, fast-forward), then replaced the AI draft in `help.md` with a one-line note ("No help requests at this time") and ticked the `help.md` item in the README checklist.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5
+- **Prompt ที่ใช้:**
+
+```text
+Remove current writing in this help.md, it's not relevant for our latest design.  I have no additional request for help
+```
+
+- **ผลที่ได้:** `help.md` keeps the template heading plus one dated line, so the instructor can see it was reviewed rather than skipped. The README pre-submission checklist is complete except "ส่งลิงก์แล้ว".
+- **ตัดสินใจอะไร และเพราะอะไร:** Removed the 3 drafted stuck points, because they described an earlier design (v1.0) that is no longer relevant to the latest Moat Screener, and I have no additional request for help for the Repair Clinic.
+- **ขั้นต่อไป:** Submit the repo link via the class Google Form before Wed 4 Nov 21:00.

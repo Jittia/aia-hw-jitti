@@ -121,6 +121,6 @@ repo นี้ใครก็เปิดดูได้ ห้ามใส่�
 - [x] `prompts.md` มีบันทึกอย่างน้อย 3 รอบ และทุก commit มี entry คู่กัน (23 rounds)
 - [x] `PROJECT_MEMORY.md` มีปัญหาหรือบทเรียนอย่างน้อย 1 ข้อ
 - [x] `output/` มีภาพหรือลิงก์อย่างน้อย 1 ชิ้น
-- [ ] `help.md` เขียนครบ 3 ข้อ (AI draft from 2026-11-03 describes v1.0; Jitti to review and update)
+- [x] `help.md` reviewed: no help requests at this time (Jitti, 2026-11-04)
 - [x] ไม่มี key, password หรือข้อมูลพอร์ตจริงในทุกไฟล์
 - [ ] ส่งลิงก์แล้ว
