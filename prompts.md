@@ -904,3 +904,38 @@ Build views, labelled failed
 - **ขั้นต่อไป:**
   - Deferred minor issues: crash when Yahoo returns no prices; missing cash counted as zero in EV; the filing referenced in the freeze; the KPI label; single-company industries.
   - Fill the deck placeholders, edit `help.md`, submit the repo link.
+
+---
+
+## รอบ 19 · 2026-11-04 · Tabs regrouped: blank Screener, Scenarios, Track record
+
+- **ทำอะไร:**
+  - **Action:** a new blank "Screener" tab, a placeholder for the redesign.
+  - **Evaluation › Scenarios:** the old Screener page moved here unchanged (scenario tabs, settings, filters, table, Moat Map).
+  - **Evaluation › Track record:** now holds the frozen lists plus the old Scenarios page as the section "Scenarios compared".
+  - **Links:** all internal links now point to Scenarios (logo, Deep-Dive back link, Moat Map card, Demo steps, "How to use it").
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser
+- **Prompt ที่ใช้:**
+
+```text
+I want to change Screener section in to new way.  First adjust layout as below:
+
+1. Combine content in Scenario and Track Record together and call "Track Record"
+2. Move all layout in current Screener section to be under Evaluation sub-group and call "Scenarios".
+3. Create blank tab name "Screener" in  subgroup Action.  We will redesign in after you finish this.
+```
+
+- **ผลที่ได้:**
+  - Checked in the browser:
+    - the three groups show the right tabs;
+    - the site opens on Scenarios;
+    - the Moat Map still works;
+    - saving and deleting a scenario works inside Track record;
+    - no errors.
+  - 88 tests pass. Dashboard republished at the same link.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Layout as I described.** The working views become evaluation tools, which makes room for a new Screener designed from scratch.
+  - **The site opens on Scenarios for now** (Claude's choice, so nobody lands on an empty page). It will switch back to Screener after the redesign.
+- **ขั้นต่อไป:**
+  - Redesign the Screener (brainstorm first).
+  - Fill the deck placeholders, edit `help.md`, submit the repo link.

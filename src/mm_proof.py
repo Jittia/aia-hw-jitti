@@ -305,7 +305,7 @@ def main() -> None:
         f"<p class='small'>Then → 3 fiscal years later. Source: SEC EDGAR 10-K filings.</p><p>{lesson[r.outcome]}</p></div>"
         for r in demo.itertuples())
     demo_html = f"""<h1>Demo</h1><p class="muted">A guided walk through the tool in five steps, then three real cases from the 2013–2023 back-test.</p>
-<ol><li><b>Screener:</b> start from the shortlist. Each row shows the Moat Score, how many of the 5 themes are improving, and the top reason. <a href="#screener">Open</a></li>
+<ol><li><b>Scenarios:</b> start from the shortlist. Each row shows the Moat Score, how many of the 5 themes are improving, and the top reason. <a href="#scenarios">Open</a></li>
 <li><b>Change a setting:</b> move “Level” up to 70 (or pick the “Proven Leaders” scenario) and watch which names join and drop.</li>
 <li><b>Deep-Dive:</b> click a company. Read Key observations first, then the charts; every number links to its 10-K. <a href="#deepdive">Open</a></li>
 <li><b>Terminology:</b> each indicator explained with a worked example. <a href="#learn">Open</a></li>

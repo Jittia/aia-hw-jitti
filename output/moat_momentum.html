@@ -158,7 +158,7 @@ details summary { cursor:pointer; font-weight:600; color:var(--navy); }
 <body>
 <div class="wrap">
 <header class="bar">
-  <a class="wordmark" href="#screener" aria-label="Moat Momentum home">
+  <a class="wordmark" href="#scenarios" aria-label="Moat Momentum home">
     <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13.5" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="8.5,20.5 13,17 16.5,18.5 23.5,11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.5" cy="11" r="2" fill="var(--teal)"/></svg>
     <span>Moat Momentum</span>
   </a>
@@ -260,7 +260,7 @@ const filingUrl = (cik, accn) => `https://www.sec.gov/Archives/edgar/data/${cik}
 
 // ---------- state ----------
 let saved = {}; try { saved = JSON.parse(localStorage.getItem("mm-scenarios") || "{}"); } catch (e) {}
-const state = { s: clone(DEFAULT), view: "screener", filter: "shortlist", q: "", base: null, res: null, cik: null,
+const state = { s: clone(DEFAULT), view: "scenarios", filter: "shortlist", q: "", base: null, res: null, cik: null,
   list: "moat", ind: "", cap: "all", sort: {key: "pos", dir: 1}, scenario: "Early Moat — Default", hideSet: false };
 let _ls = null; try { _ls = localStorage.getItem("mm-hide-settings"); } catch (e) {}
 state.hideSet = _ls === null ? window.innerWidth < 760 : _ls === "1";
@@ -287,12 +287,12 @@ function renderTabs() {
 }
 document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) go(b.dataset.tab); });
 function go(view, cik) { state.view = view; if (cik) state.cik = cik; location.hash = view === "deepdive" && state.cik ? `deepdive/${state.cik}` : view; render(); window.scrollTo(0, 0); }
-window.addEventListener("hashchange", () => { const [v, c] = location.hash.slice(1).split("/"); if (v && v !== state.view || (c && +c !== state.cik)) { state.view = v || "screener"; if (c) state.cik = +c; render(); } });
+window.addEventListener("hashchange", () => { const [v, c] = location.hash.slice(1).split("/"); if (v && v !== state.view || (c && +c !== state.cik)) { state.view = v || "scenarios"; if (c) state.cik = +c; render(); } });
 
 function render() {
   renderTabs();
   const m = document.getElementById("main");
-  ({screener: viewScreener, deepdive: viewDeep, how: viewHow, learn: viewLearn, scenarios: viewScenarios,
+  ({screener: viewScreenerNew, deepdive: viewDeep, how: viewHow, learn: viewLearn, scenarios: viewScreener,
     proof: viewProof, track: viewTrack, method: viewMethod, demo: viewDemo}[state.view] || viewScreener)(m);
 }
 
@@ -376,7 +376,7 @@ function viewScreener(m) {
   const inds = {}; COMP.forEach(c => { inds[c.sic_desc] = (inds[c.sic_desc] || 0) + 1; });
   const indOpts = Object.keys(inds).filter(Boolean).sort().map(k => `<option value="${esc(k)}" ${state.ind === k ? "selected" : ""}>${esc(k)} (${inds[k]})</option>`).join("");
   const V2 = META.compounder;
-  m.innerHTML = `<h1>Screener</h1>
+  m.innerHTML = `<h1>Scenarios</h1>
   <p class="muted">Pick a scenario tab to see its list, what it does and how it did in the back-test. Early Moat, Proven Leaders and Strict Risk are versions of the Moat Score (Methodology ${META.methodology}); Compounder is the experimental v2.0 signal. Click a company for its Deep-Dive; click a column header to sort.</p>
 <div class="toolbar"><button class="btn ghost sm" id="togset" type="button" aria-expanded="${!state.hideSet}">${state.hideSet ? "Show settings" : "Hide settings"}</button>
       <span class="seg" id="lst" role="tablist" aria-label="Scenario">${listTabs().map(([k, n]) => `<button type="button" role="tab" data-l="${esc(k)}" aria-selected="${activeTab() === k}" class="${activeTab() === k ? "on" : ""}">${n}</button>`).join("")}</span></div>
@@ -718,7 +718,7 @@ function viewDeep(m) {
   q.push("Who are the 2–3 competitors that could close the gap, and what would it cost them?");
   const linkList = Object.entries(D.links).map(([f, l]) => `<a href="${l.url}" target="_blank" rel="noopener">${f} filed ${l.date}</a>`).join(" · ");
   m.innerHTML = `<div id="deep">
-  <p class="back"><a href="#screener">← Back to screener</a></p>
+  <p class="back"><a href="#scenarios">← Back to scenarios</a></p>
   <section class="hdr">
     <div><h1>${esc(c.name)} <span class="muted" style="font-size:.7em">${esc(c.ticker || "")}</span></h1>
       <div class="small">${esc(c.sic_desc)} · SIC ${c.sic} · peer group ${esc(c.group)} · scored on ${esc(c.period || "FY" + c.fy)} (ended ${c.fy_end}) · ${c.ttm ? "10-Q" : "10-K"} filed <a href="${filingUrl(c.cik, c.accn)}" target="_blank" rel="noopener">${c.filed}</a></div>
@@ -767,7 +767,7 @@ function mapCard(c) {
     ["Implied revenue growth a year", m.g_implied === null ? "n/a" : fp(m.g_implied)], ["Growth delivered (3 yrs)", fp(m.x)], ["Expectation Gap", m.gap === null ? "n/a" : fp(m.gap)]];
   const lead = [["Backlog growth minus revenue growth (1 yr)", nr(m.backlog_g)], ["Deferred revenue growth minus revenue growth (1 yr)", nr(m.defrev_g)], ["R&D ÷ revenue", nr(m.rnd_int)], ["Capex ÷ revenue", nr(m.capex_int)]];
   const tbl = rows => `<div class="tbl"><table class="num"><tbody>${rows.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="r"><b>${esc(b)}</b></td></tr>`).join("")}</tbody></table></div>`;
-  return `<h2>Moat Map (v3.0, description only)</h2><div class="card note-scn"><p style="margin-top:0">${esc(c.ticker || c.name)} is in <b>${esc(m.quad || "–")}</b>${m.r1 ? ", entered the top-right this year (R1)" : m.r2 ? ", moving toward the top-right (R2)" : ""}. Grey dots: the ${peers.length} companies in ${esc(c.group)} today; dashed teal line: the industry median growth. The line shows where ${esc(c.ticker || "the company")} was 1–5 years ago. The movement rules failed their 2021–2023 test, so read this as a description. <a href="#screener" id="openmap">Open the full map</a></p>
+  return `<h2>Moat Map (v3.0, description only)</h2><div class="card note-scn"><p style="margin-top:0">${esc(c.ticker || c.name)} is in <b>${esc(m.quad || "–")}</b>${m.r1 ? ", entered the top-right this year (R1)" : m.r2 ? ", moving toward the top-right (R2)" : ""}. Grey dots: the ${peers.length} companies in ${esc(c.group)} today; dashed teal line: the industry median growth. The line shows where ${esc(c.ticker || "the company")} was 1–5 years ago. The movement rules failed their 2021–2023 test, so read this as a description. <a href="#scenarios" id="openmap">Open the full map (Scenarios → Moat Map)</a></p>
   ${moatScatter([{c}].concat(peers.filter(z => z.c.cik !== c.cik)), {fg: z => z.c.cik === c.cik, sel: c.cik, trail: m.trail, cur: [m.x, m.y], indMed: m.ind_med_x, label: "Moat Map: " + (c.ticker || c.name) + " vs its industry"})}
   <div class="grid g2" style="margin-top:12px"><div><h3 style="margin-top:0">Valuation and Expectation Gap</h3>${tbl(val)}<p class="small">Reverse DCF with fixed assumptions: ${A.horizon_years} years at the implied growth, then ${fp(A.terminal_growth, 0)}; ${fp(A.discount, 0)} discount; ${fp(A.tax, 0)} tax; reinvestment at today's ROIC. Price: Yahoo Finance close ${esc(META.moatmap?.price_date || "")}.</p></div>
   <div><h3 style="margin-top:0">Leading items (shown, not tested)</h3>${tbl(lead)}<p class="small">From the latest 10-Q/10-K (SEC EDGAR). "Not reported" means the company does not tag it, not zero.</p></div></div></div>`;
@@ -797,7 +797,7 @@ function viewHow(m) {
      ["5 · Confirm", "“Moat Strengthening” only when at least 3 of the 5 themes are improving. The shortlist is the top 25 of those by Moat Score."]]
      .map(([h, t]) => `<div class="card"><h3>${h}</h3><p class="small" style="color:var(--ink)">${t}</p></div>`).join("")}</div>
   <h2>How to use it</h2><ol>
-  <li><b>Start with the shortlist</b> in the Screener. The top reason column says why each name is there.</li>
+  <li><b>Start with the shortlist</b> in Scenarios. The top reason column says why each name is there.</li>
   <li><b>Open a Deep-Dive.</b> Read Key observations first: risks are listed at the top. Every number links to its 10-K.</li>
   <li><b>Test the result.</b> Move the blend, weights or risk rules, or pick a saved scenario. “Joined / dropped” shows what your change did.</li>
   <li><b>Hand off to Phase 2</b> with the questions at the bottom of each Deep-Dive.</li></ol>
@@ -844,11 +844,11 @@ function viewLearn(m) {
 }
 
 // ---------- SCENARIOS ----------
-function viewScenarios(m) {
+function scenarioCompare(m) {
   const all = Object.assign({}, PRESETS, saved), names = Object.keys(all);
   const sl = n => new Set(compute(all[n]).ranked.filter(x => x.shortlist).map(x => x.c.ticker));
   const sets = Object.fromEntries(names.map(n => [n, sl(n)]));
-  m.innerHTML = `<h1>Scenarios</h1><p class="muted">Named settings you can load in the Screener. Three are pre-saved. Your own are kept in this browser; copy them into the Sheet's “Scenarios” tab to share them.</p>
+  m.innerHTML = `<h2>Scenarios compared</h2><p class="muted">Named settings you can load in the Scenarios tab. Three are pre-saved. Your own are kept in this browser; copy them into the Sheet's “Scenarios” tab to share them.</p>
   <div class="card"><div class="toolbar"><input type="text" id="sname" placeholder="Name for the current settings"><button class="btn" id="ssave" type="button">Save current settings</button><button class="btn ghost" id="scopy" type="button">Copy settings (JSON)</button></div><p class="small" id="smsg"></p></div>
   <h2>Compare shortlists</h2><div class="tbl"><table class="num"><thead><tr><th>Scenario</th><th>Blend L/T/C</th><th>Risk</th><th class="r">Shortlist</th>${names.map(n => `<th class="r">Overlap with ${esc(n)}</th>`).join("")}</tr></thead><tbody>
   ${names.map(a => `<tr><td><b>${esc(a)}</b>${saved[a] ? ` <button class="btn ghost sm" data-del="${esc(a)}" type="button">Delete</button>` : ""}</td><td>${all[a].scoring.blend.level}/${all[a].scoring.blend.trend}/${all[a].scoring.blend.consistency}</td><td class="small">${RULES.filter(r => all[a].risk_gate[r.key].mode === "remove").length} remove, ${RULES.filter(r => all[a].risk_gate[r.key].mode === "flag").length} flag</td><td class="r">${sets[a].size}</td>${names.map(b => `<td class="r">${[...sets[a]].filter(t => sets[b].has(t)).length}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
@@ -860,7 +860,14 @@ function viewScenarios(m) {
 
 // ---------- PROOF / TRACK / METHOD / DEMO ----------
 function viewProof(m) { const P = window.MM_PROOF; m.innerHTML = P ? P.html : `<h1>Proof</h1><p class="empty">Validation results appear here after step 5 (fundamental validation 2013–2023 and robustness checks).</p>`; }
-function viewTrack(m) { const T = window.MM_TRACK; m.innerHTML = T ? T.html : `<h1>Track record</h1><p class="empty">Frozen, fingerprinted shortlists appear here once the live track record starts (step 7).</p>`; }
+function viewTrack(m) {
+  const T = window.MM_TRACK;
+  m.innerHTML = (T ? T.html : `<h1>Track record</h1><p class="empty">Frozen, fingerprinted shortlists appear here once the live track record starts (step 7).</p>`) + `<div id="scncmp" style="margin-top:28px"></div>`;
+  scenarioCompare(document.getElementById("scncmp"));
+}
+function viewScreenerNew(m) {
+  m.innerHTML = `<h1>Screener</h1><div class="card"><p style="margin:0">This page is being redesigned. Meanwhile, every list, setting and the Moat Map are in <a href="#scenarios">Scenarios</a> (Evaluation group); frozen lists and the comparison of scenarios are in <a href="#track">Track record</a>.</p></div>`;
+}
 function viewDemo(m) { const P = window.MM_DEMO; m.innerHTML = P ? P.html : `<h1>Demo</h1><p class="empty">The guided walkthrough with three case studies is chosen from the validation results (step 8).</p>`; }
 function viewMethod(m) {
   m.innerHTML = `<h1>Methodology v${META.methodology}</h1>
