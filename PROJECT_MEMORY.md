@@ -67,6 +67,7 @@
 - Text extracted from filings: test it on the real cached corpus, not only on hand-made examples; count suspicious outputs (headings, "Item", lowercase starts, boilerplate) before shipping.
 - A ratio read from today's filing (ADS, split) applies to past counts only when they are the same size; check the share-count history before applying it backward.
 - A user action that can be refused (save, remove) must never look done: roll back on refusal, and give one-click deletes an Undo.
+- After removing or renaming styles, check every class the page uses still has CSS ("grid2" had none, so two boxes stacked); review layout at a wide desktop width too, not only the narrow preview pane.
 
 ## บันทึกปัญหา
 
@@ -317,3 +318,10 @@
 - **สาเหตุ:** My section-end pattern missed "Item 1(a)" and "Item 1.A.", so the contents line looked long enough; quoted references were taken as headings; the sentence splitter broke at "Item 1." and at invisible zero-width spaces.
 - **แก้อย่างไร:** Wider Item 1A pattern; reject segments with several "Item" headings; skip quoted or "see …" references (also "Part 1 – Item 1"); require a capital first letter; more boilerplate phrases; strip zero-width spaces. 9 tests; suspicious outputs 43 → 6 of 1,557.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Testing only on 8 hand-picked companies before the full run.
+
+### 2026-11-04 · Layout looked fine in the narrow pane but not on a wide screen
+
+- **เจออะไร:** In the design review at 1,440 px, the Introduction headline wrapped into five short lines, the company card and the diagram left half the width empty or grew oversized, and "Why look deeper / What to watch" stacked instead of sitting side by side.
+- **สาเหตุ:** Earlier checks were done in the ~1,000 px preview pane only. The side-by-side boxes used a class ("grid2") that was never defined in the CSS.
+- **แก้อย่างไร:** Audited every tab at 1,440 px, phone width, light and dark; defined the grid; two-column layouts for the cover and company card; capped diagram width.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Checking only the default pane width.

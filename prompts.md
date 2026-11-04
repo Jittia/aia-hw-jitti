@@ -1166,3 +1166,71 @@ I want to add one more feature in Watch List.  For any Watch list, I want to hav
     - same ADR split-timing gap in the frozen v3.0 test.
   - Update the Google Sheet and pitch docs, which still describe v1.1.
   - Fill the deck placeholders, edit `help.md`, submit the repo link.
+
+---
+
+## รอบ 23 · 2026-11-04 · Screener tidy-up and a full visual design pass
+
+- **ทำอะไร:**
+  - **Screener intro box removed.** Its source and date line moved to the bottom of the page (AGENTS.md: every number shows source and date).
+  - **Screener Summary table:**
+    - horizontal scrollbar at the top, synced with the table;
+    - fixed header row with its own vertical scrollbar;
+    - Watchlist (☆) and Deep-Dive columns right after Company;
+    - "# of moats" shortened to "#Moat" (also in the Watchlist).
+  - **Design pass (layout and type only, no calculation changed):**
+    - one page header on every tab;
+    - one type and spacing scale; larger buttons; data-date chip;
+    - sticky jump bar on the Screener (Scope · M1–M4 · Summary, live count) and on Methodology;
+    - Moat Screener lists in scroll boxes with fixed headers (Screener about 1,000 px shorter);
+    - quadrant counts in the side box;
+    - Deep-Dive header with search and ☆, two-column company card, side-by-side "why look deeper / what to watch";
+    - Watchlist actions moved next to Priority;
+    - Introduction cover with a live "Today's screen" panel and lighter pull quotes;
+    - grids sized so no row is left with a lone card;
+    - phone header and tab bar fixes.
+  - Dashboard republished, versions 16–19.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser (audit at 1,440 px, phone width, light and dark)
+- **Prompt ที่ใช้:**
+
+```text
+Remove this section out.
+```
+
+```text
+Section 3 in Screener tab.  Move horizontal sliding bar to the top so we can change it easiser. Keep header of column to stay, add vertical sliding bar on the right so we can see list of item with header.
+```
+
+```text
+Move this 2 selection to be after Company Name column.   Put header "Watchlist" at top of Star.     Reduce width of "# of Moats" column to be "#Moat"
+```
+
+```text
+Put yourself as Professional Dashboard design, focus on font, layout consistency, attractive look, how text alignment and manage space of screen, etc.    Review the whole dashboard throughly and enhance it to meet global standard.  Do not change any calculation, focus on "visual attractive".    Try each tool and think yourself as user, make it seamless and best flow by simulate how you want to use it.
+```
+
+- **ผลที่ได้:**
+  - Every tab has no horizontal page scroll at 375 px; light and dark both read well; no JavaScript errors; 151 tests pass (none were changed, because no calculation changed).
+  - **Audit findings that drove the changes:**
+    - the Screener page was 8,700 px with no way to jump between sections;
+    - section headings were inconsistent;
+    - Watchlist actions sat off-screen;
+    - the Deep-Dive and Introduction left half the width empty;
+    - "Why look deeper / What to watch" stacked because their layout class was never defined;
+    - quotes and notes used heavy filled cards with side bars;
+    - the phone header wrapped onto two lines.
+  - **Not covered:** the pitch deck slides were already designed separately and did not change.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti: remove the Screener intro box; scrollbar on top with a fixed header; Watchlist and Deep-Dive next to Company; a narrow "#Moat" column.** Easier to work the table.
+  - **Jitti: a professional design pass without changing calculations.**
+  - **Claude's choices:**
+    - Keep the existing identity (paper, navy serif, teal) and make it consistent rather than replacing it.
+    - Keep one source line at the bottom of the Screener, because of the AGENTS.md source-and-date rule.
+    - Jump bars for long pages, because the Screener and Methodology are scanned, not read top to bottom.
+    - Scroll boxes for the 25-row lists, so all three lists show side by side without stretching the page.
+    - Coloured headings with a status dot in place of side bars on cards.
+- **ขั้นต่อไป:**
+  - Try the shared Watchlist and the deck download on claude.ai.
+  - Deferred items from round 22 still stand.
+  - Update the Google Sheet and pitch docs (still v1.1).
+  - Fill the deck placeholders, edit `help.md`, submit the repo link.

@@ -96,6 +96,8 @@ fieldset.ctl-set[disabled] { opacity:.45; }
 .listwrap thead th { position:sticky; top:0; background:var(--card); z-index:2; box-shadow:0 1px 0 var(--grid); }
 .topscroll { overflow-x:auto; overflow-y:hidden; height:14px; margin-bottom:4px; }
 .topscroll > div { height:1px; }
+.sumwrap { overflow-x:hidden; overflow-y:auto; max-height:min(70vh, 640px); }
+.sumwrap .sumt { margin:0; }
 .mapsvg { width:100%; height:auto; display:block; }
 .mapsvg text { font:11px var(--sans); fill:var(--ink-2); }
 .mapsvg .ql { font:600 12px var(--sans); fill:var(--ink-2); opacity:.75; }
@@ -232,6 +234,7 @@ h2.sec-title { margin:24px 0 4px; }
 .sumt { font-size:13px; }
 .sumt td.nm { max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .sumt .mcol { width:44px; }
+.sumt .nmoat { width:52px; } .sumt th.ctr, .sumt td.ctr { text-align:center; }
 .mhit { display:inline-block; min-width:30px; padding:2px 5px; border-radius:3px; background:var(--good-bg); color:var(--good-text); border:1px solid var(--good); font-weight:700; text-align:center; }
 .mapsvg circle.bgd { fill:var(--neutral); opacity:.55; }
 .mapsvg .lbl { font:600 12px var(--sans); fill:var(--ink); paint-order:stroke; stroke:var(--card); stroke-width:3px; }
@@ -241,6 +244,94 @@ h2.sec-title { margin:24px 0 4px; }
 .hdr { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; justify-content:space-between; }
 details summary { cursor:pointer; font-weight:600; color:var(--navy); }
 @media print { body { background:#fff; } .tabs, .controls, .btn, .bar button { display:none !important; } }
+
+/* ---------- visual polish layer (layout and type only; no data changes) ---------- */
+:root { --r:6px; --shadow:0 1px 2px rgba(38,42,51,.06), 0 1px 0 rgba(38,42,51,.02); --tabs-h:70px; }
+body { line-height:1.55; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+.wrap { max-width:1280px; padding-left:max(20px, env(safe-area-inset-left, 0px)); padding-right:max(20px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { text-wrap:balance; letter-spacing:-.005em; }
+h1 { font-size:clamp(28px, 3.2vw, 38px); margin:0; }
+h2 { font-size:clamp(20px, 2vw, 24px); }
+.bar { padding:14px 0; }
+#asof { font:600 12px/1 var(--sans); font-style:normal; color:var(--ink-2); background:var(--card); border:1px solid var(--grid); padding:6px 10px; border-radius:999px; font-variant-numeric:tabular-nums; }
+.tab { font-size:14.5px; padding:12px 14px 13px; } .tab:hover { color:var(--ink); }
+.phead { display:flex; flex-wrap:wrap; gap:16px 28px; align-items:flex-end; justify-content:space-between; padding:30px 0 18px; margin-bottom:22px; border-bottom:1px solid var(--grid); }
+.phead-t { min-width:0; flex:1 1 520px; } .phead .lede { margin:10px 0 0; } .phead .eyebrow { margin-bottom:8px; }
+.lede { font-size:17px; line-height:1.55; color:var(--ink-2); max-width:72ch; }
+.eyebrow { font:700 11px/1.2 var(--sans); letter-spacing:.9px; text-transform:uppercase; color:var(--teal-text); margin:0 0 6px; }
+.card { border-radius:var(--r); padding:20px; box-shadow:var(--shadow); }
+.btn { font-size:14px; padding:10px 16px; border-radius:var(--r); transition:background .15s, filter .15s; } .btn.sm { padding:7px 11px; font-size:13px; }
+.btn:hover { filter:brightness(1.1); } .btn.ghost:hover { background:var(--hover); filter:none; }
+input[type=search], input[type=text], input[type=number], select { min-height:36px; border-radius:var(--r); }
+.seg { border-radius:999px; } .seg button { padding:8px 12px; font-size:12.5px; } .seg button:not(.on):hover { background:var(--hover); color:var(--ink); }
+/* Screener */
+.jumpnav { position:sticky; top:var(--tabs-h); z-index:4; display:flex; gap:4px; align-items:center; overflow-x:auto; scrollbar-width:none; padding:8px 0; margin:-8px 0 20px; background:var(--paper); border-bottom:1px solid var(--grid); }
+.jumpnav::-webkit-scrollbar { display:none; }
+.jumpnav a { font:600 13px/1 var(--sans); color:var(--ink-2); text-decoration:none; padding:8px 12px; border-radius:999px; white-space:nowrap; }
+.jumpnav a:hover { background:var(--hover); color:var(--ink); } .jumpnav a.on { background:var(--navy); color:var(--on-solid); }
+.jumpnav .jn { font-weight:700; opacity:.65; margin-right:3px; }
+.jumpcount { margin-left:auto; padding-left:14px; font-size:13px; color:var(--ink-2); white-space:nowrap; font-variant-numeric:tabular-nums; }
+.sec, .grp, .secband { scroll-margin-top:calc(var(--tabs-h) + 62px); }
+.sec, .grp { margin:0 0 22px; }
+.sec-h { align-items:flex-end; margin-bottom:16px; } .sec-h h2, .secband h2, .ghead h2 { margin:0; }
+.secband { margin:36px 0 16px; } .secband .small { margin:6px 0 0; max-width:80ch; }
+.scope3 { margin-top:0; } .scope3 h3, .scope-bottom h3 { font:700 12px/1.2 var(--sans); letter-spacing:.7px; text-transform:uppercase; color:var(--ink-2); margin:0 0 10px; }
+.indlist { background:var(--paper); }
+.ghead { display:flex; flex-wrap:wrap; gap:12px 28px; justify-content:space-between; align-items:flex-start; }
+.ghead-t { min-width:0; flex:1 1 440px; } .ghead .riskrow.lines { margin:6px 0 0; padding:10px 12px; background:var(--paper); border:1px solid var(--grid); border-radius:var(--r); }
+.grp .q { font:600 17px/1.35 var(--serif); margin:6px 0 4px; } .grp .axes { color:var(--ink-2); font-size:14px; }
+.grp .ref { font-size:12.5px; line-height:1.5; margin:12px 0 16px; padding-top:10px; border-top:1px dashed var(--grid); max-width:none; }
+.grpgrid { gap:18px; } .sidebox { position:sticky; top:calc(var(--tabs-h) + 64px); }
+.lists3 { gap:16px; margin-top:16px; }
+.phead-r { display:flex; flex-wrap:wrap; gap:10px; align-items:center; } .ddpick input { width:min(320px, 70vw); }
+.tick { font:600 .55em/1 var(--sans); letter-spacing:.6px; color:var(--ink-2); background:var(--card); border:1px solid var(--grid); padding:4px 8px; border-radius:var(--r); vertical-align:middle; }
+.knum { grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); } .knum .kpi { box-shadow:none; }
+.dd4 .card { box-shadow:none; } .dd4 .eyebrow { margin-bottom:2px; }
+.cbrief { display:grid; grid-template-columns:minmax(0, 1.7fr) minmax(220px, 1fr); gap:28px; align-items:start; }
+.cbrief > p { margin:0; line-height:1.65; max-width:none; } .cbrief dl.facts { grid-template-columns:1fr; margin:0; gap:0; } .cbrief dl.facts div { padding:8px 0; }
+@media (max-width:760px) { .cbrief { grid-template-columns:minmax(0, 1fr); } }
+.grid2 { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; } .grid2.c3 { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+@media (max-width:980px) { .grid2.c3 { grid-template-columns:repeat(2, minmax(0, 1fr)); } } @media (max-width:700px) { .grid2, .grid2.c3 { grid-template-columns:minmax(0, 1fr); } }
+#main h2[id^="ms"] { scroll-margin-top:calc(var(--tabs-h) + 62px); margin-top:36px; }
+.note-scn, .note-exp { border-left:1px solid var(--grid); }
+.note-scn h3, .note-exp h3 { display:flex; align-items:center; gap:8px; margin-top:0; font-size:17px; }
+.note-scn h3::before, .note-exp h3::before { content:""; width:9px; height:9px; border-radius:50%; flex:none; }
+.note-scn h3 { color:var(--good-text); } .note-scn h3::before { background:var(--good); }
+.note-exp h3 { color:var(--risk-text); } .note-exp h3::before { background:var(--risk); }
+.note-scn ul, .note-exp ul { margin:0; padding-left:20px; } .note-scn li, .note-exp li { margin-bottom:6px; }
+.wlt td.wlact { white-space:nowrap; } .wlt .wlact .btn { text-decoration:none; } .wlt .linkbtn.rm { color:var(--ink-2); margin-left:4px; font-size:13px; }
+.wlt tbody tr:not(.noterow) td { border-top:2px solid var(--grid); border-bottom:0; padding-top:12px; } .wlt tbody tr:first-child td { border-top:0; }
+.wlt tr.noterow td { background:transparent; padding-bottom:16px; } .wlt textarea { background:var(--card); }
+.herogrid { display:grid; grid-template-columns:minmax(0, 1.6fr) minmax(260px, 1fr); gap:32px; align-items:center; padding:12px 0 8px; }
+.herogrid .hero h1 { max-width:24ch; }
+.glance { display:grid; gap:2px; padding:20px 22px; } .glance .gl { display:flex; align-items:baseline; gap:12px; padding:8px 0; border-bottom:1px solid var(--grid); }
+.glance .gl b { font:600 28px/1 var(--serif); color:var(--navy); min-width:3.6ch; text-align:right; font-variant-numeric:tabular-nums; } .glance .gl span { color:var(--ink-2); font-size:14px; }
+.glance .gl.hi b { color:var(--teal-text); } .glance .gl:last-of-type { border-bottom:0; }
+@media (max-width:860px) { .herogrid { grid-template-columns:minmax(0, 1fr); gap:8px; } }
+a.btn { text-decoration:none; display:inline-block; }
+.infog { max-width:900px; }
+.qgrid { display:grid; grid-template-columns:1fr 1fr; gap:6px; } .qgrid div { background:var(--card); border:1px solid var(--grid); border-radius:var(--r); padding:8px 10px; min-width:0; }
+.qgrid b { display:block; font:600 20px/1.1 var(--serif); color:var(--navy); font-variant-numeric:tabular-nums; } .qgrid span { font-size:12px; color:var(--ink-2); }
+.qgrid .tr { background:var(--good-bg); border-color:var(--good); } .qgrid .tr b { color:var(--good-text); } .lcol { min-width:0; display:flex; flex-direction:column; }
+.lists3 h4 { margin:0 0 8px; font-size:14px; }
+.lbox { max-height:410px; overflow:auto; border:1px solid var(--grid); border-radius:var(--r); background:var(--paper); }
+.lbox thead th, .sumwrap thead th { position:sticky; top:0; background:var(--card); z-index:1; box-shadow:0 1px 0 var(--grid); }
+.lbox table { margin:0; } .lbox tr:last-child td { border-bottom:0; }
+th { font-size:11px; letter-spacing:.6px; } td { font-variant-numeric:tabular-nums; }
+.sumt th, .sumt td { padding:8px 10px; } .sumwrap { background:var(--paper); }
+tr.click:hover td, .lists3 tr.on td { background:var(--hover); }
+.mapsvg text { font-size:11.5px; }
+/* Design pages */
+.hero { padding:36px 0 12px; } .hero h1 { font-size:clamp(30px, 4.2vw, 46px); line-height:1.12; max-width:20ch; margin-bottom:14px; }
+.hero .lede { font-size:19px; margin-bottom:20px; } .hero p:last-child { display:flex; flex-wrap:wrap; gap:10px; }
+.quote { background:none; border:0; border-radius:0; padding:6px 0 6px 52px; position:relative; margin:34px 0; max-width:900px; }
+.quote::before { content:"“"; position:absolute; left:0; top:-12px; font:700 72px/1 var(--serif); color:var(--teal); opacity:.85; }
+.quote blockquote { font-size:clamp(19px, 2vw, 23px); line-height:1.4; }
+.grid3 .card h3, .q4 .card h3 { margin-top:0; }
+ol.steps { padding-left:22px; } ol.steps li { padding-left:4px; }
+.timeline { gap:14px; } .tl-item { box-shadow:none; }
+.disclaimer { font-size:12px; line-height:1.5; }
+@media (max-width:640px) { .wordmark span { font-size:18px; white-space:nowrap; } #asof { font-size:11px; padding:5px 8px; white-space:nowrap; } .phead { padding-top:20px; } .card { padding:16px; } .jumpcount { display:none; } .sidebox { position:static; } }
 </style>
 <script src="data/site_data.js"></script>
 <script src="data/deep_data.js" defer onload="onDataLoaded()"></script>
@@ -300,12 +391,20 @@ window.addEventListener("hashchange", () => { const [v, c] = location.hash.slice
 
 function render() {
   renderTabs();
+  const tabsEl = document.getElementById("tabs"), act = tabsEl.querySelector('[aria-selected="true"]');
+  document.documentElement.style.setProperty("--tabs-h", (tabsEl.offsetHeight || 70) + "px");
+  if (act && tabsEl.scrollWidth > tabsEl.clientWidth) { const g = act.closest(".tgroup") || act; tabsEl.scrollLeft = Math.max(0, g.offsetLeft - 8); }
   try { localStorage.setItem("mm-view", state.view); } catch (e) {}
   const m = document.getElementById("main");
   ({intro: viewIntro, method: viewMethodology, howto: viewHowTo, screener: viewScreenerNew, deepdive: viewDeep, watchlist: viewWatchlist,
     tbd: viewTbd, archive: viewArchive}[state.view] || viewIntro)(m);
 }
 
+// ---------- page furniture ----------
+function pageHead(eyebrow, title, lede, right = "") {
+  return `<header class="phead"><div class="phead-t"><p class="eyebrow">${eyebrow}</p><h1>${title}</h1>${lede ? `<p class="lede">${lede}</p>` : ""}</div>${right ? `<div class="phead-r">${right}</div>` : ""}</header>`;
+}
+const secHead = (n, title, right = "") => `<div class="sec-h"><div><p class="eyebrow">Section ${n} of 3</p><h2>${title}</h2></div>${right}</div>`;
 // ---------- shared chart helpers ----------
 function quantile(arr, q) { const a = arr.filter(v => v !== null && isFinite(v)).sort((p, r) => p - r); if (!a.length) return 0; const i = (a.length - 1) * q, lo = Math.floor(i); return a[lo] + (a[Math.min(lo + 1, a.length - 1)] - a[lo]) * (i - lo); }
 // clamp a value into [lo, hi]; pinned = true when it was outside (drawn at the edge, marked)
@@ -563,10 +662,9 @@ function quadOf(G, x, y, lines) { return x >= lines[0] ? (y >= lines[1] ? G.quad
 const pctIn = v => ok(v) ? +(v * 100).toFixed(2) : "";
 function viewScreenerNew(m) {
   const P = SCR.meta, S = state.scr;
-  m.innerHTML = `<h1>Screener</h1>
-  <div class="card note-exp" style="margin-bottom:12px"><p style="margin:0"><b>A screening tool, not a tested signal.</b> It narrows today's universe to a short list worth a Deep-Dive: set the scope and remove weak balance sheets, look at four questions about the moat, then keep the companies that show up in several. None of the four Moat Screeners has been back-tested in our data; what was tested before (and failed as a predictor) is summarised in <a href="#archive">Archive</a>.</p>
-  <p class="small" style="margin:6px 0 0">All figures are 12 months (TTM) from each company's latest 10-Q or 10-K: SEC EDGAR bulk retrieved ${esc(P.sec_retrieved || "")}. Prices: Yahoo Finance close ${esc(P.price_date || "")} (retrieved ${esc(P.prices_retrieved || "")}); past quarters use that quarter's month-end close with later splits undone. <a href="#method">Methodology</a></p></div>
-  <section class="card" style="margin-bottom:12px"><div class="sec-h"><h2>Section 1 · Screener Scope</h2><span class="small" id="scr-count"></span></div>
+  m.innerHTML = `${pageHead("Action", "Screener", "Narrow the market to a short list: set the scope and risk check, read four questions about the moat, then compare in the summary.")}
+  <nav class="jumpnav" id="scr-jump" aria-label="Screener sections"><a href="#" data-to="scr-s1">Scope</a>${SGROUPS.map((G, i) => `<a href="#" data-to="grp-${G.k}"><span class="jn">M${i + 1}</span> ${esc(G.n.split(" · ")[1])}</a>`).join("")}<a href="#" data-to="scr-s3">Summary</a><span class="jumpcount" id="scr-count"></span></nav>
+  <section class="card sec" id="scr-s1">${secHead(1, "Screener Scope")}
     <div class="scope3">
       <div class="scol"><h3>Market value</h3><div class="chips" id="scr-caps">${CAPS.filter(c => c[0] !== "all").map(([k, n]) => `<button type="button" data-cap="${k}" aria-pressed="false">${esc(n)}</button>`).join("")}</div>
         <p class="small" style="margin:8px 0 0">Several may be chosen; none = all sizes. Yahoo Finance close × cover-page shares.</p></div>
@@ -584,13 +682,14 @@ function viewScreenerNew(m) {
     <div class="scope-bottom"><div class="sec-h"><h3>Industry (SEC SIC) <span class="small" id="scr-indn"></span></h3>
       <div class="toolbar" style="margin:0"><input type="search" id="scr-indq" placeholder="Search industries" aria-label="Search industries" style="min-width:0;width:240px"><button type="button" class="btn ghost sm" id="scr-indclr">Clear</button></div></div>
       <div class="indlist" id="scr-inds"></div></div></section>
-  <h2 class="sec-title">Section 2 · Moat Screener</h2>
-  <div id="scr-groups">${SGROUPS.map(G => `<section class="card grp" id="grp-${G.k}"><h2 style="margin:0 0 2px">${G.n}</h2><p class="q">${G.q}</p><p class="axes">${G.axes}</p><p class="ref">${G.ref}</p>
-    <div class="riskrow lines" data-g="${G.k}">${G.ln.map((n, i) => `<label>${n} (${G.pts && i === 1 ? "pts" : "%"})<input type="number" step="${i === 1 && G.pts ? 0.5 : 1}" data-li="${i}"></label>`).join("")}<a href="#" class="small" data-lreset="${G.k}">Reset lines</a></div>
+  <div class="secband" id="scr-s2"><p class="eyebrow">Section 2 of 3</p><h2>Moat Screener</h2><p class="small">Four questions about the moat. Each chart shows today's companies after the scope; top-right answers “yes”. Click a dot or a company in the lists to see its last four quarters.</p></div>
+  <div id="scr-groups">${SGROUPS.map(G => `<section class="card grp" id="grp-${G.k}"><div class="ghead"><div class="ghead-t"><p class="eyebrow">${esc(G.n.split(" · ")[0])}</p><h2>${esc(G.n.split(" · ")[1])}</h2><p class="q">${G.q}</p><p class="axes">${G.axes}</p></div>
+    <div class="riskrow lines" data-g="${G.k}">${G.ln.map((n, i) => `<label>${n} (${G.pts && i === 1 ? "pts" : "%"})<input type="number" step="${i === 1 && G.pts ? 0.5 : 1}" data-li="${i}"></label>`).join("")}<a href="#" class="small" data-lreset="${G.k}">Reset lines</a></div></div><p class="ref">${G.ref}</p>
     <div id="grpbody-${G.k}"></div></section>`).join("")}</div>
-  <section class="card" style="margin:16px 0"><div class="sec-h"><h2>Section 3 · Screener Summary</h2><span class="seg" id="scr-ov">${QKEY.map((k, i) => `<button type="button" data-ov="${k}">${QLBL[i]}</button>`).join("")}</span></div>
+  <section class="card sec" id="scr-s3">${secHead(3, "Screener Summary", `<span class="seg" id="scr-ov">${QKEY.map((k, i) => `<button type="button" data-ov="${k}">${QLBL[i]}</button>`).join("")}</span>`)}
     <p class="small" style="margin:0 0 8px">Every company in the chosen list of any Moat Screener, ranked by how many it appears in, then by its average percentile rank. M1–M4 show the company's percentile rank (0–100 among companies shown) where it qualifies. Measures are 12 months; P/E is clean (one-offs removed) at yesterday's close.</p>
-    <div class="tbl" id="scr-ovt"></div></section>`;
+    <div class="topscroll" id="scr-ovtop" aria-hidden="true"><div></div></div><div class="listwrap sumwrap" id="scr-ovt"></div></section>
+  <p class="small">Sources: 12-month figures from each company's latest 10-Q or 10-K, SEC EDGAR bulk retrieved ${esc(P.sec_retrieved || "")}; prices: Yahoo Finance close ${esc(P.price_date || "")} (retrieved ${esc(P.prices_retrieved || "")}). <a href="#method">Methodology</a></p>`;
   const $ = id => document.getElementById(id);
   $("scr-ic").value = S.risk.ic; $("scr-nd").value = S.risk.nd; $("scr-cd").value = Math.round(S.risk.cd * 100); $("scr-nt").checked = S.dropNT;
   document.querySelectorAll(".riskrow.lines").forEach(row => row.querySelectorAll("input[data-li]").forEach(inp => { inp.value = pctIn(S.lines[row.dataset.g][+inp.dataset.li]); }));
@@ -615,6 +714,15 @@ function viewScreenerNew(m) {
     // a row in the three lists selects that company's dot (and its 4-quarter trail) in the chart above
     const t = e.target.closest(".lists3 tr[data-cik]"); if (t && !e.target.closest("a")) { const sec = t.closest("section.grp"), g = sec.id.slice(4);
       S.sel[g] = +t.dataset.cik; scrGroup(SGROUPS.find(G => G.k === g)); sec.querySelector(".grpgrid").scrollIntoView({behavior: "smooth", block: "start"}); } });
+  $("scr-jump").addEventListener("click", e => { const a = e.target.closest("[data-to]"); if (!a) return; e.preventDefault(); document.getElementById(a.dataset.to).scrollIntoView({behavior: "smooth", block: "start"}); });
+  if ("IntersectionObserver" in window) { const links = [...m.querySelectorAll("#scr-jump [data-to]")];
+    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) links.forEach(l => l.classList.toggle("on", l.dataset.to === en.target.id)); }), {rootMargin: "-30% 0px -60% 0px"});
+    links.forEach(l => { const t = document.getElementById(l.dataset.to); if (t) io.observe(t); }); }
+  // Summary: horizontal scrollbar at the top (synced), vertical scrollbar on the box, header row fixed
+  const top = $("scr-ovtop"), box = $("scr-ovt");
+  top.addEventListener("scroll", () => { if (box.scrollLeft !== top.scrollLeft) box.scrollLeft = top.scrollLeft; });
+  box.addEventListener("wheel", e => { const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0); if (dx && box.scrollWidth > box.clientWidth) { e.preventDefault(); top.scrollLeft += dx; } }, {passive: false});
+  window.addEventListener("resize", sizeSumScroll);
   $("scr-ov").addEventListener("click", e => { const b = e.target.closest("[data-ov]"); if (b) { S.ov = b.dataset.ov; scrOverlap(); } });
   $("scr-ovt").addEventListener("click", e => { const h = e.target.closest("th[data-k]"); if (h) { const k = h.dataset.k; S.ovSort = {key: k, dir: S.ovSort.key === k ? -S.ovSort.dir : (k === "ticker" ? 1 : -1)}; scrOverlap(); return; }
     const t = e.target.closest("tr[data-cik]"); if (t && !e.target.closest("a")) go("deepdive", +t.dataset.cik); });
@@ -626,7 +734,7 @@ function scrUpdate(redrawInds = true) {
   const S = state.scr, U = scrUniverse(); _scr = U;
   document.querySelectorAll("#scr-caps [data-cap]").forEach(b => { const on = S.caps.has(b.dataset.cap); b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
   document.querySelectorAll("#scr-flt [data-f]").forEach(b => b.classList.toggle("on", (b.dataset.f === "1") === S.filter));
-  document.getElementById("scr-count").textContent = `${U.base.length.toLocaleString()} of ${Object.keys(SCR.co).length.toLocaleString()} companies in scope · ${U.kept.length.toLocaleString()} go to the Moat Screeners`;
+  document.getElementById("scr-count").textContent = `${U.kept.length.toLocaleString()} of ${Object.keys(SCR.co).length.toLocaleString()} companies screened`;
   document.getElementById("scr-indn").textContent = S.inds.size ? `· ${S.inds.size} ticked` : S.sectors.size ? `· in ${S.sectors.size} sector${S.sectors.size > 1 ? "s" : ""}` : "· all";
   scrSecs(); if (redrawInds) scrInds();
   const li = (v, l, cls = "") => `<li class="${cls}"><b>${v.toLocaleString()}</b> ${l}</li>`;
@@ -666,10 +774,12 @@ function scrGroup(G) {
       <table><thead><tr><th>12 months to</th><th class="r">${G.xs}</th><th class="r">${G.ys}</th></tr></thead><tbody>${sel.pts.map((p, i) => `<tr><td>${i ? "−" + i + "q" : "Now · " + esc(u.r.end)}</td><td class="r">${fp(p[0])}</td><td class="r">${fy(p[1])}</td></tr>`).join("")}</tbody></table>
       <p class="small" style="margin:6px 0 0">Change over 4 quarters: ${G.xs} ${chg(sel.pts[0][0], sel.pts[4][0], fp)}, ${G.ys} ${chg(sel.pts[0][1], sel.pts[4][1], fy)}</p>
       <p style="margin:8px 0 0">${wlButton(sel.cik, false)} <a href="#deepdive/${sel.cik}">Open Deep-Dive</a> · <a href="#" data-clr="1">Clear</a></p>`; })()
-    : `<p style="margin:0 0 6px"><b>${dots.length.toLocaleString()}</b> companies shown, <b>${nTR.toLocaleString()}</b> in the top-right.</p><p class="small" style="margin:0">${left}. Click a dot, or a company in the lists below, to see its values, its quadrant and where it was 1–4 quarters back.</p>`;
+    : (() => { const qn = i => dots.filter(d => quadOf(G, d.x, d.y, lines) === G.quads[i]).length;
+        return `<p class="eyebrow" style="margin-bottom:8px">Companies by quadrant</p><div class="qgrid"><div><b>${qn(1).toLocaleString()}</b><span>${esc(G.quads[1])}</span></div><div class="tr"><b>${qn(0).toLocaleString()}</b><span>${esc(G.quads[0])}</span></div><div><b>${qn(3).toLocaleString()}</b><span>${esc(G.quads[3])}</span></div><div><b>${qn(2).toLocaleString()}</b><span>${esc(G.quads[2])}</span></div></div>
+        <p class="small" style="margin:10px 0 0">${dots.length.toLocaleString()} shown · ${left}. Click a dot, or a company in the lists, to see its values and where it was 1–4 quarters back.</p>`; })();
   const dtxt = (v, f) => ok(v) ? (v >= 0 ? "+" : "") + f(v) : "–";
   const tbl = (key, i) => { const a = Lst[key];
-    return `<div class="tbl"><h4>${QLBL[i]} <span class="small">(${a.length})</span></h4>${a.length ? `<table><colgroup><col style="width:26px"><col><col style="width:62px"><col style="width:66px"><col style="width:66px"></colgroup><thead><tr><th class="r">#</th><th>Company</th><th class="r" title="${esc(G.xl)}">${esc(G.xs)}</th><th class="r" title="${esc(G.yl)}">${esc(G.ys)}</th><th class="r" title="${key === "top" ? "Average percentile rank of X and Y (0–100)" : "Change over the last 4 quarters"}">${key === "top" ? "Pct" : "Δ 4q"}</th></tr></thead><tbody>${a.map((r, j) => `<tr class="click${r.cik === S.sel[G.k] ? " on" : ""}" data-cik="${r.cik}" title="${esc((COMP_BY.get(r.cik) || {}).name || "")} · ${fusd(byCik.get(r.cik).mc)} · click to show it in the chart"><td class="r">${j + 1}</td><td class="nm"><b>${esc((COMP_BY.get(r.cik) || {}).ticker || "")}</b> <span class="small">${esc((COMP_BY.get(r.cik) || {}).name || "")}</span></td><td class="r">${fp(r.x)}</td><td class="r">${fy(r.y)}</td><td class="r">${key === "top" ? Math.round(r.pct) : key === "upY" ? dtxt(r.dy, fy) : dtxt(r.dx, fp)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty" style="padding:10px">None.</p>`}</div>`; };
+    return `<div class="lcol"><h4>${QLBL[i]} <span class="small">(${a.length})</span></h4><div class="lbox">${a.length ? `<table><colgroup><col style="width:26px"><col><col style="width:62px"><col style="width:66px"><col style="width:66px"></colgroup><thead><tr><th class="r">#</th><th>Company</th><th class="r" title="${esc(G.xl)}">${esc(G.xs)}</th><th class="r" title="${esc(G.yl)}">${esc(G.ys)}</th><th class="r" title="${key === "top" ? "Average percentile rank of X and Y (0–100)" : "Change over the last 4 quarters"}">${key === "top" ? "Pct" : "Δ 4q"}</th></tr></thead><tbody>${a.map((r, j) => `<tr class="click${r.cik === S.sel[G.k] ? " on" : ""}" data-cik="${r.cik}" title="${esc((COMP_BY.get(r.cik) || {}).name || "")} · ${fusd(byCik.get(r.cik).mc)} · click to show it in the chart"><td class="r">${j + 1}</td><td class="nm"><b>${esc((COMP_BY.get(r.cik) || {}).ticker || "")}</b> <span class="small">${esc((COMP_BY.get(r.cik) || {}).name || "")}</span></td><td class="r">${fp(r.x)}</td><td class="r">${fy(r.y)}</td><td class="r">${key === "top" ? Math.round(r.pct) : key === "upY" ? dtxt(r.dy, fy) : dtxt(r.dx, fp)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty" style="padding:10px">None.</p>`}</div></div>`; };
   el.innerHTML = `<div class="grpgrid"><div style="min-width:0">${scatter2x2(dots, {lines, quads: G.quads, xl: G.xl, yl: G.yl, xs: G.xs, ys: G.ys, pts: G.pts, fy, sel: S.sel[G.k], trail: sel ? sel.pts : null, label: G.n})}</div><div class="sidebox">${side}</div></div>
     <div class="lists3">${QKEY.map(tbl).join("")}</div>
     <p class="small" style="margin:8px 0 0">② already right of the X line, below the Y line, Y rose over 4 quarters; ③ already above the Y line, left of the X line, X rose. A company with no point 4 quarters back can be in ① but not ② or ③. Click a company to show it in the chart; its Deep-Dive link is in the box beside the chart.</p>`;
@@ -689,17 +799,23 @@ function scrOverlap() {
     const na = typeof va !== "string" && !ok(va), nb = typeof vb !== "string" && !ok(vb); if (na || nb) return na === nb ? 0 : na ? 1 : -1;
     return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * d; });
   const th = (key, label, cls = "", title = "") => `<th class="sort ${cls}" data-k="${key}"${title ? ` title="${esc(title)}"` : ""} aria-sort="${S.ovSort.key === key ? (S.ovSort.dir === 1 ? "ascending" : "descending") : "none"}"><button type="button">${label}</button></th>`;
-  document.getElementById("scr-ovt").innerHTML = rows.length ? `<table class="sumt"><thead><tr>${th("ticker", "Company")}${th("mc", "Market cap", "r")}${th("pe", "P/E TTM", "r", "Clean P/E: market value ÷ clean net income, 12 months")}${th("count", "# of moats", "r")}${
-    GKEYS.map((g, i) => th(g, "M" + (i + 1), "r mcol", SGROUPS[i].n + ": percentile rank where it qualifies")).join("")}${SUMCOLS.map(([k, n, , , t]) => th(k, n, "r", t)).join("")}<th></th></tr></thead><tbody>${
-    sorted.map(r => `<tr class="click" data-cik="${r.cik}"><td class="nm"><b>${esc(r.c.ticker || "")}</b> <span class="small">${esc(r.c.name || "")}</span></td><td class="r">${fusd(r.mc)}</td><td class="r">${fpe(r.pe)}</td><td class="r"><b>${r.count}</b></td>${
+  document.getElementById("scr-ovt").innerHTML = rows.length ? `<table class="sumt"><thead><tr>${th("ticker", "Company")}<th class="ctr">Watchlist</th><th>Deep-Dive</th>${th("mc", "Market cap", "r")}${th("pe", "P/E TTM", "r", "Clean P/E: market value ÷ clean net income, 12 months")}${th("count", "#Moat", "r nmoat", "Number of Moat Screeners where the company is in the chosen list")}${
+    GKEYS.map((g, i) => th(g, "M" + (i + 1), "r mcol", SGROUPS[i].n + ": percentile rank where it qualifies")).join("")}${SUMCOLS.map(([k, n, , , t]) => th(k, n, "r", t)).join("")}</tr></thead><tbody>${
+    sorted.map(r => `<tr class="click" data-cik="${r.cik}"><td class="nm"><b>${esc(r.c.ticker || "")}</b> <span class="small">${esc(r.c.name || "")}</span></td><td class="ctr">${wlButton(r.cik, false)}</td><td><a href="#deepdive/${r.cik}">Deep-Dive</a></td><td class="r">${fusd(r.mc)}</td><td class="r">${fpe(r.pe)}</td><td class="r"><b>${r.count}</b></td>${
       GKEYS.map(g => `<td class="r mcol">${r.m[g] !== undefined ? `<span class="mhit">${Math.round(r.m[g])}</span>` : ""}</td>`).join("")}${
-      SUMCOLS.map(([k]) => `<td class="r">${k === "dgm" ? fpt(r[k]) : fp(r[k])}</td>`).join("")}<td class="wlact">${wlButton(r.cik, false)} <a href="#deepdive/${r.cik}">Deep-Dive</a></td></tr>`).join("")}</tbody></table>`
+      SUMCOLS.map(([k]) => `<td class="r">${k === "dgm" ? fpt(r[k]) : fp(r[k])}</td>`).join("")}</tr>`).join("")}</tbody></table>`
     : `<p class="empty">No company in this list in any Moat Screener after the scope.</p>`;
+  sizeSumScroll();
+}
+function sizeSumScroll() {
+  const top = document.getElementById("scr-ovtop"), box = document.getElementById("scr-ovt"); if (!top || !box) return;
+  const w = box.scrollWidth, over = w > box.clientWidth + 1;
+  top.firstElementChild.style.width = w + "px"; top.style.visibility = over ? "visible" : "hidden"; top.scrollLeft = box.scrollLeft;
 }
 // ---------- EVALUATION ----------
 const REPO = "https://github.com/Jittia/aia-hw-jitti";
 function viewTbd(m) {
-  m.innerHTML = `<h1>To be designed</h1><div class="card"><p style="margin:0">This space is reserved for how we will evaluate the Moat Screener once it has been used for a while: for example, tracking what happened to Watchlist companies after we added them. It is left blank on purpose until we decide the method.</p></div>`;
+  m.innerHTML = `${pageHead("Evaluation", "To be designed", "")}<div class="card"><p style="margin:0">This space is reserved for how we will evaluate the Moat Screener once it has been used for a while: for example, tracking what happened to Watchlist companies after we added them. It is left blank on purpose until we decide the method.</p></div>`;
 }
 const ARCHIVE = [
   {v: "v1.0", when: "2–3 Nov 2026", title: "Moat Momentum Score",
@@ -724,7 +840,7 @@ const ARCHIVE = [
    lesson: "A screen cannot replace judgment, but it can point judgment to the right places, consistently and with sources."},
 ];
 function viewArchive(m) {
-  m.innerHTML = `<h1>Archive</h1><p class="muted">How this tool evolved, kept for reference. Earlier pages (Scenarios, Proof, Track record, Demo) are no longer shown; their code, data and full logs stay in the <a href="${REPO}" target="_blank" rel="noopener">project repository</a>: see <a href="${REPO}/blob/main/prompts.md" target="_blank" rel="noopener">prompts.md</a> (every step and decision) and <a href="${REPO}/blob/main/PROJECT_MEMORY.md" target="_blank" rel="noopener">PROJECT_MEMORY.md</a> (lessons and rules).</p>
+  m.innerHTML = `${pageHead("Evaluation", "Archive", "")}<p class="muted">How this tool evolved, kept for reference. Earlier pages (Scenarios, Proof, Track record, Demo) are no longer shown; their code, data and full logs stay in the <a href="${REPO}" target="_blank" rel="noopener">project repository</a>: see <a href="${REPO}/blob/main/prompts.md" target="_blank" rel="noopener">prompts.md</a> (every step and decision) and <a href="${REPO}/blob/main/PROJECT_MEMORY.md" target="_blank" rel="noopener">PROJECT_MEMORY.md</a> (lessons and rules).</p>
   <div class="timeline">${ARCHIVE.map(a => `<div class="tl-item card"><div class="tl-head"><span class="badge b-moat">${esc(a.v)}</span> <b>${esc(a.title)}</b> <span class="small">${esc(a.when)}</span></div>
     <p><b>Idea.</b> ${esc(a.idea)}</p><p><b>Result.</b> ${esc(a.result)}</p><p style="margin-bottom:0"><b>Lesson.</b> ${esc(a.lesson)}</p></div>`).join("")}</div>
   <p class="small">Numbers from the project log (prompts.md, rounds 10–18). Tests used only filings public at each test date; thresholds were fixed before each one-time test.</p>`;
@@ -761,13 +877,13 @@ function miniQuad(G, pts, lines) {
 }
 function ddPick(m) {
   const opts = COMP.filter(c => SCR.co[c.cik]).map(c => `<option value="${esc(c.ticker || "")} · ${esc(c.name)}">`).join("");
-  return `<div class="toolbar"><input list="ddlist" id="ddq" type="search" placeholder="Find a company: ticker or name" aria-label="Find a company" style="flex:1;max-width:420px"><datalist id="ddlist">${opts}</datalist></div>`;
+  return `<div class="ddpick"><input list="ddlist" id="ddq" type="search" placeholder="Find a company: ticker or name" aria-label="Find a company"><datalist id="ddlist">${opts}</datalist></div>`;
 }
 function viewDeep(m) {
   const X = ddContext();
   if (!state.cik) state.cik = (X.D.ov[0] || {}).cik || +Object.keys(SCR.co)[0];
   if (!SCR.co[state.cik]) { const w = wlStore.get(state.cik);
-    m.innerHTML = `${ddPick(m)}<h1>Deep-Dive</h1><div class="card note-exp"><p style="margin:0"><b>${esc(w ? (w.ticker || "") + " " + (w.name || "") : "This company")}</b> is not in today's data: it may have left the universe (revenue, listing or filings) or changed its SEC identifier. ${w ? "Its Watchlist entry and note are kept." : ""} Search for another company above.</p></div>`;
+    m.innerHTML = `${pageHead("Action", "Deep-Dive", "", ddPick(m))}<div class="card note-exp"><p style="margin:0"><b>${esc(w ? (w.ticker || "") + " " + (w.name || "") : "This company")}</b> is not in today's data: it may have left the universe (revenue, listing or filings) or changed its SEC identifier. ${w ? "Its Watchlist entry and note are kept." : ""} Search for another company above.</p></div>`;
     const q0 = document.getElementById("ddq"); q0.addEventListener("change", () => { const t = q0.value.split(" · ")[0].trim(); const hit = COMP.find(x => x.ticker === t && SCR.co[x.cik]); if (hit) go("deepdive", hit.cik); });
     return; }
   const cik = state.cik, c = COMP_BY.get(cik) || {}, r = SCR.co[cik] || {}, B = ((window.MM_BRIEF || {}).co || {})[cik], Dp = window.MM_DEEP ? window.MM_DEEP[String(cik)] : null;
@@ -792,8 +908,8 @@ function viewDeep(m) {
       ${miniQuad(G, pts, L)}
       <table class="small"><thead><tr><th></th><th class="r">Now</th><th class="r">−1q</th><th class="r">−2q</th><th class="r">−3q</th><th class="r">−4q</th></tr></thead><tbody>
       <tr><td>${esc(G.xs)}</td>${pts.map(p => `<td class="r">${fp(p[0])}</td>`).join("")}</tr><tr><td>${esc(G.ys)}</td>${pts.map(p => `<td class="r">${G.pts ? fpt(p[1]) : fp(p[1])}</td>`).join("")}</tr></tbody></table></div>`; }).join("");
-  m.innerHTML = `${ddPick(m)}<div class="hdr"><div><p class="eyebrow">Deep-Dive · ${esc(sectorOf(c.sic))}</p><h1 style="margin-top:0">${esc(c.name || "")} <span class="muted">${esc(c.ticker || "")}</span></h1></div><div>${wlButton(cik)}</div></div>
-  <section class="card"><h2 style="margin-top:0">The company</h2>${brief}<p class="small" style="margin-bottom:0">Source: SEC EDGAR (latest 10-K, Item 1 “Business”; company submissions), retrieved ${esc((window.MM_BRIEF || {meta: {}}).meta.retrieved || "")}.</p></section>
+  m.innerHTML = `${pageHead(`Deep-Dive · ${esc(sectorOf(c.sic))} · ${esc(c.sic_desc || "")}`, `${esc(c.name || "")} <span class="tick">${esc(c.ticker || "")}</span>`, "", `${ddPick(m)}${wlButton(cik)}`)}
+  <section class="card cocard"><h2 style="margin-top:0">The company</h2><div class="cbrief">${brief}</div><p class="small" style="margin:14px 0 0">Source: SEC EDGAR (latest 10-K, Item 1 “Business”; company submissions), retrieved ${esc((window.MM_BRIEF || {meta: {}}).meta.retrieved || "")}.</p></section>
   <h2>Key numbers</h2><div class="kpis knum">${kn.map(([l, v]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("")}</div>
   <p class="small">12 months to ${esc(r.end || "–")} from SEC filings (EDGAR retrieved ${esc(P.sec_retrieved || "")}); market value, P/E, EV and earnings yield at the Yahoo Finance close ${esc(P.price_date || "")}.</p>
   <div class="grid2"><div class="card note-scn"><h3>Why look deeper</h3>${notes.look.length ? `<ul>${notes.look.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : `<p class="muted">No strong signal from the four Moat Screeners today.</p>`}</div>
@@ -894,7 +1010,7 @@ function wlRows() {
 function viewWatchlist(m) {
   const modeNote = {db: "Saved in this dashboard: everyone with access sees the same list.", local: "Saved in this browser only (the shared database is not available here, for example in a local preview or when signed out).",
     none: "This view cannot save (no database and no browser storage). Changes are lost on reload.", "db-error": "The shared database stopped answering; changes may not be saved. Reload the page to reconnect.", loading: "Connecting to the shared Watchlist…"}[wlMode()];
-  m.innerHTML = `<h1>Watchlist</h1><p class="lede">Companies we follow, with our priority and thinking. Add companies with ☆ on the Screener or the Deep-Dive.</p>
+  m.innerHTML = `${pageHead("Action", "Watchlist", "Companies we follow, with our priority and thinking. Add companies with ☆ on the Screener or the Deep-Dive.")}
   ${wlStore.readOnly() ? `<div class="card note-exp" style="margin-bottom:10px"><b>View-only:</b> you can read this Watchlist but not change it. Ask the owner for edit access.</div>` : ""}
   <p class="small">${esc(modeNote)} Numbers are today's (filings retrieved ${esc(SCR.meta.sec_retrieved || "")}, close ${esc(SCR.meta.price_date || "")}), not frozen at the date added. M1–M4: percentile where the company is in that Moat Screener's top-right (default lines).</p>
   <div class="toolbar"><span class="small">Priority</span><span class="seg" id="wlpr">${["", "A", "B", "C"].map(p => `<button type="button" data-p="${p}">${p || "All"}</button>`).join("")}</span><span class="small" id="wln"></span></div>
@@ -928,13 +1044,13 @@ function renderWatchRows() {
   document.getElementById("wln").textContent = `${rows.length} of ${all} companies`;
   const th = (key, label, cls = "") => `<th class="sort ${cls}" data-k="${key}" aria-sort="${S.key === key ? (S.dir === 1 ? "ascending" : "descending") : "none"}"><button type="button">${label}</button></th>`;
   if (!all) { t.innerHTML = `<p class="empty">No companies yet. Press ☆ next to a company in the Screener Summary, a Moat Screener side box, or a Deep-Dive.</p>`; return; }
-  t.innerHTML = `<table class="sumt wlt"><thead><tr>${th("ticker", "Company")}${th("priority", "Priority")}${th("mc", "Market cap", "r")}${th("pe", "P/E TTM", "r")}${th("count", "# of moats", "r")}${GKEYS.map((g, i) => th(g, "M" + (i + 1), "r mcol")).join("")}${SUMCOLS.map(([k, n]) => th(k, n, "r")).join("")}${th("added", "Added")}<th></th></tr></thead><tbody>${
+  t.innerHTML = `<table class="sumt wlt"><thead><tr>${th("ticker", "Company")}${th("priority", "Priority")}<th>Actions</th>${th("mc", "Market cap", "r")}${th("pe", "P/E TTM", "r")}${th("count", "#Moat", "r nmoat", "Number of Moat Screeners where the company is in the top-right")}${GKEYS.map((g, i) => th(g, "M" + (i + 1), "r mcol")).join("")}${SUMCOLS.map(([k, n]) => th(k, n, "r")).join("")}${th("added", "Added")}<th></th></tr></thead><tbody>${
     rows.map(x => `<tr><td class="nm"><b>${esc(x.c.ticker || "")}</b> <span class="small">${esc(x.c.name || "")}</span>${x.inData ? "" : ` <span class="badge b-risk">not in today's data</span>`}</td>
       <td><select data-pr="${x.cik}" aria-label="Priority for ${esc(x.c.ticker || "")}">${["", "A", "B", "C"].map(p => `<option value="${p}"${(x.e.priority || "") === p ? " selected" : ""}>${p || "–"}</option>`).join("")}</select></td>
+      <td class="wlact"><button type="button" class="btn sm" data-deck="${x.cik}">Pitch deck</button> <a class="btn ghost sm" href="#deepdive/${x.cik}">Deep-Dive</a> <button type="button" class="linkbtn rm" data-wlrm="${x.cik}" title="Remove from the Watchlist">Remove</button></td>
       <td class="r">${fusd(x.mc)}</td><td class="r">${fpe(x.pe)}</td><td class="r"><b>${x.inData ? x.count : "–"}</b></td>${GKEYS.map(g => `<td class="r mcol">${x.m[g] !== undefined ? `<span class="mhit">${Math.round(x.m[g])}</span>` : ""}</td>`).join("")}
-      ${SUMCOLS.map(([k]) => `<td class="r">${k === "dgm" ? fpt(x[k]) : fp(x[k])}</td>`).join("")}<td class="small">${esc(x.e.added || "")}</td>
-      <td class="wlact"><a href="#deepdive/${x.cik}">Deep-Dive</a> · <button type="button" class="linkbtn" data-deck="${x.cik}">Pitch deck</button> · <button type="button" class="linkbtn" data-wlrm="${x.cik}" title="Remove from the Watchlist">Remove</button></td></tr>
-      <tr class="noterow"><td colspan="${6 + GKEYS.length + SUMCOLS.length}"><label class="small" for="nt${x.cik}">Note on ${esc(x.c.ticker || x.c.name || "")}: our thinking</label>
+      ${SUMCOLS.map(([k]) => `<td class="r">${k === "dgm" ? fpt(x[k]) : fp(x[k])}</td>`).join("")}<td class="small">${esc(x.e.added || "")}</td></tr>
+      <tr class="noterow"><td colspan="${7 + GKEYS.length + SUMCOLS.length}"><label class="small" for="nt${x.cik}">Note on ${esc(x.c.ticker || x.c.name || "")}: our thinking</label>
         <textarea id="nt${x.cik}" data-note="${x.cik}" rows="4" placeholder="Why we are watching it, what would make us act, open questions…">${esc(x.e.note || "")}</textarea><span class="small" data-st="${x.cik}">${x.e.updated ? "Last saved " + esc(x.e.updated) : ""}</span></td></tr>`).join("")}</tbody></table>`;
   t.querySelectorAll("textarea[data-note]").forEach(a => { a.style.height = "auto"; a.style.height = Math.max(96, a.scrollHeight) + "px"; });
 }
@@ -1126,9 +1242,12 @@ const FOURQ = [
 ];
 function viewIntro(m) {
   const D = scrDefaultRun(), P = SCR.meta;
-  m.innerHTML = `<div class="hero"><p class="eyebrow">Moat Momentum · business case</p><h1>Find the companies whose moat is real and getting stronger, in minutes, from public filings.</h1>
+  const glance = [[Object.keys(SCR.co).length, "US companies covered"], [D.U.kept.length, "pass the risk check"], [D.atLeast(2), "top-right in 2+ Moat Screeners"], [D.atLeast(3), "top-right in 3+ Moat Screeners"]];
+  m.innerHTML = `<div class="herogrid"><div class="hero"><p class="eyebrow">Moat Momentum · business case</p><h1>Find the companies whose moat is real and getting stronger, in minutes, from public filings.</h1>
     <p class="lede">A screening tool for equity research teams: it narrows ${Object.keys(SCR.co).length.toLocaleString()} US companies to a short list worth an analyst's time, explains why each one is on it, and keeps the team's view in one shared Watchlist.</p>
     <p><a class="btn" href="#screener">Open the Screener</a> <a class="btn ghost" href="#howto">How to use it</a></p></div>
+    <aside class="card glance" aria-label="Today's screen"><p class="eyebrow">Today's screen · default settings</p>${glance.map(([n, l], i) => `<div class="gl${i === 3 ? " hi" : ""}"><b>${n.toLocaleString()}</b><span>${l}</span></div>`).join("")}
+      <p class="small" style="margin:10px 0 0">SEC filings retrieved ${esc(P.sec_retrieved || "")} · prices close ${esc(P.price_date || "")}</p></aside></div>
   ${quoteHtml(QUOTES[0])}
   <h2>The pain point</h2>
   <div class="grid3">
@@ -1155,10 +1274,10 @@ function viewIntro(m) {
 function viewMethodology(m) {
   const P = SCR.meta, d = P.defaults, L = P.lines;
   const def = (t, body, f, src) => `<div class="card defn"><h3>${t}</h3><p>${body}</p>${f ? `<div class="formula">${esc(f)}</div>` : ""}${src ? `<p class="small" style="margin-bottom:0">Source: ${src}</p>` : ""}</div>`;
-  m.innerHTML = `<h1>Methodology</h1><p class="lede">How the Moat Screener works, what each measure means, where the data comes from, and what it cannot see. It produces candidates for a deeper look, not a final answer.</p>
-  <nav class="toc small">${["Key concepts", "Screener Scope", "The four Moat Screeners", "How they fit together", "Data sources", "Strengths and blind spots", "Definitions"].map((t, i) => `<a href="#" data-to="ms${i}">${t}</a>`).join(" · ")}</nav>
+  m.innerHTML = `${pageHead("Design", "Methodology", `How the Moat Screener works, what each measure means, where the data comes from, and what it cannot see. It produces candidates for a deeper look, not a final answer.`)}
+  <nav class="toc jumpnav" aria-label="Methodology sections">${["Key concepts", "Screener Scope", "The four Moat Screeners", "How they fit together", "Data sources", "Strengths and blind spots", "Definitions"].map((t, i) => `<a href="#" data-to="ms${i}">${t}</a>`).join("")}</nav>
   <h2 id="ms0">1 · Key concepts</h2>
-  <div class="grid2">
+  <div class="grid2 c2">
     ${def("12-month figures (TTM)", "Every measure uses the last 12 months, built from the latest 10-Q or 10-K: last fiscal year + year to date − the same period a year earlier. Trends compare that figure with the same figure 1–4 quarters earlier (period ends matched within ±20 days).", "TTM = FY + YTD − prior YTD", srcLink("sec"))}
     ${def("Clean figures", "One-off items the company tags in its filings (impairments, restructuring, litigation, acquisition costs, gains on disposals) are removed, and tax is normalised at 21%. So a single unusual year does not decide the result.", "Clean operating income = operating income + tagged one-offs", null)}
     ${def("Clean ROIC and the 9% cost of capital", "Return on invested capital: after-tax clean operating profit (NOPAT) divided by the capital tied up in the business (equity + debt + leases − excess cash). Value is created only when ROIC is above the cost of capital. We use one 9% for every company, because SEC data has no market inputs for a company-specific WACC.", "ROIC = NOPAT ÷ average invested capital", srcLink("mckinsey"))}
@@ -1190,7 +1309,7 @@ function viewMethodology(m) {
   <div class="grid2"><div class="card note-scn"><h3>Strengths</h3><ul><li>Same rules and sources for every company; each number traceable to a filing.</li><li>Four different angles (with some shared measures, see above) reduce the chance that one accounting quirk decides the result.</li><li>Shows movement (4-quarter trails, lists ② and ③), not only today's position.</li><li>Fast: the whole universe in one view.</li></ul></div>
     <div class="card note-exp"><h3>Blind spots</h3><ul><li><b>No forward view:</b> backward-looking data; guidance, products and management are not in it.</li><li><b>Not tested as a predictor:</b> earlier predictive versions failed (Archive).</li><li><b>One cost of capital</b> (9%) for all companies and sectors.</li><li><b>Accounting:</b> untagged one-offs stay in; acquisitions blur growth and returns.</li><li><b>Missing data:</b> no interest or gross margin tagged → “not tested” or left out of a chart.</li><li><b>Small numbers:</b> tiny NOPAT or EV gives extreme ratios (pinned at the chart edge).</li><li><b>Share counts:</b> market value relies on cover-page shares; multi-class and ADS companies need care.</li></ul></div></div>
   <h2 id="ms6">7 · Definitions</h2>
-  <div class="grid2">
+  <div class="grid2 c3">
     ${def("NOPAT", "Net operating profit after tax: clean operating income × (1 − 21%).", "NOPAT = clean operating income × 0.79", null)}
     ${def("Invested capital", "Money tied up in the business: equity + debt + finance leases − cash above 2% of revenue.", null, null)}
     ${def("EV (enterprise value)", "What buying the whole business would cost: market value + debt − cash.", "EV = market value + debt − cash", null)}
@@ -1229,7 +1348,7 @@ function viewHowTo(m) {
     <li>Read the side box: quadrant now and the last four quarters. Is it moving toward or away from the corner?</li>
     <li>Open its <a href="#deepdive/${top.cik}">Deep-Dive</a>: what the company does, key numbers, all four Moat Screener results and the “what to watch” list.</li>
     <li>If it is worth following, press ☆ and give it a priority and a note in the <a href="#watchlist">Watchlist</a>; the Pitch deck button turns it into five slides.</li></ol></div>` : "";
-  m.innerHTML = `<h1>How to Use</h1><p class="lede">Five minutes from the full market to a short list you can defend. The Action tabs do the work: <b>Screener</b> to find, <b>Deep-Dive</b> to understand, <b>Watchlist</b> to decide and share.</p>
+  m.innerHTML = `${pageHead("Design", "How to Use", `Five minutes from the full market to a short list you can defend. The Action tabs do the work: <b>Screener</b> to find, <b>Deep-Dive</b> to understand, <b>Watchlist</b> to decide and share.`)}
   <h2>The workflow</h2>
   <ol class="steps">
     <li><b>Set the scope</b> (Screener, Section 1): pick market-value bands, sectors or industries. None picked = everything.</li>
@@ -1250,7 +1369,7 @@ function viewHowTo(m) {
 function onDataLoaded() { if (state.view === "deepdive" && !document.activeElement?.closest?.("#ddq")) render(); }
 
 // ---------- boot ----------
-document.getElementById("asof").textContent = `Data as of ${META.as_of}`;
+document.getElementById("asof").textContent = `Data ${META.as_of}`;
 document.getElementById("ret").textContent = META.sec_retrieved;
 document.getElementById("mver").textContent = "v" + META.methodology;
 (function () {
