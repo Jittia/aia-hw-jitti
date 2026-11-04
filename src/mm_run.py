@@ -197,13 +197,16 @@ def scenario_eval(disc: dict) -> dict:
         f, r = V[key]["shortlist"]["flagged"], V[key]["shortlist"]["rest"]
         return {"hit": f["hit_rate_3y"], "fa": f["false_alarm_3y"], "top20": f["reach_top20_roic_3y"], "n": f["n"],
                 "rest_hit": r["hit_rate_3y"], "rest_fa": r["false_alarm_3y"]}
+    def mkt(key):
+        P = mk["portfolios"]
+        return {"cagr": P[key]["neutral"]["cagr"], "spx": P["^SP500TR"]["neutral"]["cagr"]} if key in P else {}
     w = mk.get("compounder", {}).get("windows", {})
     lf = disc.get("label_fix", {})
     return {
         "Early Moat — Default": {**sl("Default (locked settings)"), "cagr": mk["portfolios"]["moat"]["neutral"]["cagr"],
                                  "spx": mk["portfolios"]["^SP500TR"]["neutral"]["cagr"]},
-        "Proven Leaders": sl("Proven Leaders (70% level)"),
-        "Strict Risk": sl("Strict Risk (all rules remove)"),
+        "Proven Leaders": {**sl("Proven Leaders (70% level)"), **mkt("proven")},
+        "Strict Risk": {**sl("Strict Risk (all rules remove)"), **mkt("strict")},
         "Compounder": {"test_multiple": lf.get("test", {}).get("multiple"), "train_multiple": lf.get("train", {}).get("multiple"),
                        "test_base": lf.get("test", {}).get("base_rate"),
                        "cagr_test": w.get("test 2020-2023", {}).get("compounder_neutral", {}).get("cagr"),

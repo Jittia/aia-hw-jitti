@@ -786,3 +786,45 @@ In Screener, it only show result from setting in each scenarios.  But when I cha
   - Fill the deck placeholders.
   - Edit `help.md`.
   - Submit the repo link.
+
+---
+
+## รอบ 17 · 2026-11-04 · Market test for every scenario; Compounder tab in the Google Sheet
+
+- **ทำอะไร:**
+  - **Market test:**
+    - `src/mm_market.py` now also builds the Proven Leaders and Strict Risk shortlists each 30 June (same definitions as the back-test), then prices them with the same three missing-price cases.
+    - Results go in `market.json`, the scenario tabs on the dashboard (`mm_run.py` → `scenario_eval`), and the Proof market table.
+    - The earlier results were re-checked and are unchanged.
+  - **Google Sheet:**
+    - New tab "Compounder (experimental)", copied from Shortlist so it keeps the same header and frozen row. It imports `output/sheet/compounder.csv` from GitHub.
+    - The Read me tab gains a line explaining the tab.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · Google Sheets connector · Yahoo Finance prices (cache retrieved 2026-11-03)
+- **Prompt ที่ใช้:**
+
+```text
+Go ahead on 1 & 2
+```
+
+- **ผลที่ได้:**
+  - **Market test, July 2013 – October 2026, average return a year:**
+
+    | Scenario | Neutral case | Worst case – priced throughout |
+    |---|---|---|
+    | Early Moat | 15.5% | 14.4% – 15.7% |
+    | Proven Leaders | 14.6% | 12.5% – 14.6% |
+    | Strict Risk | 15.8% | 12.9% – 16.4% |
+    | S&P 500 | 14.3% | – |
+
+    - All three are within about 1.5 points a year of the index, with more volatility (about 18% vs 14%).
+    - Proven Leaders had the smallest drawdown of the three (−27.8%).
+  - **Sheet:** the tab loads 25 candidates (MU first).
+  - **Checks:** 61 tests pass; the scenario tabs show the new numbers (checked in the browser).
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Ran the market test for the other two scenarios** so every scenario tab shows a result instead of "not run". This lets me compare them fairly.
+  - **No scenario is promoted as better.** The differences are within the range of the missing-price cases, so none is clearly better.
+  - **The Sheet tab imports from GitHub like the other tabs.** It updates after each push without manual copying.
+- **ขั้นต่อไป:**
+  - Fill the deck placeholders.
+  - Edit `help.md`.
+  - Submit the repo link.

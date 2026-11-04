@@ -56,8 +56,10 @@ def market_html() -> str:
         return ""
     m = json.loads(path.read_text())
     P = m["portfolios"]
-    names = {"moat": "Moat Momentum shortlist (25)", "quality": "Quality only: same engine, level only (25)",
+    names = {"moat": "Moat Momentum shortlist (25), Early Moat default", "proven": "Proven Leaders scenario (25)",
+             "strict": "Strict Risk scenario (25)", "quality": "Quality only: same engine, level only (25)",
              "universe": "Universe, equal weight"}
+    names = {k: v for k, v in names.items() if k in P}
     rows = ""
     for k, label in names.items():
         n, w, sv = P[k]["neutral"], P[k]["worst"], P[k]["survivors"]

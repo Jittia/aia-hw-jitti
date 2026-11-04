@@ -50,6 +50,13 @@ def portfolios(settings: dict) -> pd.DataFrame:
     q = copy.deepcopy(settings)
     q["scoring"]["blend"] = {"level": 100, "trend": 0, "consistency": 0}
     q["scoring"]["confirm_themes"] = 0  # quality only: no improvement requirement
+    # the two other built-in scenarios of the web page (same definitions as mm_validate.variants)
+    pl = copy.deepcopy(settings)
+    pl["scoring"]["blend"] = {"level": 70, "trend": 20, "consistency": 10}
+    sr = copy.deepcopy(settings)
+    for k in sr["risk_gate"]:
+        if isinstance(sr["risk_gate"][k], dict):
+            sr["risk_gate"][k]["mode"] = "remove"
     rows = []
     tax, cash, ttm = settings["data"]["tax_rate"], settings["data"]["excess_cash_pct_revenue"], bool(settings["data"].get("ttm"))
     for y in YEARS:
@@ -58,13 +65,17 @@ def portfolios(settings: dict) -> pd.DataFrame:
         a = score_as_of(d, companies, as_of, settings, live=False)["results"]
         b = score_as_of(d, companies, as_of, q, live=False)["results"]
         # same settings on fiscal years only (the v1.1 method), to show what the 12-month figures change
-        c = score_as_of(scoring_table(facts, as_of, tax, cash, ttm=False), companies, as_of, settings, live=False)["results"]
+        c = score_as_of(scoring_table(facts, as_of, tax, cash, ttm=False), companies, as_of, settings, live=False)["results"] if ttm else a
+        e = score_as_of(d, companies, as_of, pl, live=False)["results"]
+        g = score_as_of(d, companies, as_of, sr, live=False)["results"]
         a = a[a["in_universe"]]
         qual = set(b.loc[b["shortlist"], "cik"])
         fy_only = set(c.loc[c["shortlist"], "cik"])
+        proven, strict = set(e.loc[e["shortlist"], "cik"]), set(g.loc[g["shortlist"], "cik"])
         for _, r in a.iterrows():
             rows.append({"year": y, "cik": int(r["cik"]), "sic": int(r["sic"]), "moat": bool(r["shortlist"]),
-                         "quality": int(r["cik"]) in qual, "moat_fy": int(r["cik"]) in fy_only})
+                         "quality": int(r["cik"]) in qual, "moat_fy": int(r["cik"]) in fy_only,
+                         "proven": int(r["cik"]) in proven, "strict": int(r["cik"]) in strict})
         print(f"  portfolios {y}: universe {len(a)}", flush=True)
     p = pd.DataFrame(rows)
     p.to_pickle(path)
@@ -241,7 +252,7 @@ def main() -> None:
         return pd.period_range(f"{y}-07", f"{min(y + 1, 2026)}-{'06' if y < 2026 - 0 else '10'}", freq="M")
 
     out = {"retrieved": px.attrs.get("retrieved"), "portfolios": {}, "coverage": {}, "years": {}}
-    port_series = {k: {s: [] for s in ("survivors", "neutral", "worst")} for k in ("moat", "moat_fy", "quality", "universe")}
+    port_series = {k: {s: [] for s in ("survivors", "neutral", "worst")} for k in ("moat", "moat_fy", "proven", "strict", "quality", "universe")}
     yearly = []
     for y in YEARS:
         months = holding(y)
@@ -249,7 +260,8 @@ def main() -> None:
             months = pd.period_range("2025-07", "2026-10", freq="M")
         months = [m for m in months if m in rets.index]
         py = p[p["year"] == y]
-        for key, members in (("moat", py[py["moat"]]), ("moat_fy", py[py["moat_fy"]]), ("quality", py[py["quality"]]), ("universe", py)):
+        for key, members in (("moat", py[py["moat"]]), ("moat_fy", py[py["moat_fy"]]), ("proven", py[py["proven"]]),
+                             ("strict", py[py["strict"]]), ("quality", py[py["quality"]]), ("universe", py)):
             hp = hold_paths(members, months, pd.Period(f"{y}-06", "M"), f"{y + 2}-06-30", rets, px, status, spx)
             n_missing, n_dead = hp.pop("_missing"), hp.pop("_dead")
             for s, v in hp.items():
