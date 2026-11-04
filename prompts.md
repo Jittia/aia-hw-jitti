@@ -675,3 +675,50 @@ My aim is to use this additional data to spot potential compounder despite it's 
   - Edit `help.md`.
   - Submit the repo link.
   - Each quarter: re-run and freeze both lists (`mm_track.py freeze` / `freeze_compounder`). Real results from 2026 onward are the true test of v2.0.
+
+---
+
+## รอบ 15 · 2026-11-04 · Pitch documents updated to v1.1 and the experimental v2.0 list
+
+- **ทำอะไร:**
+  - **Google files edited in place** (same links):
+    - **Whitepaper** (renamed "v1.1"):
+      - funnel 1,309 / 453;
+      - Altman and Beneish marked "off since v1.1";
+      - v1.0 back-test tables labelled "v1.0 settings";
+      - TTM experiment added to limitations, plus the three fingerprints;
+      - new section 11 "What changed since v1.0", with a v1.1 vs v2.0 table.
+    - **One-pager:** filters and clean P/E, the failed v2.0 test, and "Next".
+    - **Deck:**
+      - new slide "A quarterly Compounder Signal failed its one-time 2020–2023 test";
+      - executive summary, funnel, product, fingerprint, roadmap and date updated.
+  - **Repo copies synced:**
+    - `src/mm_pitch.py` and `src/mm_deck_spec.py` now produce the same text.
+    - v1.0 tables are read from `output/data/archive_v1.0/`; section 11 and the new slide come from `discovery.json` / `market.json`.
+    - Regenerated `output/pitch/*.html`.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · Google Docs / Slides / Drive connectors
+- **Prompt ที่ใช้:**
+
+```text
+Update pitch docs
+```
+
+```text
+Yes, sync repo copies
+```
+
+- **ผลที่ได้:**
+  - All three Google files show v1.1 numbers and the v2.0 result, and the links did not change.
+  - The local copies contain every changed sentence and number (checked by script).
+  - The deck slides I changed were checked as images: no text runs out of its box.
+  - 61 tests pass.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Edit in place, not new files.** The links I already have and may have shared stay the same.
+  - **Keep the v1.0 back-test tables and label them "v1.0 settings".** They are still the true record of v1.0, and the whitepaper should show how the method changed rather than overwrite the history.
+  - **Generators read the v1.0 archive explicitly.** Before, they read whichever results were current, which would have mixed v1.1 numbers into v1.0 tables on the next run.
+  - **The deck price and "ask" placeholders stay empty.** I set those myself.
+- **ขั้นต่อไป:**
+  - Fill the deck placeholders.
+  - Add the `compounder` tab to the Google Sheet.
+  - Edit `help.md`.
+  - Submit the repo link.

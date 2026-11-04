@@ -1,5 +1,10 @@
 """Moat Momentum · step 9: whitepaper and one-pager (HTML) with every number read from the validation outputs.
 
+Since 2026-11-04 (Methodology v1.1 + experimental v2.0 list): the v1.0 back-test tables are read from
+output/data/archive_v1.0/ and labelled "v1.0 settings"; the funnel and risk gate come from today's run, and section 11
+(what changed since v1.0) from validation.json, market.json and discovery.json. The Google Docs were edited in place to
+the same text, so their links stay the same.
+
 Reading copies: output/pitch/whitepaper.html, output/pitch/onepager.html. The same HTML is uploaded to Google Docs
 (Drive converts it). Market-size anchors are incumbents' revenue from their SEC 10-K XBRL facts (bulk companyfacts).
 Anything that is not measured is marked ASSUMPTION.
@@ -42,20 +47,28 @@ def incumbents() -> list[dict]:
     return out
 
 
+PREPARED = "2026-11-03"
+V10 = "Default (locked v1.0)"
+
+
 def load() -> dict:
-    v = json.loads((ROOT / "output" / "data" / "validation.json").read_text())["variants"]
-    m = json.loads((ROOT / "output" / "data" / "market.json").read_text())
+    OD = ROOT / "output" / "data"
+    v = json.loads((OD / "archive_v1.0" / "validation.json").read_text())["variants"]
+    m = json.loads((OD / "archive_v1.0" / "market.json").read_text())
     sc = pd.read_csv(ROOT / "output" / "data" / "spotcheck.csv")
-    tr = sorted((ROOT / "track_record").glob("*.json"))[-1]
-    track = json.loads(tr.read_text())
+    tracks = {p.stem: json.loads(p.read_text()) for p in sorted((ROOT / "track_record").glob("*.json"))}
+    track = tracks["2026-11-03"]
     s = (ROOT / "output" / "data" / "site_data.js").read_text(encoding="utf-8")
     meta = json.loads(s[len("window.MM = "):s.rindex(";")])["meta"]
-    rows = pd.read_pickle(ROOT / "data" / "cache" / "mm" / "validation_rows.pkl")
-    from mm_proof import comparisons
+    rows = pd.read_pickle(ROOT / "data" / "cache" / "mm" / "validation_rows_v1.0.pkl")
+    from mm_proof import comparisons, same_yardstick
     inp = sc[~sc["item"].str.startswith("check")]
     nz = inp[inp["status"] != "zero (printed as a dash)"]
     chk = sc[sc["item"].str.startswith("check")]
-    return {"v": v, "d": v["Default (locked settings)"], "m": m, "track": track, "meta": meta, "cmp": comparisons(rows),
+    disc = json.loads((OD / "discovery.json").read_text())
+    v11 = {"val": json.loads((OD / "validation.json").read_text())["variants"]["Default (locked settings)"]["shortlist"],
+           "mkt": json.loads((OD / "market.json").read_text()), "disc": disc, "yard": same_yardstick(disc["kept"])}
+    return {"v": v, "d": v[V10], "m": m, "track": track, "tracks": tracks, "v11": v11, "meta": meta, "cmp": comparisons(rows),
             "spot": {"found": int((nz["status"] == "matched").sum()), "n": len(nz), "chk_ok": int((chk["status"] == "matched").sum()),
                      "chk_n": len(chk), "companies": sc["ticker"].nunique()},
             "inc": incumbents()}
@@ -78,7 +91,7 @@ td {{ border-bottom: 1px solid #E3D3C4; padding: 5px 7px; vertical-align: top; }
 def doc(title: str, body: str) -> str:
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">{style()}</head><body>{body}
-<p class="small" style="border-top:2px solid {NAVY};padding-top:8px;margin-top:24px">Moat Momentum is a research tool, not investment advice. Output is the same for every user. Past results do not guarantee future results. Prepared {date.today()} · Methodology v1.0 · Sources: SEC EDGAR; Yahoo Finance for the market test. Legal review is required before any launch.</p></body></html>"""
+<p class="small" style="border-top:2px solid {NAVY};padding-top:8px;margin-top:24px">Moat Momentum is a research tool, not investment advice. Output is the same for every user. Past results do not guarantee future results. Prepared {PREPARED}, updated {date.today()} · Methodology v1.1 with an experimental v2.0 list · Sources: SEC EDGAR; Yahoo Finance for the market test. Legal review is required before any launch.</p></body></html>"""
 
 
 def whitepaper(x: dict) -> str:
@@ -104,7 +117,9 @@ def whitepaper(x: dict) -> str:
     ind_rows = "".join(f"<tr><td>{tname[i['theme']]}</td><td>{i['label']}</td><td>{formulas[i['name']]}</td><td>{', '.join(cname[ch] for ch in i['comps'])}</td></tr>" for i in meta["indicators"])
     rg = meta["settings"]["risk_gate"]
     side = {"interest_cover": "below", "net_debt_ebitda": "above", "altman_z": "below", "beneish_m": "above", "dilution": "above", "sbc_revenue": "above", "goodwill_jump": "above"}
-    gate_rows = "".join(f"<tr><td>{k.replace('_', ' ')}</td><td>{rg[k]['mode']} if {side[k]} {rg[k][side[k]]}</td><td class='r'>{meta['gate_counts'][k]['breach']}</td><td class='r'>{meta['gate_counts'][k]['worsening']}</td></tr>" for k in side)
+    gdef = lambda k: (f"off since v1.1 (was remove {side[k]} {rg[k][side[k]]})" if rg[k]["mode"] == "off"  # noqa: E731
+                      else f"{rg[k]['mode']} if {side[k]} {rg[k][side[k]]}")
+    gate_rows = "".join(f"<tr><td>{k.replace('_', ' ')}</td><td>{gdef(k)}</td><td class='r'>{meta['gate_counts'][k]['breach']}</td><td class='r'>{meta['gate_counts'][k]['worsening']}</td></tr>" for k in side)
     sub_rows = "".join(f"<tr><td>{k}</td><td class='r'>{v['flagged']['n']}</td><td class='r'>{pct(v['flagged']['hit_rate_3y'])}</td><td class='r'>{pct(v['flagged']['false_alarm_3y'])}</td><td class='r'>{pct(v['rest']['hit_rate_3y'])}</td></tr>"
                        for k, v in list(d["sub_periods"].items()) + list(d["sector_exclusions"].items()))
     bound_rows = "".join(f"<tr><td>{lab}</td><td class='r'>{pct(P[k]['survivors']['cagr'])}</td><td class='r'>{pct(P[k]['neutral']['cagr'])}</td><td class='r'>{pct(P[k]['worst']['cagr'])}</td></tr>"
@@ -112,11 +127,14 @@ def whitepaper(x: dict) -> str:
     year_rows = "".join(f"<tr><td>{y}</td>" + "".join(f"<td class='r'>{pct(P[k]['neutral']['by_year'][y])}</td>" for k in ("moat", "quality", "^SP500TR", "QUAL")) + "</tr>"
                         for y in sorted(P["moat"]["neutral"]["by_year"]))
     funnel = "".join(f"<tr><td>{a}</td><td class='r'>{b:,}</td></tr>" for a, b in f)
+    ts = json.loads((ROOT / "output" / "data" / "ttm_study.json").read_text())
+    lab = {"2026-11-03": "v1.0", "2026-11-03_v1.1": "v1.1", "2026-11-03_v2.0-experimental": "experimental v2.0 list"}
+    fps = ", ".join(f"{lab.get(k, k)} {t['fingerprint_sha256'][:16]}…" for k, t in x["tracks"].items())
     return doc("Moat Momentum Whitepaper", f"""
-<h1>Moat Momentum</h1><p class="tag">Strengthening moats, found in the filings. Methodology whitepaper v1.0 · {date.today():%d %B %Y}</p>
+<h1>Moat Momentum</h1><p class="tag">Strengthening moats, found in the filings. Methodology whitepaper v1.1 · {date.today():%d %B %Y}</p>
 <h2>1. Summary</h2>
 <p>Moat Momentum screens every US-listed company with SEC XBRL data for signs that its competitive advantage is strengthening: rising returns on capital, pricing power, scale benefits, gains against industry peers and cash-backed profit. Every number comes from audited filings and links to the 10-K it came from.</p>
-<p>We tested the method honestly before writing this paper. The screen finds high-quality, improving businesses: three years after selection they still ranked <b>{c['Shortlist']['L_rank3']:+.1f} points</b> above their industry median on returns, margins and turnover, with clean ROIC <b>{pct(c['Shortlist']['L_roic3'])}</b> higher. But it does <span class="risk">not</span> yet predict further strengthening, and a portfolio of its picks returned {pct(P['moat']['neutral']['cagr'])} a year from 2013 to 2026, about the same as the S&amp;P 500 ({pct(P['^SP500TR']['neutral']['cagr'])}), with more volatility. We report this in full, because a research tool is only as useful as its willingness to show where it fails.</p>
+<p>We tested the method honestly before writing this paper. The screen finds high-quality, improving businesses: three years after selection they still ranked <b>{c['Shortlist']['L_rank3']:+.1f} points</b> above their industry median on returns, margins and turnover, with clean ROIC <b>{pct(c['Shortlist']['L_roic3'])}</b> higher. But it does <span class="risk">not</span> yet predict further strengthening, and a portfolio of its picks returned {pct(P['moat']['neutral']['cagr'])} a year from 2013 to 2026, about the same as the S&amp;P 500 ({pct(P['^SP500TR']['neutral']['cagr'])}), with more volatility. We report this in full, because a research tool is only as useful as its willingness to show where it fails. Section 11 adds what changed on 3 and 4 November 2026: v1.1 stopped two risk checks from removing healthy large companies, and a quarterly Compounder Signal (v2.0) failed its one-time test on 2020–2023, so it is offered only as an experimental list.</p>
 <h2>2. The problem</h2>
 <p>Quality screens find companies that are already great and already priced as such. Analyst moat ratings are subjective, slow to change and cover a limited set of companies. Investors who want to see a moat forming, rather than one that is already recognised, have no transparent, testable, filing-based tool.</p>
 <h2>3. Academic foundations</h2>
@@ -134,7 +152,7 @@ def whitepaper(x: dict) -> str:
 <h3>4.5 Risk gate today</h3><table><tr><th>Check</th><th>Default</th><th class="r">Over threshold</th><th class="r">Worsening</th></tr>{gate_rows}</table>
 <h2>5. Data quality</h2><p>For 10 companies in 10 industries, three fiscal years each, {sp['found']} of {sp['n']} non-zero inputs were found printed in the 10-K text, and {sp['chk_ok']} of {sp['chk_n']} hand recalculations matched the engine. The check found two clean-up issues, which were fixed: an operating-income tag that was a segment total, and business-sale gains that sit below operating income.</p>
 <h2>6. Validation</h2>
-<h3>6.1 Fundamental test, 2013–2023</h3><p>Each year the screen was re-run as of 30 June using only filings made by then, including companies that later delisted. Settings were fingerprinted before the run.</p>
+<h3>6.1 Fundamental test, 2013–2023 (v1.0 settings)</h3><p>Each year the screen was re-run as of 30 June using only filings made by then, including companies that later delisted. Settings were fingerprinted before the run.</p>
 <table><tr><th>Three years later</th><th class="r">Shortlist</th><th class="r">Moat Strengthening</th><th class="r">Rest of universe</th></tr>
 <tr><td>Peer rank kept improving (hit rate)</td><td class="r">{pct(sl['flagged']['hit_rate_3y'])}</td><td class="r">{pct(st['flagged']['hit_rate_3y'])}</td><td class="r">{pct(sl['rest']['hit_rate_3y'])}</td></tr>
 <tr><td>Peer rank fell more than 10 points (false alarm)</td><td class="r">{pct(sl['flagged']['false_alarm_3y'])}</td><td class="r">{pct(st['flagged']['false_alarm_3y'])}</td><td class="r">{pct(sl['rest']['false_alarm_3y'])}</td></tr>
@@ -144,19 +162,39 @@ def whitepaper(x: dict) -> str:
 <p class="small">{sl['flagged']['n']} shortlist picks ({sl['flagged']['companies']} companies) over 11 years. The same pattern holds in every variant tried:</p>
 <table><tr><th>Variant</th><th class="r">Shortlist hit rate</th><th class="r">Shortlist false alarm</th></tr>{rob}</table>
 <h3>6.1b Sub-periods and slices (shortlist)</h3><table><tr><th>Slice</th><th class="r">Picks</th><th class="r">Hit rate</th><th class="r">False alarm</th><th class="r">Rest: hit</th></tr>{sub_rows}</table>
-<h3>6.2 Market test, July 2013 – October 2026</h3><p>Equal-weight shortlist bought every 30 June, held one year. Prices from Yahoo Finance; companies that stopped trading filled with S&amp;P 500 returns (neutral case), with worst-case and survivors-only bounds reported in the Proof tab.</p>
+<h3>6.2 Market test, July 2013 – October 2026 (v1.0 settings)</h3><p>Equal-weight shortlist bought every 30 June, held one year. Prices from Yahoo Finance; companies that stopped trading filled with S&amp;P 500 returns (neutral case), with worst-case and survivors-only bounds below.</p>
 <table><tr><th>Portfolio</th><th class="r">CAGR</th><th class="r">Volatility</th><th class="r">Max drawdown</th></tr>{mk}</table>
 <h3>6.3 Bounds for companies that stopped trading</h3><table><tr><th>Portfolio</th><th class="r">Survivors only</th><th class="r">Neutral</th><th class="r">Worst case</th></tr>{bound_rows}</table>
 <h3>6.4 Every year (July to June)</h3><table><tr><th>Year</th><th class="r">Shortlist</th><th class="r">Quality only</th><th class="r">S&amp;P 500</th><th class="r">QUAL</th></tr>{year_rows}</table>
-<p class="small">The shortlist beat the S&amp;P 500 in {sum(P['moat']['neutral']['by_year'][y] > P['^SP500TR']['neutral']['by_year'][y] for y in P['moat']['neutral']['by_year'])} of 13 years; {pct(m['hit_rate_vs_spx'], 0)} of individual picks beat it over their holding year; annual turnover {pct(m['turnover'], 0)}.</p>
+<p class="small">The shortlist beat the S&amp;P 500 in {sum(P['moat']['neutral']['by_year'][y] > P['^SP500TR']['neutral']['by_year'][y] for y in P['moat']['neutral']['by_year'])} of 13 years; {pct(m['hit_rate_vs_spx'], 0)} of individual picks beat it over their holding year; annual turnover {pct(m['turnover'], 0)}. 2025 runs from July 2025 to October 2026.</p>
 <h2>7. What the evidence supports, and what it does not</h2>
 <ul><li><span class="good">Supported:</span> the screen identifies companies with above-industry returns on capital and margins that persist for at least three years, from audited data, with every number traceable.</li>
 <li><span class="risk">Not supported:</span> that a strengthening moat is visible in the numbers before it is recognised, or that the shortlist earns excess returns. Picks tend to be caught near the top of their improvement.</li></ul>
-<h2>8. Limitations</h2><ul><li>Only one-off items that companies tag separately can be removed.</li><li>Levels use fiscal-year data, not trailing twelve months.</li><li>The hurdle rate is 9% for all sectors; EDGAR has no market data for a true cost of capital.</li><li>Altman Z'' uses book equity and flags some healthy companies with negative equity from buybacks.</li><li>Free price data misses many companies that no longer trade; results are shown with bounds.</li><li>Banks, insurers, REITs and foreign filers are out of scope in Phase 1.</li></ul>
-<h2>9. Audit trail and live record</h2><p>Every official run freezes its shortlist, settings and data date in the public repository with a SHA-256 fingerprint (first record {x['track']['record']['as_of']}, fingerprint {x['track']['fingerprint_sha256'][:16]}…). The forward record cannot be edited without the change showing.</p>
-<h2>10. Roadmap</h2><ul><li><b>v1.1, designed in advance:</b> test measures that resist mean reversion (persistence over longer windows, distance from prior peak), built on 2013–2017 and confirmed on 2018–2023 only.</li><li><b>Phase 2:</b> qualitative layer for the shortlist (transcripts, leadership, business model) with the founder's procurement lens.</li><li><b>Phase 3:</b> foreign filers (20-F, IFRS), then Thailand, Hong Kong and Taiwan; optional valuation overlay kept separate from the moat score.</li></ul>
+<h2>8. Limitations</h2><ul><li>Only one-off items that companies tag separately can be removed.</li><li>Levels use fiscal-year data. Trailing-twelve-month scoring was tested and not adopted: once the back-test's look-ahead was removed it was no better (shortlist hit rate {pct(ts['no_overlap']['v12_hit'])} vs {pct(ts['no_overlap']['v10_hit'])}), and its market return was lower ({pct(ts['market_cagr']['ttm'])} vs {pct(ts['market_cagr']['fiscal_years_v11_gate'])} a year).</li><li>The hurdle rate is 9% for all sectors; EDGAR has no market data for a true cost of capital.</li><li>Altman Z'' uses book equity and flags some healthy companies with negative equity from buybacks; it is off by default since v1.1.</li><li>Free price data misses many companies that no longer trade; results are shown with bounds.</li><li>Banks, insurers, REITs and foreign filers are out of scope in Phase 1.</li></ul>
+<h2>9. Audit trail and live record</h2><p>Every official run freezes its shortlist, settings and data date in the public repository with a SHA-256 fingerprint (records of {x['track']['record']['as_of']}: {fps}). The forward record cannot be edited without the change showing.</p>
+<h2>10. Roadmap</h2><ul><li><b>Done since v1.0:</b> the v1.1 risk gate and the v2.0 Compounder Signal test (section 11). Next: track both frozen lists every quarter; any new signal is judged only on years after 2023.</li><li><b>Phase 2:</b> qualitative layer for the shortlist (transcripts, leadership, business model) with the founder's procurement lens.</li><li><b>Phase 3:</b> foreign filers (20-F, IFRS), then Thailand, Hong Kong and Taiwan; optional valuation overlay kept separate from the moat score.</li></ul>
+{changes(x)}
 <h2>Appendix: market-size anchors (SEC 10-K)</h2><table><tr><th>Incumbent</th><th class="r">Revenue</th><th>Period</th><th>Source</th></tr>{inc_rows}<tr><td><b>Total</b></td><td class="r"><b>${inc_total / 1e9:,.1f}B</b></td><td colspan="2"></td></tr></table>
 <p class="small">These are total company revenues, which include products beyond research subscriptions; they show the scale of spending on investment data and research, not our addressable market.</p>""")
+
+
+def changes(x: dict) -> str:
+    """Section 11: what changed since v1.0 (v1.1 risk gate, v2.0 Compounder Signal), same text as the Google Doc."""
+    v, mk, y, lf = x["v11"]["val"], x["v11"]["mkt"], x["v11"]["yard"], x["v11"]["disc"]["label_fix"]
+    w = mk["compounder"]["windows"]
+    f = dict(x["meta"]["funnel"])
+    gate = json.loads((ROOT / "output" / "data" / "gate_study.json").read_text())["A. Default v1.0"]["live_removed_top100"]
+    t, a = w["test 2020-2023"], w["all 2013-2023"]
+    row = lambda lab, p, q: f"<tr><td>{lab}</td><td class='r'>{p}</td><td class='r'>{q}</td></tr>"  # noqa: E731
+    return f"""<h2>11. What changed since v1.0</h2>
+<p><b>Risk gate v1.1 (3 November 2026).</b> Altman Z'' and Beneish M-Score now default to off. In v1.0 they removed {gate} of the 100 largest US companies, including NVIDIA, Micron, AbbVie and Oracle, while changing back-test false alarms by less than one point. With v1.1, {f['Pass the risk gate (no Remove rule hit)']:,} companies pass the gate and {f['Moat Strengthening (≥ 3 of 5 themes improving)']:,} are Moat Strengthening. The back-test result is unchanged in substance: shortlist hit rate {pct(v['flagged']['hit_rate_3y'])} and false alarm {pct(v['flagged']['false_alarm_3y'])}, against {pct(v['rest']['hit_rate_3y'])} and {pct(v['rest']['false_alarm_3y'])} for the rest of the universe; market return {pct(mk['portfolios']['moat']['neutral']['cagr'])} a year from July 2013 to October 2026, against {pct(mk['portfolios']['^SP500TR']['neutral']['cagr'])} for the S&amp;P 500.</p>
+<p><b>Compounder Signal v2.0 (4 November 2026, experimental).</b> The goal is to find companies one to two years before they become moat compounders: within three years, revenue grows at least 20% a year and at least 10 points faster than the industry median, rises every year, clean ROIC stays above 9% in at least two of the three years, gross margin holds and little growth is bought. Ten quarterly signals were fixed in advance; eight passed the training rule on 2013–2019 and were combined with equal weights. The test on 2020–2023, run once, required the top 10% to become compounders at least twice as often as all companies. It reached {lf['test']['multiple']:.2f}×, so it failed. The two methods on the same measure:</p>
+<table><tr><th>Measure</th><th class="r">v1.1 Moat Score</th><th class="r">v2.0 Compounder Signal</th></tr>
+{row("Top 10%: compounder rate ÷ all companies, 2013–2019 (years used to choose v2.0)", f"{y['train']['v11_top10']:.2f}×", f"{y['train']['v20_top10']:.2f}×")}
+{row("Top 10%: compounder rate ÷ all companies, 2020–2023 (unseen years)", f"{y['test']['v11_top10']:.2f}×", f"{y['test']['v20_top10']:.2f}×")}
+{row(f"Price, top 25, April 2020 – February 2024 (S&amp;P 500: {pct(t['sp500']['cagr'])} a year)", pct(t['v11_shortlist']['cagr']), pct(t['compounder_neutral']['cagr']))}
+{row(f"Price, May 2013 – February 2024 (S&amp;P 500: {pct(a['sp500']['cagr'])} a year)", pct(a['v11_shortlist']['cagr']), pct(a['compounder_neutral']['cagr']))}</table>
+<p>v2.0 appears in the screener only as a second, experimental list, next to market value, a clean P/E and filters by industry and size, to point to companies worth a closer look. The price rows are context, not the pass test; the v1.1 list is rebalanced once a year and the v2.0 list every quarter. Both lists are frozen so that results from 2026 onward test them on years neither method has seen.</p>"""
 
 
 def onepager(x: dict) -> str:
@@ -166,13 +204,13 @@ def onepager(x: dict) -> str:
     inc_total = sum(i["revenue"] for i in x["inc"])
     return doc("Moat Momentum One-Pager", f"""
 <h1>Moat Momentum</h1><p class="tag">Strengthening moats, found in the filings.</p>
-<h2>What it is</h2><p>A research screener that ranks about {x['meta']['funnel'][3][1]:,} US companies on whether their competitive position is improving, using only audited SEC filings. Every number links to its 10-K; every weight and threshold can be changed; every official shortlist is frozen with a fingerprint.</p>
+<h2>What it is</h2><p>A research screener that ranks about {x['meta']['funnel'][3][1]:,} US companies on whether their competitive position is improving, using only audited SEC filings. Every number links to its 10-K; every weight and threshold can be changed; every official shortlist is frozen with a fingerprint. Users can filter by industry and market value and see a clean P/E (one-off items removed) next to each score.</p>
 <h2>What we have proved, and what we have not</h2><ul>
 <li><span class="good">Proved:</span> picks keep above-industry quality. Three years later they ranked {c['Shortlist']['L_rank3']:+.1f} points above their industry median, with ROIC {pct(c['Shortlist']['L_roic3'])} higher (2013–2023, point-in-time).</li>
-<li><span class="risk">Not proved:</span> early detection or excess returns. Only {pct(sl['flagged']['hit_rate_3y'])} of picks kept improving (universe {pct(sl['rest']['hit_rate_3y'])}); the shortlist returned {pct(P['moat']['neutral']['cagr'])} a year vs {pct(P['^SP500TR']['neutral']['cagr'])} for the S&amp;P 500 (2013–2026).</li></ul>
+<li><span class="risk">Not proved:</span> early detection or excess returns. Only {pct(sl['flagged']['hit_rate_3y'])} of picks kept improving (universe {pct(sl['rest']['hit_rate_3y'])}); the shortlist returned {pct(P['moat']['neutral']['cagr'])} a year vs {pct(P['^SP500TR']['neutral']['cagr'])} for the S&amp;P 500 (2013–2026). A quarterly Compounder Signal (v2.0) chosen on 2013–2019 also failed its one-time test on 2020–2023 ({x['v11']['disc']['label_fix']['test']['multiple']:.2f}× the base rate, 2× needed); it is shown only as an experimental list.</li></ul>
 <h2>Why it is different</h2><ul><li>Free, public data: no licence cost.</li><li>Transparent rules, adjustable by the user, and a published record of where the method fails.</li><li>Founder: 30 years of global procurement and supply-chain leadership (P&amp;G, Mars, Saint-Gobain, Danone, Tesco, Coca-Cola).</li></ul>
 <h2>Business model</h2><p>Subscription research tool and data/signal licensing to funds. Pricing and volumes are <span class="assume">ASSUMPTIONS</span> to test. Incumbents Morningstar, FactSet and MSCI together reported ${inc_total / 1e9:,.1f}B of revenue in their latest 10-Ks.</p>
-<h2>Next</h2><p>v1.1 designed and tested on unseen years; Phase 2 qualitative layer; legal review before launch.</p>""")
+<h2>Next</h2><p>Live quarterly track record of both frozen lists (v1.1 and experimental v2.0); Phase 2 qualitative layer; legal review before launch.</p>""")
 
 
 def main() -> None:

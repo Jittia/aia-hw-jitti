@@ -4,6 +4,10 @@ The spec is turned into Slides API requests by the google-workspace skill's slid
 with the Slides connector. Prices, volumes and the ask are left for the founder to set: they are shown as
 [to set] and labelled ASSUMPTION, never invented.
 
+Since 2026-11-04 the v1.0 result slides read output/data/archive_v1.0/ (labelled v1.0); the funnel uses today's v1.1 run;
+slide s06b compares v1.1 with the experimental v2.0 Compounder Signal (discovery.json, market.json). The Google deck was
+edited in place to the same text.
+
 Run:  .venv/bin/python src/mm_deck_spec.py <out.json> <first_slide> <last_slide>
 """
 from __future__ import annotations
@@ -50,12 +54,21 @@ def table(sid, x, y, w, rows, widths, align):
 
 
 def slides() -> list[dict]:
-    v = json.loads((ROOT / "output" / "data" / "validation.json").read_text())["variants"]["Default (locked settings)"]
-    m = json.loads((ROOT / "output" / "data" / "market.json").read_text())
+    OD = ROOT / "output" / "data"
+    v = json.loads((OD / "archive_v1.0" / "validation.json").read_text())["variants"]["Default (locked v1.0)"]
+    m = json.loads((OD / "archive_v1.0" / "market.json").read_text())
+    mk = json.loads((OD / "market.json").read_text())["compounder"]["windows"]
+    disc = json.loads((OD / "discovery.json").read_text())
     pf = json.loads((ROOT / "output" / "pitch" / "facts.json").read_text())
     s = (ROOT / "output" / "data" / "site_data.js").read_text(encoding="utf-8")
     meta = json.loads(s[len("window.MM = "):s.rindex(";")])["meta"]
-    tr = json.loads(sorted((ROOT / "track_record").glob("*.json"))[-1].read_text())
+    tr = json.loads((ROOT / "track_record" / "2026-11-03.json").read_text())
+    fps = {k: json.loads((ROOT / "track_record" / f"{f}.json").read_text())["fingerprint_sha256"][:16]
+           for k, f in (("v1.0", "2026-11-03"), ("v1.1", "2026-11-03_v1.1"), ("v2.0 list", "2026-11-03_v2.0-experimental"))}
+    import sys as _s
+    _s.path.insert(0, str(ROOT / "src"))
+    from mm_proof import same_yardstick
+    yd = same_yardstick(disc["kept"])
     sl, P, c, inc = v["shortlist"], m["portfolios"], pf["cmp"], pf["incumbents"]
     beat = sum(P["moat"]["neutral"]["by_year"][y] > P["^SP500TR"]["neutral"]["by_year"][y] for y in P["moat"]["neutral"]["by_year"])
     inc_total = sum(i["revenue"] for i in inc)
@@ -66,7 +79,7 @@ def slides() -> list[dict]:
     S.append({"id": "s01", "bg": NAVY, "elements": [
         {"id": "s01_t", "type": "text", "x": 0.7, "y": 1.5, "w": 8.6, "h": 1.0, "text": "Moat Momentum", "size": 44, "bold": True, "color": PAPER, "font": SERIF},
         {"id": "s01_s", "type": "text", "x": 0.7, "y": 2.5, "w": 8.6, "h": 0.6, "text": "Strengthening moats, found in the filings.", "size": 20, "color": PAPER, "font": SERIF},
-        {"id": "s01_d", "type": "text", "x": 0.7, "y": 3.4, "w": 8.6, "h": 0.5, "text": "Investor presentation · draft · 3 November 2026 · Jitti", "size": 14, "color": PAPER, "font": SANS},
+        {"id": "s01_d", "type": "text", "x": 0.7, "y": 3.4, "w": 8.6, "h": 0.5, "text": "Investor presentation · draft · 4 November 2026 · Jitti", "size": 14, "color": PAPER, "font": SANS},
         {"id": "s01_f", "type": "text", "x": 0.7, "y": 5.0, "w": 8.6, "h": 0.4, "text": "Research tool, not investment advice. Past results do not guarantee future results.", "size": 9, "color": PAPER, "font": SANS}]})
 
     S.append({"id": "s02", "elements": [title("s02", "Executive summary"),
@@ -75,7 +88,7 @@ def slides() -> list[dict]:
              f"Tested before pitching: picks stay above their industry ({c['Shortlist']['L_rank3']:+.1f} rank points after 3 years), but do not keep improving ({pct(sl['flagged']['hit_rate_3y'])} vs {pct(sl['rest']['hit_rate_3y'])})\n"
              f"Market test 2013–2026: {pct(P['moat']['neutral']['cagr'])} a year, the same as the S&P 500, with more volatility\n"
              "The product is transparency: every number traced to a 10-K, every rule adjustable, every miss published\n"
-             "We ask for support to build v1.1 on unseen years and to test demand", 16, bullets=True),
+             f"A quarterly Compounder Signal (v2.0) failed its 2020–2023 test ({disc['label_fix']['test']['multiple']:.2f}×, 2× needed); it is an experimental list only. We ask for support to run the live record and test demand", 16, bullets=True),
         foot("s02", src_val)]})
 
     S.append({"id": "s03", "elements": [title("s03", "Quality screens find moats after the market has already priced them"),
@@ -91,17 +104,17 @@ def slides() -> list[dict]:
     els = [title("s04", f"{f['Revenue ≥ $100M and ≥ 5 fiscal years (universe)']:,} companies, 5 tests, a 25-name shortlist traced to 10-Ks")]
     for i, (lab, n) in enumerate(funnel):
         els.append(card("s04", f"f{i}", 0.5 + i * 1.84, 1.7, 1.66, 1.6, f"{n:,}\n{lab}", 16, fill=NAVY if i == 4 else CARD, color=PAPER if i == 4 else INK))
-    els += [body("s04", "n", 0.5, 3.6, 9, 1.3, "Clean-up of one-off items · risk gate (debt, distress, manipulation, dilution, acquisitions) · five themes ranked within each industry on level, 5-year trend and consistency", 15),
-            foot("s04", f"Source: SEC EDGAR companyfacts and submissions, retrieved {meta['sec_retrieved']}; official run {meta['as_of']}.")]
+    els += [body("s04", "n", 0.5, 3.6, 9, 1.3, "Clean-up of one-off items · risk gate (debt, dilution, stock pay, acquisitions; distress and manipulation scores shown but off by default) · five themes ranked within each industry on level, 5-year trend and consistency", 15),
+            foot("s04", f"Source: SEC EDGAR companyfacts and submissions, retrieved {meta['sec_retrieved']}; official run {meta['as_of']}, Methodology v{meta['methodology']}.")]
     S.append({"id": "s04", "elements": els})
 
     S.append({"id": "s05", "elements": [title("s05", "One screen, adjustable rules, and a Deep-Dive for every company"),
-        card("s05", "a", 0.5, 1.6, 2.1, 2.7, "Screener\n\nMove weights and risk rules; the list re-ranks at once"),
+        card("s05", "a", 0.5, 1.6, 2.1, 2.7, "Screener\n\nMove weights and risk rules; filter by industry and market value, with clean P/E"),
         card("s05", "b", 2.8, 1.6, 2.1, 2.7, "Deep-Dive\n\n20 charts, observations, peers, each number linked to its 10-K"),
         card("s05", "c", 5.1, 1.6, 2.1, 2.7, "Proof\n\nEvery past pick and what happened, misses included"),
         card("s05", "d", 7.4, 1.6, 2.1, 2.7, "Sheet + Learn\n\nGoogle Sheet source of truth; every indicator explained"),
         body("s05", "l", 0.5, 4.45, 9, 0.5, "Live demo: output/moat_momentum.html in github.com/Jittia/aia-hw-jitti", 14, color=TEAL),
-        foot("s05", "Product as built on 2026-11-03 (Methodology v1.0).")]})
+        foot("s05", "Product as built on 2026-11-04 (Methodology v1.1, with an experimental v2.0 list).")]})
 
     S.append({"id": "s06", "elements": [title("s06", "Picks stay above their industry, but do not keep improving"),
         table("s06", 0.5, 1.5, 9, [["Three years after selection", "Shortlist", "Rest"],
@@ -123,9 +136,20 @@ def slides() -> list[dict]:
         body("s07", "n", 0.5, 4.2, 9, 0.8, f"Beat the index in {beat} of 13 years. Worst case for delisted names: {pct(P['moat']['worst']['cagr'])} a year.", 14, color=INK2),
         foot("s07", f"Source: Yahoo Finance monthly adjusted prices, retrieved {m['retrieved']}; missing names bounded with SEC filings. Not investment advice.")]})
 
+    t, a = mk["test 2020-2023"], mk["all 2013-2023"]
+    S.append({"id": "s06b", "elements": [title("s06b", "A quarterly Compounder Signal failed its one-time 2020–2023 test"),
+        table("s06b", 0.5, 1.5, 9, [["Top 10% ÷ all companies", "v1.1 Moat Score", "v2.0 Compounder Signal"],
+              ["Top 10%, 2013–2019 (used to choose v2.0)", f"{yd['train']['v11_top10']:.2f}×", f"{yd['train']['v20_top10']:.2f}×"],
+              ["Top 10%, 2020–2023 (unseen years)", f"{yd['test']['v11_top10']:.2f}×", f"{yd['test']['v20_top10']:.2f}×"],
+              ["Price, top 25, Apr 2020 – Feb 2024", pct(t["v11_shortlist"]["cagr"]), pct(t["compounder_neutral"]["cagr"])],
+              ["Price, top 25, May 2013 – Feb 2024", pct(a["v11_shortlist"]["cagr"]), pct(a["compounder_neutral"]["cagr"])]],
+              [5.4, 1.8, 1.8], ["START", "END", "END"]),
+        body("s06b", "n", 0.5, 4.2, 9, 0.8, "Compounder: within 3 years, revenue +20% a year and 10 points above its industry, ROIC above 9%. Test needed 2×; shown only as an experimental list.", 14, color=INK2),
+        foot("s06b", f"Source: SEC EDGAR 10-K and 10-Q filings 2011–2026; Yahoo Finance prices retrieved {m['retrieved']}. v1.1 list rebalanced yearly, v2.0 quarterly; S&P 500 {pct(t['sp500']['cagr'])} and {pct(a['sp500']['cagr'])} a year.")]})
+
     S.append({"id": "s08", "elements": [title("s08", "Every official shortlist is frozen with a fingerprint from day one"),
         body("s08", "big", 0.5, 1.6, 9, 0.9, tr["record"]["as_of"], 40, color=NAVY, bold=True),
-        body("s08", "fp", 0.5, 2.5, 9, 0.8, f"SHA-256 {tr['fingerprint_sha256']}", 14, color=INK2),
+        body("s08", "fp", 0.5, 2.5, 9, 0.8, "SHA-256 · " + " · ".join(f"{k} {v}…" for k, v in fps.items()), 14, color=INK2),
         body("s08", "b", 0.5, 3.3, 9, 1.6, "Shortlist, settings and data date committed to a public Git repository\nChanging a frozen list later breaks its fingerprint\nPerformance is measured from the first month-end after each freeze", 16, bullets=True),
         foot("s08", "Source: track_record/ in github.com/Jittia/aia-hw-jitti. The live record starts on 2026-11-03, so there are no live results yet.")]})
 
@@ -159,7 +183,7 @@ def slides() -> list[dict]:
         foot("s12", "Competitor entries to verify against each provider's public documentation before external use.")]})
 
     S.append({"id": "s13", "elements": [title("s13", "Next 24 months: prove the signal, then test demand"),
-        card("s13", "a", 0.5, 1.5, 2.85, 2.4, "0–6 months\n\nv1.1 designed in advance, tested on 2018–2023 only; Phase 2 qualitative layer"),
+        card("s13", "a", 0.5, 1.5, 2.85, 2.4, "0–6 months\n\nLive record of v1.1 and the experimental v2.0 list; Phase 2 qualitative layer"),
         card("s13", "b", 3.575, 1.5, 2.85, 2.4, "6–12 months\n\nPilot with 20–50 users; live track record; legal review"),
         card("s13", "c", 6.65, 1.5, 2.85, 2.4, "12–24 months\n\nForeign filers, then Thailand, Hong Kong, Taiwan; data licence pilot"),
         body("s13", "ask", 0.5, 4.1, 9, 0.9, "The ask: [amount and use of funds to be set by the founder] · legal review required before launch", 16, color=NAVY, bold=True),

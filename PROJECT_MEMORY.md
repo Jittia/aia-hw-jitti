@@ -43,6 +43,8 @@
 - For market value, use the cover-page share count (dei) with a sanity check (market value 0.2%–200× revenue); XBRL diluted shares are sometimes filed in thousands or millions.
 - A "run the test once" guard must also stop re-training and settings changes from erasing or redoing the test.
 - Fix the success test and its definitions before looking at test-period results; any later check is reported as a second result, not a new pass rule.
+- A document generator must read each result from a fixed, named file (e.g. archive_v1.0) for the version it describes, never "the current results", or a re-run silently mixes versions.
+- Google Slides `updateSlidesPosition` counts the insertion index in the order before the move; read the slide order back after moving a slide.
 - Cross-check the OperatingIncomeLoss tag against revenue − CostsAndExpenses; some filers tag a segment total.
 - Fingerprint settings and scoring code before a validation run, and report every variant tried, including results against the hypothesis.
 - Test a "momentum" signal against companies with the same starting level, not only against the industry median; otherwise picking already-strong companies looks like skill.
@@ -247,4 +249,11 @@
 - **สาเหตุ:** Only the start and end points were checked for missing data; training rewrote `discovery.json` from scratch; the page recomputed a filter that only Python can set.
 - **แก้อย่างไร:** Each fixed with a test that failed first. Labels recomputed with the same signals: 1.18× (was 1.19×), same conclusion; the original result stays on record.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** —
+
+### 2026-11-04 · A new deck slide landed one place too early
+
+- **เจออะไร:** The v2.0 slide was meant to follow the market-test slide but appeared before it.
+- **สาเหตุ:** `updateSlidesPosition` counts the insertion index in the slide order before the move, so index 7 put it at position 6.
+- **แก้อย่างไร:** Read the order back and moved it with index 8. Now always read the order back after moving a slide.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Counting the target position after removing the slide.
 
