@@ -259,7 +259,11 @@ def main(as_of: str) -> None:
     from mm_market import BENCH, prices
     lat = cand.sort_values("end").drop_duplicates("cik", keep="last")[["cik", "clean_ni", "shares", "revenue"]]
     lat = lat.merge(res.loc[res["in_universe"], ["cik", "ticker"]], on="cik")
-    cov = pd.read_pickle(CACHE / "cover_shares.pkl")
+    # cover-page shares in the units Yahoo prices: ADS tickers divided by ordinary shares per ADS (SEC 10-K cover;
+    # src/mm_adr.py; BeOne ONC 13, Zai Lab ZLAB 10)
+    from mm_adr import adjust_cover, load_ratios
+    cover_all = adjust_cover(pd.read_pickle(CACHE / "cover_shares.pkl"), load_ratios())
+    cov = cover_all
     cov = cov[cov["filed"] <= pd.Timestamp(as_of)].sort_values(["filed", "end"]).drop_duplicates("cik", keep="last")
     lat["cover_shares"] = lat["cik"].map(cov.set_index("cik")["val"])
     px = prices(sorted({t.replace(".", "-") for t in lat["ticker"].dropna()}) + list(BENCH))
@@ -274,14 +278,14 @@ def main(as_of: str) -> None:
     mmap = map_at(facts, companies, as_of, settings, live=True, panel=tpanel)
     daily = prices_daily(sorted({t.replace(".", "-") for t in mmap["ticker"].dropna()}))
     mmap = value_at(mmap.assign(ticker=mmap["ticker"].map(lambda t: t.replace(".", "-") if isinstance(t, str) else t)),
-                    as_of, px, pd.read_pickle(CACHE / "cover_shares.pkl"), live=True, daily=daily)
+                    as_of, px, cover_all, live=True, daily=daily)
 
     # Screener (spec docs/specs/2026-11-04-screener-design.md): risk measures and four 2×2 groups, now and 4 quarters
     # back. Untested screening tool; filters, thresholds and lists are computed in the page.
     from mm_market import splits_history
     from mm_screener import screener_block
     scr = screener_block(tpanel, mmap[["cik", "ticker", "ev"]], px, splits_history(sorted(mmap["ticker"].dropna().unique())),
-                         pd.read_pickle(CACHE / "cover_shares.pkl"), as_of)
+                         cover_all, as_of)
     scr["meta"] |= {"price_date": daily.attrs.get("date"), "prices_retrieved": daily.attrs.get("retrieved"),
                     "sec_retrieved": settings["data"]["sec_retrieved"]}
     mmap = leading_at(mmap, pd.read_pickle(CACHE / "leading.pkl"), as_of)

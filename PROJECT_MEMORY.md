@@ -64,6 +64,9 @@
 - When pairing a split-adjusted price with a share count, undo only the splits dated after the day the shares were counted, not after the price month.
 - Page logic that decides membership (filters, lists) gets unit tests too: extract the pure JS functions and run them in Node, not only by hand in the browser.
 - Sort a new table by market value and by each multiple once before shipping; the extremes show share-count errors (e.g. ADRs) that the revenue sanity range misses.
+- Text extracted from filings: test it on the real cached corpus, not only on hand-made examples; count suspicious outputs (headings, "Item", lowercase starts, boilerplate) before shipping.
+- A ratio read from today's filing (ADS, split) applies to past counts only when they are the same size; check the share-count history before applying it backward.
+- A user action that can be refused (save, remove) must never look done: roll back on refusal, and give one-click deletes an Undo.
 
 ## บันทึกปัญหา
 
@@ -303,7 +306,14 @@
 
 ### 2026-11-04 · ADR market value 13× too high (BeOne Medicines), found by sorting
 
-- **เจออะไร:** Sorting the new Screener Summary by P/E put BeOne Medicines first at a $524.7B market value; the real value is tens of billions.
-- **สาเหตุ (probable, not yet confirmed):** the price is for the US-listed ADR, while the cover-page share count is ordinary shares, several of which make one ADR. The result (about 131× revenue) is inside the 0.2%–200× sanity range, so it was not hidden.
-- **แก้อย่างไร:** Not fixed yet; logged as the next step. It affects market cap, P/E, EV and earnings yield for such companies in every view.
+- **เจออะไร:** Sorting the new Screener Summary by P/E put BeOne Medicines first at a $524.7B market value; the real value is about $40B.
+- **สาเหตุ (confirmed, round 22):** the price is per ADS; the cover-page count is ordinary shares (13 per ADS). About 98× revenue, inside the 0.2%–200× sanity range.
+- **แก้อย่างไร:** `src/mm_adr.py` reads the ratio from the 10-K cover line naming the ticker (245 foreign-incorporated companies checked); applied only to counts close in size to the one in that 10-K. First try divided Zai Lab's 2021 count (taken before its 2022 share change) by 10 and made it 10× too small; fixed with that rule and a test.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Relying on the revenue sanity range alone.
+
+### 2026-11-04 · 10-K "Business" text: table of contents and cross-references got through
+
+- **เจออะไร:** The independent review ran the extractor over all cached 10-Ks: Halliburton and Rollins returned table-of-contents text; Avista and others returned quoted cross-references ("see “Item 1. Business – …”"), mid-sentence starts, or legal boilerplate (about 60 cases).
+- **สาเหตุ:** My section-end pattern missed "Item 1(a)" and "Item 1.A.", so the contents line looked long enough; quoted references were taken as headings; the sentence splitter broke at "Item 1." and at invisible zero-width spaces.
+- **แก้อย่างไร:** Wider Item 1A pattern; reject segments with several "Item" headings; skip quoted or "see …" references (also "Part 1 – Item 1"); require a capital first letter; more boilerplate phrases; strip zero-width spaces. 9 tests; suspicious outputs 43 → 6 of 1,557.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Testing only on 8 hand-picked companies before the full run.

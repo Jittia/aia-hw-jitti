@@ -1072,3 +1072,97 @@ Last part which currently call Overlap, change it to "Section 3 - Screener Summa
   - Fix the ADR market-value bug (BeOne and similar companies) in the existing valuation code.
   - Deferred minor issues from round 20 still stand.
   - Fill the deck placeholders, edit `help.md`, submit the repo link.
+
+---
+
+## รอบ 22 · 2026-11-04 · ADR market-value fix; dashboard pivot to the Moat Screener (Watchlist, pitch deck)
+
+- **ทำอะไร:**
+  - **ADR fix (`src/mm_adr.py`):**
+    - BeOne Medicines showed a $524.7B market value: Yahoo prices the ADS, while SEC cover pages count ordinary shares, and 13 ordinary shares make one ADS.
+    - The ratio is now read from each company's 10-K cover; the 245 companies not incorporated in a US state were checked.
+    - Only BeOne needed a change: $524.7B → $40.4B, P/E 800 → 61.6. Zai Lab's ratio applies only to share counts taken after its 2022 share change, so its value is unchanged.
+  - **Dashboard pivot** (spec `docs/specs/2026-11-04-dashboard-pivot-design.md`, plan `docs/plans/2026-11-04-dashboard-pivot.md`):
+    - **Design:**
+      - Introduction: the business case, with a live funnel 1,870 → 1,105 → 653 → 243 → 96, verified Buffett/Munger quotes and an honest history.
+      - Methodology: concepts, risk checks, the four Moat Screeners with linked research, how they fit, strengths and blind spots, definitions.
+      - How to Use: workflow, a numbered map of the Screener page, and a worked example chosen by a fixed rule.
+    - **Action:**
+      - Screener with ☆.
+      - Deep-Dive rebuilt: SEC company brief, 12 key numbers, rule-based "why look deeper / what to watch", four Moat Screener cards with mini charts.
+      - Watchlist in the page's shared database: Priority A/B/C, auto-saving note, Undo on remove.
+      - Pitch deck: 5 slides, full screen, Download .html.
+    - **Evaluation:** To be designed (blank), Archive (v1.0 → today).
+    - **Removed from the page, kept in the repo:** Scenarios, Proof, Track record, Demo, Terminology, and the v1.1 engine.
+  - **Company briefs (`src/mm_brief.py` → `output/data/brief_data.js`):** from each company's latest 10-K (Item 1 "Business") and SEC submissions.
+  - Dashboard republished as version 15 with the `db` and `downloads` capabilities.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 (build) · Opus subagent (independent review) · built-in browser · Claude in Chrome (to open source pages)
+- **Prompt ที่ใช้:**
+
+```text
+Yes, fix it
+```
+
+```text
+As we pivot this tool from back-test investigation to Moat Filter tool.  A lot of old result from V1.0 to V.3 and back test is not relevant.  
+
+To avoid confusion of user, I want you to remove all content which is not relevant to our new approach Screener approach out from this dashboard.  You can keep in the log backend for reference if we want to call it back.
+
+Then rearrange dashboard section / sub section to be as below:  
+
+1. Design : 
+
+* Introduction -  Write as key narrative similar to business case summary, in the way to present to Senior Executive who we want to pitch this tool to. Some idea ; explain investment pain point, what we want to achieve from this tool, our thought process and direction we choose to build this tool.  Use any info graphic, well recognized quote from top investor to support this section.  By end of this section, Senior Executive to be convinced that we choose the right direction of tool design.  Add anything to make this objective work.
+* Methodology - Explain in detail the key concept of this tool design, clear terminology of each measurement, source of information we use , make it credible reference, how we draw conclusion of this 4 group as our selected Moat Screener.  Show any key benefit or blind side of this analysis which user should be aware of.  This tool is not one final solution, but give strong candidate for additional deep dive.  By end of this section, Senior Executive to be convinced that we the optimized moat screener and how it compliment each other. Add anything to make this objective work.
+* How to Use -  Explain in simple way, including example of layout , key part of work flow, how to use each section as we have in section "Action" and it's sub-section.  By end of this section, Senior Executive to be able to use and explore this tool by themself. Add anything to make this objective work.
+
+
+2. Action : 
+
+* Screener :  Keep as we had design.  Add one feature to add any company in to our Watch List.
+* Deep Dive :  Remove any non relevant back test result in the past, focus on deep dive result of individual company base on our key 4 Moat Screener.  Add company brief introduction from public source eg. what company did, establish year, filed of business, key business performance , revenue, profit, link to official website etc.  The introduction intend to get reader to understand what company is and key business number and Value investment key measurement.  Then focus on their 4 Moat result, it's progress.  Write briefly explain why this number would convince us to do deeper investigation , what to watch out.
+* Watchlist :  Record and summary company under our watch list which we mark from screener.  Use same layout as section 3 of screener plus 2 additional field. Field 1 "Priority" for us to select from A, B, C.   Field 2 "Note" : that we can add our free text note to explain our thinking on this company.  The space to put in this note should be big enough to add long narrative.  
+
+
+3. Evaluation :
+
+* To be designed -  leave as blank template for now
+* Archive - Put few summary of our journey, learning, evolution of this project tool development in this log.  Only for future reference.
+```
+
+```text
+I want to add one more feature in Watch List.  For any Watch list, I want to have button to press and it will generate 5 page html presentation which could be used to pitch Senior Executive.  Make it to meet global investment analyst standard both in term of content and visual look.  All company shall be present in consistent way as out put from Moat Momentum tool.  Keep consistent corporate identity.
+```
+
+  Answers to Claude's questions: Watchlist "In the dashboard (Recommended)"; brief source "SEC only (Recommended)"; Deep-Dive text "Rule-based from numbers (Recommended)"; Terminology "Inside Methodology (Recommended)"; then "Approve spec", "Native (in session)".
+- **ผลที่ได้:**
+  - **Briefs:** of 1,870 companies, 1,557 have a 10-K description, 898 a founding year as stated in the filing, and 1,512 a website. 6 descriptions (0.4%) still start with a stray fragment.
+  - **Independent review:** 0 critical, 7 important plus 4 raised by me (honesty and links), all fixed with a test that failed first. 151 tests pass.
+  - **Browser checks:** every tab at 375 px with no horizontal scroll, light and dark, no JavaScript errors.
+  - **Watchlist in local preview:** add, priority, a 5,037-character note containing `<script>` (shown as text), survives reload, Undo works.
+  - **Deck:** 5 slides for MU; a company missing from today's data still builds.
+  - **Published page:** the shared `watchlist` collection exists and is empty.
+  - **Not yet checked on the published page:** saving to the shared Watchlist and the deck download need you to try them on claude.ai.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti: pivot from prediction to screening, and remove old back-test content from the page** to avoid confusing users; the history stays in the repo and in Archive.
+  - **Jitti: Watchlist in the dashboard database** (shared, survives devices); **SEC-only brief** (trust sources); **rule-based Deep-Dive text** (same for every company); **definitions inside Methodology**.
+  - **Jitti: a 5-slide pitch deck per Watchlist company,** consistent and in the tool's identity.
+  - **Claude's choices (logged):**
+    - Quotes checked against several reprints (no PDF reader here).
+    - The deck links the same Google Fonts instead of embedding them.
+    - "Gross margin above a year earlier" wording, because the data holds year-on-year changes.
+    - A refused first add rolls back; Remove offers Undo.
+    - The Introduction states the honest history: v1.0 matched the S&P 500 with more risk, and v2.0 and v3.0 failed; the v1.1 top 25 did better but on too few companies.
+    - ADR: a ratio applies only to share counts close in size to the count in the 10-K that states it.
+- **ขั้นต่อไป:**
+  - Try the shared Watchlist and the deck download on claude.ai.
+  - Deferred items:
+    - deck keyboard after clicking inside a slide;
+    - deck stays open on browser Back;
+    - blank deck file name for a company not in today's data;
+    - search by name for companies without a ticker;
+    - ☆ clicks while the page connects;
+    - 6 description fragments;
+    - same ADR split-timing gap in the frozen v3.0 test.
+  - Update the Google Sheet and pitch docs, which still describe v1.1.
+  - Fill the deck placeholders, edit `help.md`, submit the repo link.
