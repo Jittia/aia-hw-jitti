@@ -1346,3 +1346,70 @@ done
 - **ผลที่ได้:** Every item in the README checklist is ticked; the repo is the submitted version.
 - **ตัดสินใจอะไร และเพราะอะไร:** Recorded the submission in the repo, so the checklist matches what actually happened.
 - **ขั้นต่อไป:** Read the instructor's comments in the repo's Issues tab (5–6 Nov) and bring them to the Repair Clinic (Sat 7 Nov, 13:30).
+
+---
+
+## รอบ 28 · 2026-11-05 · Calculation check in the Deep-Dive, with a Google Sheet per company
+
+- **ทำอะไร:**
+  - **Dashboard (Deep-Dive → new last section "Calculation check"):**
+    - A table with one row for each of the 11 measures (4 Moat Screeners + 3 risk checks): formula, dollar inputs, result, line and side.
+    - **Create calculation sheet:** builds a Google Sheet for that one company in the reader's own Drive (claude.ai Google Drive connector). It has 3 tabs: Calculation check, SEC inputs, Sources. Every result is a live formula.
+    - **Download as Excel:** the same workbook as an .xlsx.
+    - Republished as dashboard version 21.
+  - **SEC inputs:**
+    - Every 12-month figure is shown as last 10-K year + this year to date − the same months a year earlier.
+    - Each input has its XBRL tag, the filing ID and **the page number printed in the filing**.
+  - **New code:**
+    - `src/mm_audit.py`: per-company audit record, re-derivation and reconciliation; exported in 16 parts (`output/data/audit/a00–a15.js`, 10 MB).
+    - `src/mm_pages.py`: finds each value's page in the Inline XBRL filing.
+    - `ttm_parts` in `mm_fundamentals.py`.
+    - Held-to-maturity securities extract in `mm_extract.py`.
+    - `MM_REUSE_DAILY=1` in `mm_market.py`.
+  - **Docs:** spec and plan in `docs/specs/` and `docs/plans/` (2026-11-04-calculation-check).
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · Google Drive and Sheets connectors · SEC EDGAR · built-in browser
+- **Prompt ที่ใช้:**
+
+```text
+I am doubt in calculation in each key measurement of screener.   Add section at the bottom of Deep Dive to show actual reference calculated number of latest status in every measurement from 4 Moat Screener.  In dashboard, show calculated formula, taken number, then link with individual google sheet to show detail reference from EDGAR and calculataion.
+```
+
+```text
+I go with option B. It should show as file back up when we click to deep dive of any stock. So it's one file at a time. I saw some error in tab SEC input. I change my mind, please add reference page number of each value you pull in.
+```
+
+```text
+For 10-Q. Which page it show revenue 12 months at 1,145 billion ?
+```
+
+- **ผลที่ได้:**
+  - **Honesty check:**
+    - For all 1,870 companies, the measures recomputed from the SEC inputs equal what the Screener shows.
+    - Every company's workbook was calculated in a test and says "Same as dashboard? Yes".
+    - The dashboard's own data files are byte-for-byte unchanged.
+  - **Page numbers:** 85,323 of 86,592 values placed (98.5%):
+    - 92.9% at the printed page number;
+    - 3.9% as "#N", the page's position in a filing whose page has no printed number;
+    - 1.7% as "cover page";
+    - 1.5% marked "not located", never guessed.
+  - **DUOL end to end (2026-11-05):** Jitti clicked the button and the sheet was created in Drive. All 11 results and every building block equal the hand-built example sheet, with no #ERROR.
+  - **Answer to the 10-Q question:** a 10-Q shows only 3- and 6-month revenue, not 12 months. The $1,145.0M is 10-K FY2025 $1,037.6M (page 84) + 6 months 2026 $590.4M (10-Q page 7) − 6 months 2025 $483.0M (10-Q page 6).
+  - 201 tests pass.
+  - **Still small:**
+    - risk-check wording in the sheet ("n/a / No point") is terser than the hand-built one;
+    - the held-to-maturity what-if lacks net debt ÷ EBITDA.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti:**
+    - Option B: one sheet per company, made when you click in the Deep-Dive, "one file at a time".
+    - Page numbers for every value, after seeing errors in the SEC inputs tab and wanting to find each number in the filing.
+    - Build on click through the Google Drive connector.
+  - **Claude's choices:**
+    - **Recompute from the raw SEC parts and test every company against the Screener,** not just display the stored values. Otherwise the check would only repeat the numbers Jitti doubted.
+    - **Take page numbers from the Inline XBRL tags** (the number carries its tag name) and read the printed page footer. Text search could match the same number in the notes.
+    - **Write "not located" when a page cannot be found,** because a guessed page would break the rule "never invent figures".
+    - **Show the held-to-maturity gap (Duolingo $133.0M) as a what-if** instead of changing the cash rule, because the change would move every company's results and is a separate decision.
+    - **Reuse the 3 Nov prices** (`MM_REUSE_DAILY`) so the audit data matches the published dashboard.
+- **ขั้นต่อไป:**
+  - Decide whether held-to-maturity securities should count as cash.
+  - Check ZLAB's market value: it uses a 2021 cover-page share count.
+  - Small wording fixes in the sheet.

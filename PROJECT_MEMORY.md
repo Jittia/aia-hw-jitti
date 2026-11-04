@@ -69,6 +69,8 @@
 - A user action that can be refused (save, remove) must never look done: roll back on refusal, and give one-click deletes an Undo.
 - After removing or renaming styles, check every class the page uses still has CSS ("grid2" had none, so two boxes stacked); review layout at a wide desktop width too, not only the narrow preview pane.
 - Google Slides: an inserted image keeps a tiny base size and is shown through its scale; to resize it, set the scale to the target size ÷ that base size (read it first), never a small ratio such as 0.9. Check every slide as an image (Slides thumbnails work when no PDF renderer is installed).
+- When showing how a number was calculated, recompute it from the raw SEC parts and test every company against the stored value; never just display the stored value.
+- A page number shown for a value comes from its Inline XBRL tag; if it cannot be found, write "not located", never a guess.
 
 ## บันทึกปัญหา
 
@@ -333,3 +335,21 @@
 - **สาเหตุ:** Slides stores the image with a base size of 36,000 × 25,000 EMU and shows it through a scale of about 113; my request set the scale to 0.91.
 - **แก้อย่างไร:** Read the element's base size, then set the scale to the target width ÷ base width (113.28). Checked again with slide thumbnails (there is no PDF renderer on this Mac).
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Treating the scale as a ratio of the size I had asked for.
+
+### 2026-11-05 · Calculation check: five companies did not reconcile, and sheet formulas broke on edge cases
+
+- **เจออะไร:**
+  - The first re-derivation of the Screener measures disagreed for 5 companies.
+  - The generated sheets showed #ERROR!/#NAME? for some companies: missing inputs, gross profit without cost of revenue, ROIC with one invested capital missing, and others.
+  - The audit export was 14.3 MB.
+  - Page labels were found for only 81% of values.
+- **สาเหตุ:**
+  - The tool ignores a balance-sheet copy of a tag when that tag is a flow anywhere in the run, and I had built the records from fewer facts.
+  - Spreadsheet formulas were written for the typical company only.
+  - Filings print page numbers in many styles ("- 3 -", "Page 7", "F-3"), and some print none.
+- **แก้อย่างไร:**
+  - Build each record from the full fact store with the same flow-tag rule.
+  - Wrote a small formula evaluator in the tests and calculated every company's workbook (all say "Same as dashboard? Yes").
+  - Trimmed and split the export into 16 parts.
+  - Added footer patterns, plus "#N" or "cover page" when no number is printed, and "not located" when not found.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Checking a few sample companies only; text search for the number in the filing.

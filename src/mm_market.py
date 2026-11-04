@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import warnings
 import zipfile
 from datetime import date
@@ -147,6 +148,8 @@ def prices_daily(tickers: list[str], path: Path | None = None) -> pd.Series:
     """v3.0 live valuation: each ticker's latest daily close (not adjusted), from Yahoo Finance.
     attrs: 'date' = close date of most tickers, 'retrieved' = run date. Cached for the day in prices_daily.pkl."""
     path = path or CACHE / "prices_daily.pkl"
+    if path.exists() and os.environ.get("MM_REUSE_DAILY") == "1":  # re-run on the cached closes (same as-of data)
+        return pd.read_pickle(path)
     if path.exists():
         old = pd.read_pickle(path)
         if old.attrs.get("retrieved") == str(date.today()) and set(tickers) <= set(old.index):

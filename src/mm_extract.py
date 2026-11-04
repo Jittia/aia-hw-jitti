@@ -259,7 +259,45 @@ def leading() -> None:
     print(f"leading items: {len(df):,} rows, {df['cik'].nunique():,} companies", flush=True)
 
 
+# Calculation check (spec docs/specs/2026-11-04-calculation-check-design.md §7): balances the tool does NOT count but
+# shows next to its inputs, e.g. short-term investments filed as held-to-maturity securities. Not in facts.pkl.
+EXTRA_TAGS = ["DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent"]
+
+
+def _extra_rows(cik: int, cf: dict) -> list[tuple]:
+    g = cf.get("facts", {}).get("us-gaap", {})
+    return [(cik, tag, "I", None, f["end"], float(f["val"]), f["filed"], f["form"], f["accn"])
+            for tag in EXTRA_TAGS for f in g.get(tag, {}).get("units", {}).get("USD", [])
+            if f.get("form") in FORMS and not f.get("start")]
+
+
+def _extra_work(ciks: list[int]) -> list[tuple]:
+    out = []
+    with zipfile.ZipFile(BULK / "companyfacts.zip") as cz:
+        for cik in ciks:
+            try:
+                out.extend(_extra_rows(cik, json.loads(cz.read(f"CIK{cik:010d}.json"))))
+            except KeyError:
+                continue
+    return out
+
+
+def extra() -> None:
+    """EXTRA_TAGS → data/cache/mm/extra_facts.pkl, same columns and point-in-time rules as facts.pkl."""
+    ciks = pd.read_pickle(OUT / "companies.pkl")["cik"].tolist()
+    rows = []
+    with Pool(8) as pool:
+        for r in pool.imap_unordered(_extra_work, [ciks[i::32] for i in range(32)]):
+            rows.extend(r)
+    df = pd.DataFrame(rows, columns=["cik", "tag", "kind", "start", "end", "val", "filed", "form", "accn"])
+    for c in ("start", "end", "filed"):
+        df[c] = pd.to_datetime(df[c])
+    df = _compress(df).reset_index(drop=True)
+    df.to_pickle(OUT / "extra_facts.pkl")
+    print(f"extra facts: {len(df):,} rows, {df['cik'].nunique():,} companies", flush=True)
+
+
 if __name__ == "__main__":
     import sys
     cmd = sys.argv[1:]
-    cover_shares() if cmd == ["cover"] else leading() if cmd == ["leading"] else main()
+    {"cover": cover_shares, "leading": leading, "extra": extra}.get(cmd[0] if cmd else "", main)()

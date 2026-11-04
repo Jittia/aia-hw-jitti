@@ -136,27 +136,35 @@ QUARTER_FORMS = {"10-Q", "10-Q/A"}
 POINT_TAGS = {"WeightedAverageNumberOfDilutedSharesOutstanding"}  # an average, not a sum: use the year-to-date value
 
 
-def ttm_rows(k: pd.DataFrame, tax_rate: float = 0.21, excess_cash_pct: float = 0.02) -> pd.DataFrame:
-    """Trailing-12-month rows at every 10-Q period end (methodology v1.2), from facts already filtered by known_as_of:
-      flow (income, cash flow) = last fiscal year + this year to date − the same period a year earlier
-      balance sheet            = the 10-Q balance sheet at that quarter end
-    Each tag is built only when all three parts were filed; the rest stays missing. Same clean-up as annual rows."""
+def ttm_parts(k: pd.DataFrame) -> pd.DataFrame:
+    """The filed parts of every 12-month flow at a 10-Q period end, from facts already filtered by known_as_of:
+    last fiscal year (a_*) + this year to date (val, accn, start, end) − the same months a year earlier (p_*).
+    `ttm` = the 12-month value (the year-to-date value itself for POINT_TAGS). Each part keeps its filing (accn)."""
     k = k.assign(tagc=pd.factorize(k["tag"].astype(str))[0].astype("int32"))
     day = pd.Timedelta(days=1)
     ann = k[(k["kind"] == "A") & k["form"].isin(ANNUAL_FORMS)]
     ann = pd.DataFrame({"cik": ann["cik"], "tagc": ann["tagc"], "key": ann["end"] + day,
-                        "a_start": ann["start"], "a_val": ann["val"]})
+                        "a_start": ann["start"], "a_end": ann["end"], "a_val": ann["val"], "a_accn": ann["accn"]})
     ytd = k[k["kind"].isin(["Q", "YTD"])].copy()
     ytd["nq"] = ((ytd["end"] - ytd["start"]).dt.days / 91.3).round().astype("int32")
     cur = ytd[ytd["form"].isin(QUARTER_FORMS)].assign(key=lambda x: x["start"])
     m = pd.merge_asof(cur.sort_values("key"), ann.sort_values("key"), on="key", by=["cik", "tagc"],
                       direction="nearest", tolerance=5 * day).dropna(subset=["a_val"])  # year to date starts after the last FY
     prior = pd.DataFrame({"cik": ytd["cik"], "tagc": ytd["tagc"], "nq": ytd["nq"], "key2": ytd["start"],
-                          "p_end": ytd["end"], "p_val": ytd["val"]})
+                          "p_start": ytd["start"], "p_end": ytd["end"], "p_val": ytd["val"], "p_accn": ytd["accn"]})
     m = pd.merge_asof(m.assign(key2=m["a_start"]).sort_values("key2"), prior.sort_values("key2"), on="key2",
                       by=["cik", "tagc", "nq"], direction="nearest", tolerance=5 * day)
     m = m[(m["end"] - m["p_end"]).dt.days.between(350, 380)]
     m["ttm"] = np.where(m["tag"].isin(POINT_TAGS), m["val"], m["a_val"] + m["val"] - m["p_val"])
+    return m
+
+
+def ttm_rows(k: pd.DataFrame, tax_rate: float = 0.21, excess_cash_pct: float = 0.02) -> pd.DataFrame:
+    """Trailing-12-month rows at every 10-Q period end (methodology v1.2), from facts already filtered by known_as_of:
+      flow (income, cash flow) = last fiscal year + this year to date − the same period a year earlier
+      balance sheet            = the 10-Q balance sheet at that quarter end
+    Each tag is built only when all three parts were filed; the rest stays missing. Same clean-up as annual rows."""
+    m = ttm_parts(k)
 
     rev = m[m["tag"].isin(REVENUE_TAGS)].copy()
     rev["prio"] = rev["tag"].map({t: i for i, t in enumerate(REVENUE_TAGS)}).astype(int)

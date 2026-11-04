@@ -332,6 +332,17 @@ ol.steps { padding-left:22px; } ol.steps li { padding-left:4px; }
 .timeline { gap:14px; } .tl-item { box-shadow:none; }
 .disclaimer { font-size:12px; line-height:1.5; }
 @media (max-width:640px) { .wordmark span { font-size:18px; white-space:nowrap; } #asof { font-size:11px; padding:5px 8px; white-space:nowrap; } .phead { padding-top:20px; } .card { padding:16px; } .jumpcount { display:none; } .sidebox { position:static; } }
+/* calculation check (Deep-Dive) */
+.calct { width:100%; border-collapse:collapse; font-size:13px; }
+.calct th, .calct td { padding:7px 10px; border-bottom:1px solid var(--grid); vertical-align:top; text-align:left; }
+.calct thead th { font-weight:600; color:var(--ink-2); border-bottom:2px solid var(--ink); white-space:nowrap; }
+.calct .r { text-align:right; white-space:nowrap; }
+.calct tr.cgrp th { background:var(--card); color:var(--navy); font-weight:700; padding-top:9px; }
+.calct .cf { color:var(--ink-2); min-width:220px; }
+.calct .cu div { white-space:nowrap; }
+.cblocks { margin:12px 0; }
+.cblocks summary { cursor:pointer; font-weight:600; color:var(--navy); }
+.calc-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:14px 0 6px; }
 </style>
 <script src="data/site_data.js"></script>
 <script src="data/deep_data.js" defer onload="onDataLoaded()"></script>
@@ -487,6 +498,349 @@ function ddNotes(r, lines, inLists, t) {
     g3: "no gross margin reported", g4: "no earnings yield (EV not positive or no price)"};
   gs.forEach(g => { if (!(has(now(g)[0]) && has(now(g)[1]))) watch.push(`${DDN[g]} not shown: ${why[g]}.`); });
   return {look, watch};
+}
+// ---- Calculation check (spec docs/specs/2026-11-04-calculation-check-design.md): the Screener's measures recomputed
+// from one company's audit record (window.MM_AUDIT.co[cik], built by src/mm_audit.py). Same rules as the Screener.
+function auditMeasures(a, B) {
+  const has = v => v !== null && v !== undefined && isFinite(v);
+  const blk = k => { const r = a.b && a.b[k]; if (!r) return null; const o = {}; B.forEach((n, i) => { o[n] = r[i]; }); return o; };
+  const n = blk("now") || {}, q4 = blk("q4") || {}, q12 = blk("q12") || {};
+  const div = (x, y) => has(x) && has(y) && y > 0 ? x / y : null;
+  const r = div(n.revenue, q12.revenue), growth = r !== null && r > 0 ? Math.pow(r, 1 / 3) - 1 : null;
+  const ics = [n.ic, q4.ic].filter(has), roic = ics.length ? div(n.nopat, ics.reduce((s, v) => s + v, 0) / ics.length) : null;
+  const g2x = has(n.nopat) && n.nopat > 0 && has(n.ic) && has(q4.ic) ? (n.ic - q4.ic) / n.nopat : null;
+  let g2y = null;
+  if (has(n.ic) && has(q12.ic) && has(n.nopat) && has(q12.nopat)) { const dic = n.ic - q12.ic; if (dic > 0 && dic >= 0.10 * Math.abs(q12.ic)) g2y = (n.nopat - q12.nopat) / dic; }
+  const gm = p => div(p.gross_profit, p.revenue), g3y = gm(n) !== null && gm(q4) !== null ? gm(n) - gm(q4) : null;
+  const ev = a.m && a.m.ev, g4y = has(ev) && ev > 0 && has(n.clean_oi) ? n.clean_oi / ev : null;
+  const debt = has(n.debt) ? n.debt : 0, cash = has(n.cash) ? n.cash : 0, net = debt - cash;
+  const ebitda = has(n.clean_oi) ? n.clean_oi + (has(n.da) ? n.da : 0) : null;
+  const nd = ebitda !== null && ebitda <= 0 && net > 0 ? 999 : ebitda !== null && ebitda > 0 ? net / ebitda : null;
+  const ic = has(n.clean_oi) && has(n.interest) && n.interest > 0 ? n.clean_oi / n.interest : null;
+  return {blocks: {now: n, q4: blk("q4"), q12: blk("q12"), ebitda, net, ev},
+    m: {g1x: growth, g1y: roic, g2x, g2y, g3y, g4y, ic, nd, cd: debt > 0 ? div(n.cfo, debt) : null}};
+}
+function ddCalcRows(a, B, lines, thr) {
+  const A = auditMeasures(a, B), m = A.m, n = A.blocks.now, q4 = A.blocks.q4 || {}, q12 = A.blocks.q12 || {};
+  const end = k => (a.pts && a.pts[k] ? a.pts[k][0] : null), has = v => v !== null && v !== undefined && isFinite(v);
+  const side = (v, L) => !has(v) ? "No point" : v >= L ? "Above" : "Below";
+  const row = (k, grp, label, formula, used, res, line, s) => ({k, grp, label, formula, used, res, line, side: s === undefined ? side(res, line) : s});
+  const now = end("now"), b4 = end("q4"), b12 = end("q12");
+  const it = has(n.interest) && n.interest > 0, hd = has(n.debt) && n.debt > 0, nc = A.blocks.net <= 0;
+  const rp = riskPass({it, ic: m.ic, hd, nc, nd: m.nd, cd: m.cd}, thr);
+  const txt = (r, pass, nt) => r === "pass" ? (pass || "Pass") : r === "fail" ? "Fail" : "Not tested: " + nt;
+  return [
+    row("g1x", "Group 1 · Growth vs return", "X · Revenue growth, a year over 3 years", "(Revenue now ÷ revenue 12 quarters back)^(1/3) − 1",
+      [["Revenue now", n.revenue, now], ["Revenue 12 quarters back", q12.revenue, b12]], m.g1x, lines.g1[0]),
+    row("g1y", "Group 1 · Growth vs return", "Y · Clean ROIC", "NOPAT ÷ average invested capital (now and 4 quarters back)",
+      [["NOPAT now", n.nopat, now], ["Invested capital now", n.ic, now], ["Invested capital 4 quarters back", q4.ic, b4]], m.g1y, lines.g1[1]),
+    row("g2x", "Group 2 · Reinvestment vs return on new capital", "X · Reinvestment rate", "(Invested capital now − 4 quarters back) ÷ NOPAT, only when NOPAT > 0",
+      [["Invested capital now", n.ic, now], ["Invested capital 4 quarters back", q4.ic, b4], ["NOPAT now", n.nopat, now]], m.g2x, lines.g2[0]),
+    row("g2y", "Group 2 · Reinvestment vs return on new capital", "Y · Return on new capital", "(NOPAT now − 12 quarters back) ÷ (invested capital now − 12 quarters back), only when capital grew at least 10%",
+      [["NOPAT now", n.nopat, now], ["NOPAT 12 quarters back", q12.nopat, b12], ["Invested capital now", n.ic, now], ["Invested capital 12 quarters back", q12.ic, b12]], m.g2y, lines.g2[1]),
+    row("g3x", "Group 3 · Growth vs pricing power", "X · Revenue growth, a year over 3 years", "Same as Group 1 X",
+      [["Revenue now", n.revenue, now], ["Revenue 12 quarters back", q12.revenue, b12]], m.g1x, lines.g3[0]),
+    row("g3y", "Group 3 · Growth vs pricing power", "Y · Gross-margin change, 1 year", "Gross profit ÷ revenue now − the same 4 quarters back",
+      [["Gross profit now", n.gross_profit, now], ["Revenue now", n.revenue, now], ["Gross profit 4 quarters back", q4.gross_profit, b4], ["Revenue 4 quarters back", q4.revenue, b4]], m.g3y, lines.g3[1]),
+    row("g4x", "Group 4 · Quality vs price", "X · Clean ROIC", "Same as Group 1 Y",
+      [["NOPAT now", n.nopat, now], ["Invested capital now", n.ic, now], ["Invested capital 4 quarters back", q4.ic, b4]], m.g1y, lines.g4[0]),
+    row("g4y", "Group 4 · Quality vs price", "Y · Earnings yield", "Clean operating income ÷ enterprise value",
+      [["Clean operating income", n.clean_oi, now], ["Enterprise value", A.blocks.ev, a.m && a.m.date]], m.g4y, lines.g4[1]),
+    row("ic", "Risk checks", "Interest cover", "Clean operating income ÷ interest expense",
+      [["Clean operating income", n.clean_oi, now], ["Interest expense", n.interest, now]], m.ic, thr.ic,
+      txt(rp.ic, it ? "Pass" : nc ? "Pass: net cash, no interest expense filed" : "Pass: no debt, no interest expense filed", it ? "no clean operating income" : "no interest expense filed")),
+    row("nd", "Risk checks", "Net debt ÷ EBITDA", "(Debt − cash) ÷ EBITDA",
+      [["Debt", n.debt, now], ["Cash and short-term investments", n.cash, now], ["EBITDA", A.blocks.ebitda, now]], m.nd, thr.nd,
+      txt(rp.nd, nc ? "Pass: net cash" : "Pass", !hd && it ? "interest filed but no debt tagged" : "a figure is missing")),
+    row("cd", "Risk checks", "Operating cash flow ÷ debt", "Operating cash flow ÷ debt",
+      [["Operating cash flow", n.cfo, now], ["Debt", n.debt, now]], m.cd, thr.cd,
+      txt(rp.cd, !hd ? "Pass: no debt" : nc ? "Pass: net cash" : "Pass", !hd && it ? "interest filed but no debt tagged" : "a figure is missing"))];
+}
+const fmUsd = v => v === null || v === undefined || !isFinite(v) ? "–" : (v < 0 ? "−$" : "$") + (Math.abs(v) / 1e6).toLocaleString("en-US", {minimumFractionDigits: 1, maximumFractionDigits: 1}) + "M";
+const _auditParts = {}, _auditDone = {};
+const fMonth = iso => { const d = new Date(String(iso) + "T00:00:00"); return isNaN(d) ? String(iso) : d.toLocaleString("en-US", {month: "short", year: "numeric"}); };
+function loadAudit(cik) {  // the audit record lives in one of 16 parts (CIK mod 16), loaded the first time it is needed
+  const n = (window.MM_AUDIT && MM_AUDIT.meta && MM_AUDIT.meta.shards) || 16, k = cik % n;
+  if (_auditParts[k]) return _auditParts[k];
+  _auditParts[k] = new Promise(res => { const s = document.createElement("script");
+    s.src = `data/audit/a${String(k).padStart(2, "0")}.js`; s.onload = () => res(true); s.onerror = () => res(false); document.head.appendChild(s); })
+    .then(okd => { _auditDone[k] = true; if (state.view === "deepdive" && state.cik % n === k) render(); return okd; });
+  return _auditParts[k];
+}
+function ddCalcSection(cik) {
+  const A = window.MM_AUDIT, a = A && A.co[cik], head = `<h2 id="calc">Calculation check</h2>`;
+  if (!a) { loadAudit(cik); const done = _auditDone[cik % ((A && A.meta && A.meta.shards) || 16)];
+    return `${head}<p class="small" id="calc-wait">${done ? "No calculation record for this company in today's data." : "Loading the calculation record…"}</p>`; }
+  const S = state.scr, rows = ddCalcRows(a, A.meta.blocks, S.lines, S.risk), M = A.meta, mk = a.m || {};
+  const fres = r => !(r.res !== null && r.res !== undefined && isFinite(r.res)) ? "n/a" : r.k === "ic" ? r.res.toFixed(1).replace("-", "−") + "×" : r.k === "nd" ? (r.res >= 999 ? "EBITDA ≤ 0" : r.res.toFixed(2).replace("-", "−") + "×") : (r.res * 100).toFixed(2).replace("-", "−") + "%";
+  const fline = r => r.k === "ic" ? "≥ " + r.line + "×" : r.k === "nd" ? "≤ " + r.line + "×" : r.k === "cd" ? "≥ " + Math.round(r.line * 100) + "%" : (r.line * 100).toFixed(1) + "%";
+  let grp = "";
+  const body = rows.map(r => { const g = r.grp !== grp ? `<tr class="cgrp"><th colspan="6">${esc(r.grp)}</th></tr>` : ""; grp = r.grp;
+    return `${g}<tr><td>${esc(r.label)}</td><td class="cf">${esc(r.formula)}</td><td class="cu">${r.used.map(u => `<div>${esc(u[0])}: <b>${fmUsd(u[1])}</b>${u[2] ? ` <span class="muted">(${esc(fMonth(u[2]))})</span>` : ""}</div>`).join("")}</td>
+      <td class="r"><b>${fres(r)}</b></td><td class="r">${fline(r)}</td><td>${esc(r.side)}</td></tr>`; }).join("");
+  const B = auditMeasures(a, M.blocks).blocks, n = B.now, htm = a.it && a.it.htm && a.it.htm.now && a.it.htm.now[0];
+  const shares = `${mk.shares ? Math.round(mk.shares).toLocaleString("en-US") : "–"} shares (${mk.shares_src === "cover page" ? "cover page" + (mk.ads_ratio ? `, ÷ ${mk.ads_ratio} ordinary shares per ADS` : "") : "diluted average, no cover-page count filed"})`;
+  const blocks = [["Revenue, 12 months", n.revenue, "last fiscal year + this year to date − the same months a year earlier"],
+    ["Clean operating income", n.clean_oi, "operating income + one-off items (impairment, restructuring, litigation, deal costs, less asset-sale gains)"],
+    ["NOPAT", n.nopat, `clean operating income × (1 − ${Math.round(M.tax * 100)}% tax)`],
+    ["Cash and short-term investments", n.cash, "cash + the short-term investment tags the tool reads"],
+    ["Excess cash", n.excess_cash, `cash above ${Math.round(M.cash_pct * 100)}% of revenue`], ["Debt", n.debt, "debt including finance leases"],
+    ["Invested capital", n.ic, "equity + debt − excess cash"], ["EBITDA", B.ebitda, "clean operating income + depreciation and amortization"],
+    ["Market value", mk.mcap, `Yahoo Finance close ${mk.date || ""} $${mk.price ? mk.price.toFixed(2) : "–"} × ${shares}`],
+    ["Enterprise value", B.ev, "market value + debt − cash"]];
+  const notes = [];
+  if (htm) notes.push(`The balance sheet also shows ${fmUsd(htm)} of short-term investments filed as held-to-maturity securities, which the tool does not count as cash. The sheet shows what changes if they are counted.`);
+  if (a.rc && a.rc.length) notes.push(`Does not reconcile with the Screener on ${a.rc.map(d => d[0]).join(", ")}; the Screener's values are the ones used in the lists.`);
+  if (a.ck && a.ck.length) notes.push(`A building block differs from the Screener's data (${a.ck.map(d => d[0] + " " + d[1]).join(", ")}).`);
+  return `${head}<p class="small">How each Moat Screener measure and risk check is calculated for ${esc(a.t || "this company")}, with the numbers used. 12 months to ${esc((a.pts.now || [])[0] || "–")}; lines and thresholds as set on the Screener.</p>
+  <div class="tbl"><table class="calct"><thead><tr><th>Measure</th><th>Formula</th><th>Numbers used</th><th class="r">Result</th><th class="r">Line</th><th>Side</th></tr></thead><tbody>${body}</tbody></table></div>
+  <details class="cblocks"><summary>Building blocks</summary><table class="calct"><tbody>${blocks.map(b => `<tr><td>${esc(b[0])}</td><td class="r"><b>${fmUsd(b[1])}</b></td><td class="cf">${esc(b[2])}</td></tr>`).join("")}</tbody></table></details>
+  ${notes.map(t => `<div class="card note-exp"><p style="margin:0">${esc(t)}</p></div>`).join("")}
+  <div class="calc-actions" id="calc-actions" data-cik="${cik}"></div>
+  <p class="small">Source: SEC EDGAR XBRL filings filed on or before ${esc(M.as_of)} (retrieved ${esc(M.sec_retrieved)}); prices Yahoo Finance close ${esc(M.price_date || "")}. The sheet lists every filing, XBRL tag and printed page.</p>`;
+}
+// The one-company workbook (spec §3) as a plain model: sheets of rows of cells {v} (value), {f} (formula) or null,
+// with style hints s: "title"|"note"|"h"|"sec"|"tot"|"in" and number format n: "usd"|"pct"|"pct2"|"x"|"int"|"price".
+function auditWorkbook(a, meta, lines, thr, dash, co) {
+  const PTS = ["now", "q4", "q12"], COL = {now: "C", q4: "D", q12: "E"}, SI = "'SEC inputs'!";
+  const has = v => v !== null && v !== undefined && isFinite(v);
+  const V = (v, o) => Object.assign({v}, o || {}), F = (f, o) => Object.assign({f}, o || {});
+  const pend = k => a.pts[k] ? a.pts[k][0] : null, ttm = k => a.pts[k] && a.pts[k][1];
+  const phead = k => !a.pts[k] ? "–" : `${{now: "Now", q4: "4 quarters back", q12: "12 quarters back"}[k]}: ${ttm(k) ? "12 months" : "fiscal year"} to ${a.pts[k][0]}`;
+  const fid = i => i === null || i === undefined ? "" : "F" + (i + 1), pg = p => p === null ? "not located" : p === "" ? "–" : p;
+  // ---- SEC inputs ----
+  const sec = [[V(`SEC inputs: ${co.name || a.t} (${a.t}), US$`, {s: "title"})],
+    [V("Blue = value as filed with the SEC (filing IDs in column F, links on the Sources tab; page = the number printed at the bottom of that page, #N = the Nth page of a filing whose page has no printed number, – = not looked up). Black = formula. A 12-month figure = last fiscal year + this year to date − the same months a year earlier.", {s: "note"})], [],
+    ["Item", "XBRL tag", phead("now"), phead("q4"), phead("q12"), "Filings (C · D · E)", "Page in filing (C · D · E)"].map(h => V(h, {s: "h"}))];
+  const ref = {};  // item -> {now: "C12", ...} cell of its total
+  const NAMES = {revenue: "Revenue", gross_profit: "Gross profit", op_income: "Operating income", oneoffs: "One-off items added back",
+    da: "Depreciation and amortization", cfo: "Operating cash flow", interest: "Interest expense", equity: "Shareholders' equity",
+    cash: "Cash and cash equivalents", st_invest: "Short-term investments the tool reads", debt: "Debt including finance leases",
+    htm: "Held-to-maturity securities, current (not counted by the tool)", shares: "Diluted average shares (12-month point)"};
+  const KIND = {FY: 0, YTD: 1, PRIOR: 2, BAL: 0};
+  Object.keys(NAMES).forEach(name => {
+    const it = a.it[name]; if (!it) return;
+    // a point with no filed tag counts as 0; a point the tool itself has as missing (value null) is never computed
+    const pts = PTS.filter(k => it[k]), filed = pts.filter(k => it[k][1].length && it[k][0] !== null);
+    sec.push([V(NAMES[name], {s: "sec"})]);
+    const tags = []; pts.forEach(k => it[k][1].forEach(c => { if (!tags.some(t => t[0] === c[0])) tags.push([c[0], c[1]]); }));
+    if (!tags.length) { sec.push([V("Not filed"), V(""), ...PTS.map(k => it[k] ? V("not filed", {s: "in"}) : null)]); ref[name] = {}; return; }
+    const compTot = [];
+    tags.forEach(([tag, sign]) => {
+      const kinds = new Set(); pts.forEach(k => { const c = it[k][1].find(x => x[0] === tag); if (c) c[4].forEach(p => kinds.add(p[0])); });
+      const anyTtm = kinds.has("YTD") && kinds.has("PRIOR"), bal = kinds.has("BAL");
+      const lines3 = bal ? [["Balance at period end", "BAL"]] : anyTtm ? [["Last fiscal year (10-K)", "FY"], ["+ This year to date (10-Q)", "YTD"], ["− Same months a year earlier", "PRIOR"]]
+        : kinds.has("YTD") ? [["Year to date (10-Q), an average", "YTD"]] : [["Fiscal year (10-K)", "FY"]];
+      const rows0 = sec.length + 1;
+      lines3.forEach(([lab, kind]) => {
+        const cells = PTS.map(k => { const c = it[k] && it[k][1].find(x => x[0] === tag), p = c && c[4].find(q => q[0] === kind); return p ? V(p[1], {s: "in", n: name === "shares" ? "int" : "usd"}) : null; });
+        const parts = PTS.map(k => { const c = it[k] && it[k][1].find(x => x[0] === tag); return c ? c[4].find(q => q[0] === kind) : null; });
+        sec.push([V(lab), V(tag), ...cells, V(parts.map(p => p ? fid(p[2]) : "").join(" · ")), V(parts.map(p => p ? pg(p[5]) : "").join(" · "))]);
+      });
+      if (lines3.length > 1 || tags.length > 1) {
+        const r = rows0, tot = PTS.map(k => { const c = it[k] && it[k][1].find(x => x[0] === tag); if (!c) return null;
+          const ks = c[4].map(p => p[0]), f = lines3.length > 1 && ks.includes("YTD") && ks.includes("PRIOR") ? `=${COL[k]}${r}+${COL[k]}${r + 1}-${COL[k]}${r + 2}` : `=${COL[k]}${r}`;
+          return F(f, {n: "usd"}); });
+        sec.push([V(`= ${tag}${lines3.length > 1 ? ", 12 months" : ""}`, {s: "tot"}), V(""), ...tot]);
+        compTot.push([sec.length, sign]);
+      } else compTot.push([rows0, sign]);
+    });
+    if (tags.length > 1 || compTot[0][1] < 0) {  // several components, or one that is subtracted (asset-sale gains)
+      const f = k => { const live = compTot.filter(([r]) => sec[r - 1][PTS.indexOf(k) + 2]);
+        return live.length ? "=" + live.map(([r, sg], i) => `${i === 0 ? (sg < 0 ? "-" : "") : sg < 0 ? "-" : "+"}${COL[k]}${r}`).join("") : "=0"; };
+      sec.push([V(`= ${NAMES[name]}${name === "gross_profit" ? " (revenue − cost of revenue)" : ""}`, {s: "tot"}), V(""), ...PTS.map(k => filed.includes(k) ? F(f(k), {n: "usd"}) : null)]);
+      ref[name] = Object.fromEntries(filed.map(k => [k, `${COL[k]}${sec.length}`]));
+    } else ref[name] = Object.fromEntries(filed.map(k => [k, `${COL[k]}${compTot[0][0]}`]));
+  });
+  const m = a.m || {}, mk0 = sec.length + 2;
+  sec.push([V("Market value", {s: "sec"})]);
+  sec.push([V(`Share price, close ${m.date || ""} (US$)`), V("Yahoo Finance"), V(m.price, {s: "in", n: "price"}), null, null, V("Y1"), V("")]);
+  if (m.shares_src === "cover page") {
+    sec.push([V("Shares outstanding, cover page"), V("dei:EntityCommonStockSharesOutstanding"), V(m.cover_raw, {s: "in", n: "int"}), null, null,
+      V(m.cover_accn ? "F" + (a.f.findIndex(f => f[0] === m.cover_accn) + 1 || "C") : ""), V(pg(m.cover_page === undefined ? "" : m.cover_page))]);
+    sec.push(m.ads_ratio ? [V("Ordinary shares per ADS (10-K cover page)"), V(""), V(m.ads_ratio, {s: "in"}), null, null, V(""), V("")] : [V("Shares used"), V(""), F(`=C${mk0 + 1}`, {n: "int"}), null, null, V(""), V("")]);
+    if (m.ads_ratio) sec.push([V("= Shares used (ADS)", {s: "tot"}), V(""), F(`=C${mk0 + 1}/C${mk0 + 2}`, {n: "int"})]);
+  } else sec.push([V("Shares used: diluted average (no cover-page count filed)"), V(""), F(ref.shares && ref.shares.now ? `=${ref.shares.now}` : "=0", {n: "int"})]);
+  const priceRef = `C${mk0}`, sharesRef = `C${sec.length}`;
+  // ---- Sources ----
+  const src = [[V(`Sources: ${co.name || a.t} (${a.t}), SEC CIK ${co.cik}`, {s: "title"})],
+    [V(`Values from SEC XBRL filings filed on or before ${meta.as_of} (retrieved ${meta.sec_retrieved}); price from Yahoo Finance.`, {s: "note"})], [],
+    ["ID", "Form", "Period", "Filed", "Accession no.", "Open on SEC EDGAR"].map(h => V(h, {s: "h"}))];
+  const idx = acc => `https://www.sec.gov/Archives/edgar/data/${co.cik}/${acc.replace(/-/g, "")}/${acc}-index.htm`;
+  a.f.forEach((f, i) => src.push([V("F" + (i + 1)), V(f[1]), V(f[2]), V(f[3]), V(f[0]), F(`=HYPERLINK("${idx(f[0])}","F${i + 1} filing index")`)]));
+  if (m.cover_accn && !a.f.some(f => f[0] === m.cover_accn)) src.push([V("FC"), V("cover page"), V(m.cover_end || ""), V(""), V(m.cover_accn), F(`=HYPERLINK("${idx(m.cover_accn)}","Cover page filing index")`)]);
+  src.push([], [V("Y1"), V("Yahoo Finance"), V(`${a.t} daily close ${m.date || ""}`), V(meta.prices_retrieved || ""), V(""), F(`=HYPERLINK("https://finance.yahoo.com/quote/${a.t}/history/","Yahoo Finance price history")`)],
+    [V("S1"), V("SEC XBRL"), V("All company facts"), V(meta.sec_retrieved || ""), V(""), F(`=HYPERLINK("https://data.sec.gov/api/xbrl/companyfacts/CIK${String(co.cik).padStart(10, "0")}.json","SEC company facts (JSON)")`)],
+    [V("D1"), V("Dashboard"), V("Values the Moat Momentum dashboard shows"), V(meta.as_of), V(""), F(`=HYPERLINK("https://github.com/Jittia/aia-hw-jitti/tree/main/output/data/audit","Audit data on GitHub")`)]);
+  // ---- Calculation check ----
+  const cc = [[V(`${a.t} · Moat Screener calculation check`, {s: "title"})],
+    [V(`Latest point: ${phead("now")}; prices as of ${m.date || "–"}. Every result is a formula over the SEC inputs tab. "Dashboard shows" = the value in the Moat Momentum dashboard (source D1).`, {s: "note"})], [],
+    ["Setting", "Value", "Used in"].map(h => V(h, {s: "h"}))];
+  const set = [["Tax rate", meta.tax, "NOPAT", "pct"], ["Cash kept for operations, share of revenue", meta.cash_pct, "Excess cash", "pct"],
+    ["Growth line (Group 1 X)", lines.g1[0], "Group 1 X", "pct"], ["ROIC hurdle (Group 1 Y)", lines.g1[1], "Group 1 Y", "pct"],
+    ["Reinvestment line (Group 2 X)", lines.g2[0], "Group 2 X", "pct"], ["Return on new capital line (Group 2 Y)", lines.g2[1], "Group 2 Y", "pct"],
+    ["Growth line (Group 3 X)", lines.g3[0], "Group 3 X", "pct"], ["Gross-margin change line (Group 3 Y)", lines.g3[1], "Group 3 Y", "pct2"],
+    ["ROIC line (Group 4 X)", lines.g4[0], "Group 4 X", "pct2"],
+    ["Earnings-yield line (Group 4 Y)", lines.g4[1], "Group 4 Y", "pct2"], ["Interest cover, minimum", thr.ic, "Risk check", "x"],
+    ["Net debt ÷ EBITDA, maximum", thr.nd, "Risk check", "x"], ["Operating cash flow ÷ debt, minimum", thr.cd, "Risk check", "pct"]];
+  const S0 = cc.length + 1; set.forEach(r => cc.push([V(r[0]), V(r[1], {s: "in", n: r[3]}), V(r[2])]));
+  const sr = i => `$B$${S0 + i}`;
+  cc.push([], ["Building block (US$)", "Now", "4 quarters back", "12 quarters back", "How it is calculated"].map(h => V(h, {s: "h"})));
+  const blk = {}, put = (key, label, fn, how, n) => { cc.push([V(label), ...PTS.map(k => { const f = fn(k); return f ? F("=" + f, {n: n || "usd"}) : null; }), V(how)]); blk[key] = cc.length; };
+  const r = (name, k) => ref[name] && ref[name][k] ? (name === "interest" ? `ABS(${SI}${ref[name][k]})` : SI + ref[name][k]) : null;  // interest is used as a positive amount
+  const B = k => (key) => `${COL[k] === "C" ? "B" : COL[k] === "D" ? "C" : "D"}${blk[key]}`;  // building-block column for a point
+  put("rev", "Revenue, 12 months", k => r("revenue", k), "From SEC inputs");
+  put("coi", "Clean operating income", k => r("op_income", k) ? `${r("op_income", k)}+${r("oneoffs", k) || 0}` : null, "Operating income + one-off items");
+  put("nopat", "NOPAT", k => r("op_income", k) ? `${B(k)("coi")}*(1-${sr(0)})` : null, "Clean operating income × (1 − tax rate)");
+  put("cash", "Cash counted", k => a.it.cash && a.it.cash[k] ? `${r("cash", k) || 0}+${r("st_invest", k) || 0}` : null, "Cash + short-term investments the tool reads (none filed = 0)");
+  put("xcash", "Excess cash", k => r("revenue", k) ? `MAX(${B(k)("cash")}-${sr(1)}*${B(k)("rev")},0)` : null, "Cash counted above the operating share of revenue");
+  put("debt", "Debt", k => r("debt", k) || (a.it.debt && a.it.debt[k] ? "0" : null), "Debt including finance leases");
+  put("ic", "Invested capital", k => r("equity", k) ? `${r("equity", k)}+${B(k)("debt")}-${B(k)("xcash")}` : null, "Equity + debt − excess cash");
+  put("gm", "Gross margin", k => k !== "q12" && r("gross_profit", k) ? `${r("gross_profit", k)}/${B(k)("rev")}` : null, "Gross profit ÷ revenue", "pct2");
+  put("ebitda", "EBITDA", k => k === "now" && r("op_income", k) ? `${B(k)("coi")}+${r("da", k) || 0}` : null, "Clean operating income + D&A");
+  put("nd", "Net debt", k => k === "now" ? `${B(k)("debt")}-${B(k)("cash")}` : null, "Debt − cash counted (negative = net cash)");
+  const noMcap = !has(m.mcap);  // the dashboard has no market value: no share count, or outside its sanity range
+  put("mcap", "Market value", k => k === "now" ? (noMcap ? `"n/a"` : `${SI}${priceRef}*${SI}${sharesRef}`) : null,
+    noMcap ? "Not available in the dashboard: no share count, or the value is outside 0.2%–200× of revenue (a mis-scaled count)" : "Share price × shares");
+  put("ev", "Enterprise value", k => k === "now" ? `IF(ISNUMBER(B${blk.mcap}),B${blk.mcap}+B${blk.nd},"n/a")` : null, "Market value + net debt");
+  cc.push([], ["Measure", "Result", "Dashboard shows", "Same as dashboard?", "Line", "Side of line", "Formula"].map(h => V(h, {s: "h"})));
+  const d0 = g => dash && dash[g] && dash[g][0] ? dash[g][0] : [null, null];
+  const meas = (label, f, dv, line, n, how, tol) => { const row = cc.length + 1;
+    cc.push([V(label), F(f, {n}), V(has(dv) ? dv : "n/a", {s: "in", n}), F(`=IF(ISNUMBER(B${row}),IF(ISNUMBER(C${row}),IF(ABS(B${row}-C${row})<=${tol || 0.0005},"Yes","No"),"No"),IF(C${row}="n/a","Yes","No"))`),
+      line ? F("=" + line, {n}) : V(""), line ? F(`=IF(ISNUMBER(B${row}),IF(B${row}>=E${row},"Above","Below"),"No point")`) : V(""), V(how)]); return row; };
+  const b = key => `B${blk[key]}`, c = key => `C${blk[key]}`, dd = key => `D${blk[key]}`;
+  cc.push([V("Group 1 · Growth vs return", {s: "sec"})]);
+  const gx = meas("X · Revenue growth, a year over 3 years", `=IF(AND(ISNUMBER(${dd("rev")}),${dd("rev")}>0),(${b("rev")}/${dd("rev")})^(1/3)-1,"n/a")`, d0("g1")[0], sr(2), "pct2", "(Revenue now ÷ revenue 12 quarters back)^(1/3) − 1");
+  const roic = meas("Y · Clean ROIC", `=IF(AND(ISNUMBER(${b("nopat")}),COUNT(${b("ic")},${c("ic")})>0),IF(AVERAGE(${b("ic")},${c("ic")})>0,${b("nopat")}/AVERAGE(${b("ic")},${c("ic")}),"n/a"),"n/a")`, d0("g1")[1], sr(3), "pct2", "NOPAT ÷ average invested capital (now and 4 quarters back; the one available when the other is missing)");
+  cc.push([V("Group 2 · Reinvestment vs return on new capital", {s: "sec"})]);
+  meas("X · Reinvestment rate", `=IF(AND(ISNUMBER(${b("nopat")}),ISNUMBER(${b("ic")}),ISNUMBER(${c("ic")})),IF(${b("nopat")}>0,(${b("ic")}-${c("ic")})/${b("nopat")},"n/a"),"n/a")`, d0("g2")[0], sr(4), "pct2", "(Invested capital now − 4 quarters back) ÷ NOPAT, only when NOPAT > 0");
+  meas("Y · Return on new capital", `=IF(AND(ISNUMBER(${b("ic")}),ISNUMBER(${dd("ic")}),ISNUMBER(${b("nopat")}),ISNUMBER(${dd("nopat")})),IF(AND(${b("ic")}-${dd("ic")}>0,${b("ic")}-${dd("ic")}>=0.1*ABS(${dd("ic")})),(${b("nopat")}-${dd("nopat")})/(${b("ic")}-${dd("ic")}),"n/a"),"n/a")`, d0("g2")[1], sr(5), "pct2", "(NOPAT now − 12 quarters back) ÷ (invested capital now − 12 quarters back), only when capital grew at least 10%");
+  cc.push([V("Group 3 · Growth vs pricing power", {s: "sec"})]);
+  meas("X · Revenue growth, a year over 3 years", `=B${gx}`, d0("g3")[0], sr(6), "pct2", "Same as Group 1 X");
+  meas("Y · Gross-margin change, 1 year", `=IF(AND(ISNUMBER(${b("gm")}),ISNUMBER(${c("gm")})),${b("gm")}-${c("gm")},"n/a")`, d0("g3")[1], sr(7), "pct2", "Gross margin now − gross margin 4 quarters back");
+  cc.push([V("Group 4 · Quality vs price", {s: "sec"})]);
+  meas("X · Clean ROIC", `=B${roic}`, d0("g4")[0], sr(8), "pct2", "Same as Group 1 Y");
+  meas("Y · Earnings yield", `=IF(AND(ISNUMBER(${b("coi")}),ISNUMBER(${b("ev")})),IF(${b("ev")}>0,${b("coi")}/${b("ev")},"n/a"),"n/a")`, d0("g4")[1], sr(9), "pct2", "Clean operating income ÷ enterprise value", 0.0006);
+  cc.push([V("Risk checks", {s: "sec"})]);
+  const intr = r("interest", "now");
+  meas("Interest cover", intr ? `=IF(AND(ISNUMBER(${b("coi")}),${intr}>0),${b("coi")}/${intr},"n/a")` : `="n/a"`, dash && dash.ic, sr(10), "x", "Clean operating income ÷ interest expense", 0.006);
+  meas("Net debt ÷ EBITDA", `=IF(ISNUMBER(${b("ebitda")}),IF(${b("ebitda")}>0,${b("nd")}/${b("ebitda")},IF(${b("nd")}>0,999,"n/a")),"n/a")`, dash && dash.nd, sr(11), "x", "(Debt − cash) ÷ EBITDA; 999 = EBITDA ≤ 0 with net debt", 0.006);
+  meas("Operating cash flow ÷ debt", r("cfo", "now") ? `=IF(${b("debt")}>0,${r("cfo", "now")}/${b("debt")},"n/a")` : `="n/a"`, dash && dash.cd, sr(12), "pct", "Operating cash flow ÷ debt", 0.0006);
+  const htm = a.it.htm && a.it.htm.now && a.it.htm.now[0];
+  if (htm && ref.htm && ref.htm.now) {
+    cc.push([], ["If held-to-maturity securities counted as cash", "Now", "4 quarters back"].map(h => V(h, {s: "h"})));
+    const h0 = cc.length + 1, hq = ref.htm.q4 ? SI + ref.htm.q4 : "0";
+    cc.push([V("Cash counted, including held-to-maturity securities"), F(`=${b("cash")}+${SI}${ref.htm.now}`, {n: "usd"}), F(`=${c("cash")}+${hq}`, {n: "usd"})]);
+    cc.push([V("Excess cash"), F(`=MAX(B${h0}-${sr(1)}*${b("rev")},0)`, {n: "usd"}), F(`=MAX(C${h0}-${sr(1)}*${c("rev")},0)`, {n: "usd"})]);
+    cc.push([V("Invested capital"), F(`=${r("equity", "now")}+${b("debt")}-B${h0 + 1}`, {n: "usd"}), F(`=${r("equity", "q4")}+${c("debt")}-C${h0 + 1}`, {n: "usd"})]);
+    cc.push([V("Clean ROIC"), F(`=IF(AVERAGE(B${h0 + 2},C${h0 + 2})>0,${b("nopat")}/AVERAGE(B${h0 + 2},C${h0 + 2}),"n/a")`, {n: "pct2"})]);
+    cc.push([V("Earnings yield"), F(`=${b("coi")}/(${b("mcap")}+${b("debt")}-B${h0})`, {n: "pct2"})]);
+    cc.push([V("The tool's cash list does not include held-to-maturity securities, so it counts them as invested capital instead of cash.", {s: "note"})]);
+  }
+  return {title: `${a.t} · Moat Momentum calculation check (data as of ${meta.as_of})`,
+    sheets: [{name: "Calculation check", rows: cc, widths: [360, 150, 150, 150, 110, 200, 460]},
+      {name: "SEC inputs", rows: sec, widths: [360, 380, 170, 170, 170, 170, 170]},
+      {name: "Sources", rows: src, widths: [50, 110, 260, 140, 190, 230]}]};
+}
+let _exceljs = null;
+function loadExcelJS() {  // ExcelJS 4.4.0 (cdnjs), loaded the first time a workbook is built
+  return _exceljs || (_exceljs = new Promise((res, rej) => { if (window.ExcelJS) return res(window.ExcelJS);
+    const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
+    s.onload = () => res(window.ExcelJS); s.onerror = () => { _exceljs = null; rej(new Error("ExcelJS could not be loaded")); }; document.head.appendChild(s); }));
+}
+async function xlsxBytes(model) {
+  const XL = await loadExcelJS(), wb = new XL.Workbook(), FONT = "Source Sans 3";
+  const NF = {usd: '$#,##0;($#,##0);"-"', pct: '0.0%;(0.0%);"-"', pct2: '0.00%;(0.00%);"-"', x: '0.00"x";(0.00"x")', int: "#,##0", price: "$#,##0.00"};
+  wb.creator = "Moat Momentum"; wb.title = model.title;
+  wb.calcProperties = Object.assign(wb.calcProperties || {}, {fullCalcOnLoad: true});  // results are formulas: calculate on open
+  model.sheets.forEach(sh => {
+    const ws = wb.addWorksheet(sh.name, {views: [{state: "frozen", ySplit: sh.name === "Calculation check" ? 0 : 4}]});
+    (sh.widths || []).forEach((w, i) => { ws.getColumn(i + 1).width = Math.round(w / 7); });
+    sh.rows.forEach((row, r) => (row || []).forEach((c, j) => { if (!c) return;
+      const cell = ws.getCell(r + 1, j + 1);
+      cell.value = "f" in c ? {formula: c.f.replace(/^=/, "")} : c.v;
+      const font = {name: FONT, size: 10};
+      if (c.s === "title") Object.assign(font, {bold: true, size: 14});
+      if (c.s === "note") font.italic = true;
+      if (c.s === "h") { Object.assign(font, {bold: true, color: {argb: "FFFFFFFF"}}); cell.fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FF1F3A5E"}}; cell.alignment = {wrapText: true, vertical: "top"}; }
+      if (c.s === "sec") { font.bold = true; cell.fill = {type: "pattern", pattern: "solid", fgColor: {argb: "FFE8EDF4"}}; }
+      if (c.s === "tot") font.bold = true;
+      if (c.s === "in") font.color = {argb: "FF0000FF"};
+      cell.font = font;
+      if (c.n && NF[c.n]) cell.numFmt = NF[c.n];
+    }));
+  });
+  return new Uint8Array(await wb.xlsx.writeBuffer());
+}
+// ---- Create the sheet in the reader's Google Drive (connector "Google Drive", tool create_file), or download it ----
+function driveErrorText(code) {
+  const add = "Add Google Drive in claude.ai Settings → Connectors, then try again.", off = "Google Drive is not available in this view. Use Download as Excel.";
+  const ask = "Creating the sheet needs your approval; claude.ai asks when the dashboard is open there.";
+  const T = {server_not_connected: add, selection_required: add, server_not_found: add, approval_required: ask, not_in_manifest: ask,
+    needs_reauth: "Reconnect Google Drive in claude.ai Settings → Connectors, then try again.",
+    blocked_by_policy: "Your organization's policy blocks Google Drive here. Use Download as Excel.",
+    not_granted: off, capability_disabled: off, capability_removed: off};
+  // anything else after the call (timeout, upstream error, tool error) is ambiguous: the file may exist; never retry by itself
+  return {msg: T[code] || "The sheet may have been created; check your Google Drive before trying again.", retry: false};
+}
+function auditLinkState(stored, asOf) { return !stored || !stored.url ? "create" : stored.built === asOf ? "open" : "rebuild"; }
+const auditLinks = (() => {  // the link is remembered per reader: their private database path, else this browser
+  let envP = null;
+  const env = () => envP || (envP = (async () => { const use = n => (window.claude && window.claude.use) ? window.claude.use(n) : Promise.resolve(null);
+    try { const [db, user] = await Promise.all([use("db"), use("user")]); const id = user && await user.id(); return db && id ? db.collection("data/users/" + id) : null; } catch (e) { return null; } })());
+  const key = cik => "audit-" + cik;
+  return {
+    async get(cik) { const col = await env();
+      if (col) { try { const s = await col.doc(key(cik)).get(); if (s.exists) return s.data(); } catch (e) { /* fall through */ } }
+      try { return JSON.parse(localStorage.getItem("mm-" + key(cik)) || "null"); } catch (e) { return null; } },
+    async put(cik, rec) { const col = await env();
+      if (col) { try { await col.doc(key(cik)).set(rec); } catch (e) { /* kept in this browser below */ } }
+      try { localStorage.setItem("mm-" + key(cik), JSON.stringify(rec)); } catch (e) { /* storage blocked */ } }};
+})();
+function auditModel(cik) {
+  const A = window.MM_AUDIT, a = A.co[cik], c = COMP_BY.get(cik) || {};
+  return auditWorkbook(a, A.meta, state.scr.lines, state.scr.risk, SCR.co[cik], {ticker: a.t || c.ticker, name: c.name, cik});
+}
+const _b64 = bytes => { let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
+let _calcBusy = false;
+async function createAuditSheet(cik) {
+  if (_calcBusy) return; _calcBusy = true; calcMsg("Building the sheet…");
+  try {
+    let mcp = null; try { mcp = (window.claude && window.claude.use) ? await window.claude.use("mcp") : null; } catch (e) { mcp = null; }
+    if (!mcp) { calcMsg(driveErrorText("not_granted").msg); return; }
+    const model = auditModel(cik), bytes = await xlsxBytes(model);
+    let res;
+    try { res = await mcp.callTool("Google Drive", "create_file", {title: model.title, base64Content: _b64(bytes),
+      contentMimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}); }
+    catch (e) { calcMsg(driveErrorText(e && e.code).msg); return; }
+    const p = (res && res.payload) || {}, url = p.viewUrl || p.webViewLink || (p.id ? `https://docs.google.com/spreadsheets/d/${p.id}/edit` : null);
+    if (!url) { calcMsg(driveErrorText("tool_error").msg); return; }
+    await auditLinks.put(cik, {url, built: MM_AUDIT.meta.as_of, title: model.title});
+    await renderCalcActions(cik); calcMsg("Created in your Google Drive.");
+  } catch (e) { calcMsg("The sheet could not be built: " + (e && e.message ? e.message : "unknown error") + ". Try Download as Excel."); }
+  finally { _calcBusy = false; }
+}
+async function downloadAuditXlsx(cik) {
+  if (_calcBusy) return; _calcBusy = true;
+  try { const dl = await deckDownloads(); if (!dl) { calcMsg("Downloads are not available in this view."); return; }
+    const model = auditModel(cik), bytes = await xlsxBytes(model);
+    await dl.save({filename: `${(MM_AUDIT.co[cik].t || cik)}_calculation_check_${MM_AUDIT.meta.as_of}.xlsx`, data: bytes});
+    calcMsg("Saved.");
+  } catch (e) { calcMsg(e && e.code === "unavailable" ? "Downloads are not available in this view." : "The file was not saved."); }
+  finally { _calcBusy = false; }
+}
+function calcMsg(t) { const m = document.getElementById("calc-msg"); if (m) m.textContent = t; }
+async function renderCalcActions(cik) {
+  const box = document.getElementById("calc-actions"); if (!box || +box.dataset.cik !== cik) return;
+  const st = await auditLinks.get(cik), mode = auditLinkState(st, MM_AUDIT.meta.as_of), dl = await deckDownloads();
+  if (+box.dataset.cik !== cik || !document.body.contains(box)) return;
+  const create = `<button type="button" class="btn" data-calc="create">${mode === "rebuild" ? "Rebuild calculation sheet (newer data)" : "Create calculation sheet"}</button>`;
+  box.innerHTML = (mode === "open" ? `<a class="btn" href="${esc(st.url)}" target="_blank" rel="noopener">Open calculation sheet</a> <button type="button" class="btn ghost sm" data-calc="create">Rebuild</button>`
+      : create + (mode === "rebuild" ? ` <a class="small" href="${esc(st.url)}" target="_blank" rel="noopener">Open the earlier sheet (data as of ${esc(st.built)})</a>` : ""))
+    + (dl ? ` <button type="button" class="btn ghost" data-calc="xlsx">Download as Excel</button>` : "")
+    + ` <span class="small" id="calc-msg" role="status">${mode === "create" ? "Builds a Google Sheet in your Google Drive that recomputes every measure from the SEC values." : ""}</span>`;
+  box.onclick = e => { const b = e.target.closest("[data-calc]"); if (!b) return; b.disabled = true;
+    (b.dataset.calc === "create" ? createAuditSheet(cik) : downloadAuditXlsx(cik)).finally(() => { b.disabled = false; }); };
 }
 function quarterCharts(D, c) {
   const Q = D.q; if (!Q || Q.end.length < 2) return `<p class="small">No quarterly 12-month figures for this company.</p>`;
@@ -926,9 +1280,11 @@ function viewDeep(m) {
   <h2>The four Moat Screeners</h2><div class="dd4">${cards}</div>
   <p class="small">Percentile: position among all companies with both values (0–100, average of X and Y). List: membership with default settings (① now top-right, ② improving on Y, ③ improving on X). Dot = now; line = the last 4 quarters.</p>
   ${Dp ? quarterCharts(Dp, c) : `<p class="small">Loading 12-quarter history…</p>`}
+  ${ddCalcSection(cik)}
   <p class="back"><a href="#screener">← Screener</a> · <a href="#watchlist">Watchlist</a></p>`;
   const q = document.getElementById("ddq");
   q.addEventListener("change", () => { const t = q.value.split(" · ")[0].trim(); const hit = COMP.find(x => x.ticker === t && SCR.co[x.cik]); if (hit) go("deepdive", hit.cik); });
+  if (window.MM_AUDIT && MM_AUDIT.co[cik]) renderCalcActions(cik);
 }
 // ---------- WATCHLIST ----------
 // Store: the published page's shared database (claude.use("db"), collection "watchlist", one document per company);

@@ -288,6 +288,26 @@ def main(as_of: str) -> None:
                          cover_all, as_of)
     scr["meta"] |= {"price_date": daily.attrs.get("date"), "prices_retrieved": daily.attrs.get("retrieved"),
                     "sec_retrieved": settings["data"]["sec_retrieved"]}
+
+    # Calculation check (spec docs/specs/2026-11-04-calculation-check-design.md): every Screener input split into its
+    # filed parts, re-derived and reconciled with the Screener; page numbers from src/mm_pages.py when cached
+    from mm_adr import load_ratios
+    from mm_audit import export, live_rows, panel_and_records
+    raw_cov = pd.read_pickle(CACHE / "cover_shares.pkl").set_index(["cik", "accn", "end"])["val"]  # counts as filed
+    raw_cov = raw_cov[~raw_cov.index.duplicated(keep="last")]
+    cmeta = {int(r.cik): {"accn": r.accn, "end": str(r.end.date()), "form": r.form, "raw": raw_cov.get((r.cik, r.accn, r.end))}
+             for r in cov.itertuples()}
+    live = live_rows(mmap[["cik", "ticker", "cover_shares", "shares", "mcap", "ev"]], daily, load_ratios(),
+                     daily.attrs.get("date"), cmeta)
+    try:  # the calculation check must never stop the Screener refresh
+        am = export(panel_and_records(as_of, live=live, ciks={int(c) for c in scr["co"]}, facts=facts, panel=tpanel),
+                    {"as_of": as_of, "price_date": daily.attrs.get("date"), "prices_retrieved": daily.attrs.get("retrieved"),
+                     "sec_retrieved": settings["data"]["sec_retrieved"], "tax": settings["data"]["tax_rate"],
+                     "cash_pct": settings["data"]["excess_cash_pct_revenue"]},
+                    OUTD / "audit", CACHE / "pages", {str(k): v for k, v in scr["co"].items()})
+        print(f"  audit: {am['n']} companies, {am['reconciled']} match the Screener, {am['bytes'] / 1e6:.1f} MB", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"  WARNING audit export failed ({type(e).__name__}: {e}); Screener data is still written", flush=True)
     mmap = leading_at(mmap, pd.read_pickle(CACHE / "leading.pkl"), as_of)
     for rule in ("r1", "r2", "r3"):
         mmap[f"top_{rule}"] = mmap.index.isin(top25(mmap, rule).index)
