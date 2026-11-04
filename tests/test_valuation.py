@@ -10,7 +10,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
-from mm_valuation import valuation  # noqa: E402
+from mm_valuation import cover_at, multiples, price_before, valuation  # noqa: E402
 
 
 def setup():
@@ -67,6 +67,47 @@ class Valuation(unittest.TestCase):
         v = valuation(latest, px).iloc[0]
         self.assertAlmostEqual(v["mcap"], 45.0 * 6.4e5)
         self.assertFalse(v["check"])
+
+class PointInTime(unittest.TestCase):
+    def test_price_before_uses_previous_month_end(self):
+        px = pd.DataFrame({"AAA": [10.0, 11.0, 12.0]}, index=pd.PeriodIndex(["2021-01", "2021-02", "2021-03"], freq="M"))
+        self.assertEqual(price_before(px, "2021-03-15")["AAA"], 11.0)
+
+    def test_cover_at_point_in_time(self):
+        cov = pd.DataFrame({"cik": [1, 1], "end": pd.to_datetime(["2021-01-20", "2021-04-20"]), "val": [100.0, 120.0],
+                            "filed": pd.to_datetime(["2021-02-01", "2021-05-01"])})
+        self.assertEqual(cover_at(cov, "2021-03-15")[1], 100.0)
+
+
+class DailyClose(unittest.TestCase):
+    def test_last_close_excludes_run_date(self):
+        from mm_market import last_closes
+        frame = pd.DataFrame({"AAA": [10.0, 11.0, 12.5]}, index=pd.to_datetime(["2026-11-02", "2026-11-03", "2026-11-04"]))
+        closes, dates = last_closes(frame, "2026-11-04")       # 12.5 is today's (possibly intraday) bar
+        self.assertEqual(closes["AAA"], 11.0)
+        self.assertEqual(dates["AAA"], "2026-11-03")
+
+
+class Multiples(unittest.TestCase):
+    def frame(self, **kw):
+        base = {"mcap": 1000.0, "debt": 200.0, "cash": 100.0, "revenue": 500.0, "clean_oi": 50.0, "clean_ni": 40.0, "fcf": 30.0}
+        base.update(kw)
+        return multiples(pd.DataFrame([base])).iloc[0]
+
+    def test_multiples_values(self):
+        r = self.frame()
+        self.assertAlmostEqual(r["ev"], 1100)
+        self.assertAlmostEqual(r["ev_sales"], 2.2)
+        self.assertAlmostEqual(r["ev_ebit"], 22)
+        self.assertAlmostEqual(r["pe"], 25)
+        self.assertAlmostEqual(r["fcf_yield"], 0.03)
+
+    def test_multiples_negative_denominators(self):
+        self.assertTrue(np.isnan(self.frame(clean_oi=-5.0)["ev_ebit"]))
+        self.assertTrue(np.isnan(self.frame(clean_ni=0.0)["pe"]))
+        r = self.frame(mcap=float("nan"))
+        self.assertTrue(np.isnan(r[["ev", "ev_sales", "ev_ebit", "pe", "fcf_yield"]].astype(float)).all())
+
 
 if __name__ == "__main__":
     unittest.main()

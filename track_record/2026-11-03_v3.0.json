@@ -1,0 +1,932 @@
+{
+ "fingerprint_sha256": "9aae5968930a98d4579011203d35309c9edf99079aa0ca5f87b9ac805770a3b5",
+ "record": {
+  "as_of": "2026-11-03",
+  "methodology": "3.0",
+  "list": "Moat Map R1/R2/R3 top 25",
+  "price_date": "2026-11-03",
+  "assumptions": {
+   "horizon_years": 10,
+   "discount": 0.09,
+   "terminal_growth": 0.03,
+   "tax": 0.21,
+   "hurdle": 0.09,
+   "growth_line": 0.1
+  },
+  "test_2021_2023_passed": {
+   "r1": false,
+   "r2": false,
+   "r3": false
+  },
+  "shortlist": [
+   {
+    "ticker": "NPKI",
+    "cik": 71829,
+    "name": "NPK International Inc.",
+    "x": 0.1868,
+    "y": 0.02494,
+    "gap": 0.000307,
+    "filing_used": "0000071829-26-000009"
+   },
+   {
+    "ticker": "CCOI",
+    "cik": 1158324,
+    "name": "COGENT COMMUNICATIONS HOLDINGS, INC.",
+    "x": 0.1124,
+    "y": 0.04515,
+    "gap": 0.1026,
+    "filing_used": "0001104659-26-017968"
+   },
+   {
+    "ticker": "AR",
+    "cik": 1433270,
+    "name": "ANTERO RESOURCES Corp",
+    "x": 0.05151,
+    "y": 0.04657,
+    "gap": 0.08114,
+    "filing_used": "0001104659-26-013386"
+   },
+   {
+    "ticker": "DLTR",
+    "cik": 935703,
+    "name": "DOLLAR TREE, INC.",
+    "x": 0.06984,
+    "y": 0.2062,
+    "gap": 0.0386,
+    "filing_used": "0000935703-26-000025"
+   },
+   {
+    "ticker": "HON",
+    "cik": 773840,
+    "name": "HONEYWELL INTERNATIONAL INC",
+    "x": 0.01208,
+    "y": 0.09697,
+    "gap": 0.02723,
+    "filing_used": "0000773840-26-000013"
+   },
+   {
+    "ticker": "TPC",
+    "cik": 77543,
+    "name": "TUTOR PERINI CORP",
+    "x": 0.1637,
+    "y": 0.1194,
+    "gap": 0.09556,
+    "filing_used": "0000077543-26-000028"
+   },
+   {
+    "ticker": "TER",
+    "cik": 97210,
+    "name": "TERADYNE, INC",
+    "x": 0.2224,
+    "y": 0.337,
+    "gap": 0.08838,
+    "filing_used": "0001193125-26-059002"
+   },
+   {
+    "ticker": "KALU",
+    "cik": 811596,
+    "name": "KAISER ALUMINUM CORP",
+    "x": 0.1279,
+    "y": 0.05284,
+    "gap": 0.1738,
+    "filing_used": "0001193125-26-059575"
+   },
+   {
+    "ticker": "DINO",
+    "cik": 1915657,
+    "name": "HF Sinclair Corp",
+    "x": 0.01523,
+    "y": 0.2333,
+    "gap": 0.2119,
+    "filing_used": "0001915657-26-000016"
+   },
+   {
+    "ticker": "KTB",
+    "cik": 1760965,
+    "name": "Kontoor Brands, Inc.",
+    "x": 0.09425,
+    "y": 0.117,
+    "gap": 0.07002,
+    "filing_used": "0001760965-26-000014"
+   },
+   {
+    "ticker": "STX",
+    "cik": 1137789,
+    "name": "Seagate Technology Holdings plc",
+    "x": 0.2659,
+    "y": 0.8875,
+    "gap": 0.1439,
+    "filing_used": "0001137789-26-000159"
+   },
+   {
+    "ticker": "SM",
+    "cik": 893538,
+    "name": "SM Energy Co",
+    "x": 0.2783,
+    "y": 0.1269,
+    "gap": 0.4477,
+    "filing_used": "0000893538-26-000032"
+   },
+   {
+    "ticker": "JRSH",
+    "cik": 1696558,
+    "name": "Jerash Holdings (US), Inc.",
+    "x": 0.08267,
+    "y": 0.01703,
+    "gap": 0.1615,
+    "filing_used": "0001213900-26-070227"
+   },
+   {
+    "ticker": "INVA",
+    "cik": 1080014,
+    "name": "Innoviva, Inc.",
+    "x": 0.1485,
+    "y": 0.06077,
+    "gap": 0.2265,
+    "filing_used": "0001193125-26-071776"
+   },
+   {
+    "ticker": "SON",
+    "cik": 91767,
+    "name": "SONOCO PRODUCTS CO",
+    "x": 0.1415,
+    "y": 0.01382,
+    "gap": 0.1627,
+    "filing_used": "0000091767-26-000008"
+   },
+   {
+    "ticker": "DELL",
+    "cik": 1571996,
+    "name": "Dell Technologies Inc.",
+    "x": 0.1733,
+    "y": 0.4183,
+    "gap": 0.07542,
+    "filing_used": "0001571996-26-000008"
+   },
+   {
+    "ticker": "VLO",
+    "cik": 1035002,
+    "name": "VALERO ENERGY CORP/TX",
+    "x": 0.004893,
+    "y": 0.5335,
+    "gap": 0.1036,
+    "filing_used": "0001628280-26-011499"
+   },
+   {
+    "ticker": "LPG",
+    "cik": 1596993,
+    "name": "DORIAN LPG LTD.",
+    "x": 0.1129,
+    "y": 0.1061,
+    "gap": 0.1908,
+    "filing_used": "0001596993-26-000025"
+   },
+   {
+    "ticker": "RMR",
+    "cik": 1644378,
+    "name": "RMR GROUP INC.",
+    "x": 0.2233,
+    "y": 0.1217,
+    "gap": 0.3701,
+    "filing_used": "0001644378-25-000043"
+   },
+   {
+    "ticker": "CENX",
+    "cik": 949157,
+    "name": "CENTURY ALUMINUM CO",
+    "x": 0.05137,
+    "y": 0.4971,
+    "gap": 0.1996,
+    "filing_used": "0001628280-26-013788"
+   },
+   {
+    "ticker": "CCLD",
+    "cik": 1582982,
+    "name": "CareCloud, Inc.",
+    "x": 0.00795,
+    "y": 0.1076,
+    "gap": 0.05719,
+    "filing_used": "0001493152-26-009872"
+   },
+   {
+    "ticker": "FLXS",
+    "cik": 37472,
+    "name": "FLEXSTEEL INDUSTRIES INC",
+    "x": 0.05628,
+    "y": 0.1432,
+    "gap": 0.1192,
+    "filing_used": "0001193125-26-357097"
+   },
+   {
+    "ticker": "MLI",
+    "cik": 89439,
+    "name": "MUELLER INDUSTRIES INC",
+    "x": 0.1194,
+    "y": 0.3405,
+    "gap": 0.1285,
+    "filing_used": "0000089439-26-000008"
+   },
+   {
+    "ticker": "SNX",
+    "cik": 1177394,
+    "name": "TD SYNNEX CORP",
+    "x": 0.08408,
+    "y": 0.06517,
+    "gap": 0.09065,
+    "filing_used": "0001628280-26-003598"
+   },
+   {
+    "ticker": "LOGI",
+    "cik": 1032975,
+    "name": "LOGITECH INTERNATIONAL S.A.",
+    "x": 0.05141,
+    "y": 0.8091,
+    "gap": 0.02073,
+    "filing_used": "0001032975-26-000021"
+   }
+  ],
+  "lists": {
+   "r1": [
+    {
+     "ticker": "FRSH",
+     "cik": 1544522,
+     "name": "Freshworks Inc.",
+     "x": 0.1839,
+     "y": 0.09194,
+     "gap": -0.2103,
+     "filing_used": "0001544522-26-000036"
+    },
+    {
+     "ticker": "CRMD",
+     "cik": 1410098,
+     "name": "CorMedix Inc.",
+     "x": 15.83,
+     "y": 0.706,
+     "gap": null,
+     "filing_used": "0001213900-26-023889"
+    },
+    {
+     "ticker": "NPKI",
+     "cik": 71829,
+     "name": "NPK International Inc.",
+     "x": 0.1868,
+     "y": 0.02494,
+     "gap": 0.000307,
+     "filing_used": "0000071829-26-000009"
+    },
+    {
+     "ticker": "HUBS",
+     "cik": 1404655,
+     "name": "HUBSPOT INC",
+     "x": 0.2105,
+     "y": 0.1634,
+     "gap": -0.1085,
+     "filing_used": "0001193125-26-046646"
+    },
+    {
+     "ticker": "CCOI",
+     "cik": 1158324,
+     "name": "COGENT COMMUNICATIONS HOLDINGS, INC.",
+     "x": 0.1124,
+     "y": 0.04515,
+     "gap": 0.1026,
+     "filing_used": "0001104659-26-017968"
+    },
+    {
+     "ticker": "KN",
+     "cik": 1587523,
+     "name": "Knowles Corp",
+     "x": 0.4279,
+     "y": 0.0002208,
+     "gap": null,
+     "filing_used": "0001587523-26-000005"
+    },
+    {
+     "ticker": "PATH",
+     "cik": 1734722,
+     "name": "UiPath, Inc.",
+     "x": 0.1444,
+     "y": 0.1651,
+     "gap": -0.06603,
+     "filing_used": "0001734722-26-000012"
+    },
+    {
+     "ticker": "TPC",
+     "cik": 77543,
+     "name": "TUTOR PERINI CORP",
+     "x": 0.1637,
+     "y": 0.1194,
+     "gap": 0.09556,
+     "filing_used": "0000077543-26-000028"
+    },
+    {
+     "ticker": "FORM",
+     "cik": 1039399,
+     "name": "FORMFACTOR INC",
+     "x": 0.1042,
+     "y": 0.05879,
+     "gap": -0.2406,
+     "filing_used": "0001039399-26-000009"
+    },
+    {
+     "ticker": "TER",
+     "cik": 97210,
+     "name": "TERADYNE, INC",
+     "x": 0.2224,
+     "y": 0.337,
+     "gap": 0.08838,
+     "filing_used": "0001193125-26-059002"
+    },
+    {
+     "ticker": "KALU",
+     "cik": 811596,
+     "name": "KAISER ALUMINUM CORP",
+     "x": 0.1279,
+     "y": 0.05284,
+     "gap": 0.1738,
+     "filing_used": "0001193125-26-059575"
+    },
+    {
+     "ticker": "STX",
+     "cik": 1137789,
+     "name": "Seagate Technology Holdings plc",
+     "x": 0.2659,
+     "y": 0.8875,
+     "gap": 0.1439,
+     "filing_used": "0001137789-26-000159"
+    },
+    {
+     "ticker": "SM",
+     "cik": 893538,
+     "name": "SM Energy Co",
+     "x": 0.2783,
+     "y": 0.1269,
+     "gap": 0.4477,
+     "filing_used": "0000893538-26-000032"
+    },
+    {
+     "ticker": "ONC",
+     "cik": 1651308,
+     "name": "BeOne Medicines Ltd.",
+     "x": 0.5014,
+     "y": 0.3777,
+     "gap": null,
+     "filing_used": "0001628280-26-011946"
+    },
+    {
+     "ticker": "INVA",
+     "cik": 1080014,
+     "name": "Innoviva, Inc.",
+     "x": 0.1485,
+     "y": 0.06077,
+     "gap": 0.2265,
+     "filing_used": "0001193125-26-071776"
+    },
+    {
+     "ticker": "SON",
+     "cik": 91767,
+     "name": "SONOCO PRODUCTS CO",
+     "x": 0.1415,
+     "y": 0.01382,
+     "gap": 0.1627,
+     "filing_used": "0000091767-26-000008"
+    },
+    {
+     "ticker": "DELL",
+     "cik": 1571996,
+     "name": "Dell Technologies Inc.",
+     "x": 0.1733,
+     "y": 0.4183,
+     "gap": 0.07542,
+     "filing_used": "0001571996-26-000008"
+    },
+    {
+     "ticker": "TPB",
+     "cik": 1290677,
+     "name": "Turning Point Brands, Inc.",
+     "x": 0.1612,
+     "y": 0.04089,
+     "gap": -0.01763,
+     "filing_used": "0001437749-26-006405"
+    },
+    {
+     "ticker": "LPG",
+     "cik": 1596993,
+     "name": "DORIAN LPG LTD.",
+     "x": 0.1129,
+     "y": 0.1061,
+     "gap": 0.1908,
+     "filing_used": "0001596993-26-000025"
+    },
+    {
+     "ticker": "RMR",
+     "cik": 1644378,
+     "name": "RMR GROUP INC.",
+     "x": 0.2233,
+     "y": 0.1217,
+     "gap": 0.3701,
+     "filing_used": "0001644378-25-000043"
+    },
+    {
+     "ticker": "MLI",
+     "cik": 89439,
+     "name": "MUELLER INDUSTRIES INC",
+     "x": 0.1194,
+     "y": 0.3405,
+     "gap": 0.1285,
+     "filing_used": "0000089439-26-000008"
+    },
+    {
+     "ticker": "GLW",
+     "cik": 24741,
+     "name": "CORNING INC /NY",
+     "x": 0.1087,
+     "y": 0.1042,
+     "gap": -0.1235,
+     "filing_used": "0000024741-26-000124"
+    },
+    {
+     "ticker": "SHOO",
+     "cik": 913241,
+     "name": "STEVEN MADDEN, LTD.",
+     "x": 0.1227,
+     "y": 0.0628,
+     "gap": 0.002657,
+     "filing_used": "0001628280-26-012995"
+    },
+    {
+     "ticker": "EW",
+     "cik": 1099800,
+     "name": "Edwards Lifesciences Corp",
+     "x": 0.15,
+     "y": 0.1416,
+     "gap": -0.003283,
+     "filing_used": "0001099800-26-000009"
+    },
+    {
+     "ticker": "TTMI",
+     "cik": 1116942,
+     "name": "TTM TECHNOLOGIES INC",
+     "x": 0.1884,
+     "y": 0.04189,
+     "gap": -0.03203,
+     "filing_used": "0001193125-26-051976"
+    }
+   ],
+   "r2": [
+    {
+     "ticker": "STAA",
+     "cik": 718937,
+     "name": "STAAR SURGICAL CO",
+     "x": 0.09174,
+     "y": -0.02654,
+     "gap": null,
+     "filing_used": "0000718937-26-000004"
+    },
+    {
+     "ticker": "WTI",
+     "cik": 1288403,
+     "name": "W&T OFFSHORE INC",
+     "x": 0.006408,
+     "y": 0.942,
+     "gap": -0.1038,
+     "filing_used": "0001104659-26-028315"
+    },
+    {
+     "ticker": "ARLO",
+     "cik": 1736946,
+     "name": "Arlo Technologies, Inc.",
+     "x": 0.0749,
+     "y": 0.1055,
+     "gap": -0.3062,
+     "filing_used": "0001736946-26-000031"
+    },
+    {
+     "ticker": "KLIC",
+     "cik": 56978,
+     "name": "KULICKE & SOFFA INDUSTRIES INC",
+     "x": 0.0476,
+     "y": 0.1898,
+     "gap": -0.1049,
+     "filing_used": "0000056978-25-000081"
+    },
+    {
+     "ticker": "SITM",
+     "cik": 1451809,
+     "name": "SITIME Corp",
+     "x": 0.3275,
+     "y": -0.06002,
+     "gap": null,
+     "filing_used": "0001451809-26-000012"
+    },
+    {
+     "ticker": "RUN",
+     "cik": 1469367,
+     "name": "Sunrun Inc.",
+     "x": 0.1281,
+     "y": -0.08567,
+     "gap": null,
+     "filing_used": "0001628280-26-012289"
+    },
+    {
+     "ticker": "WOR",
+     "cik": 108516,
+     "name": "WORTHINGTON ENTERPRISES, INC.",
+     "x": 0.6409,
+     "y": -0.03508,
+     "gap": null,
+     "filing_used": "0001193125-26-325872"
+    },
+    {
+     "ticker": "IIIV",
+     "cik": 1728688,
+     "name": "i3 Verticals, Inc.",
+     "x": 0.2096,
+     "y": -0.0771,
+     "gap": null,
+     "filing_used": "0001728688-25-000122"
+    },
+    {
+     "ticker": "AR",
+     "cik": 1433270,
+     "name": "ANTERO RESOURCES Corp",
+     "x": 0.05151,
+     "y": 0.04657,
+     "gap": 0.08114,
+     "filing_used": "0001104659-26-013386"
+    },
+    {
+     "ticker": "DLTR",
+     "cik": 935703,
+     "name": "DOLLAR TREE, INC.",
+     "x": 0.06984,
+     "y": 0.2062,
+     "gap": 0.0386,
+     "filing_used": "0000935703-26-000025"
+    },
+    {
+     "ticker": "HON",
+     "cik": 773840,
+     "name": "HONEYWELL INTERNATIONAL INC",
+     "x": 0.01208,
+     "y": 0.09697,
+     "gap": 0.02723,
+     "filing_used": "0000773840-26-000013"
+    },
+    {
+     "ticker": "HCC",
+     "cik": 1691303,
+     "name": "WARRIOR MET COAL, INC.",
+     "x": 0.01148,
+     "y": -0.004052,
+     "gap": null,
+     "filing_used": "0001193125-26-048914"
+    },
+    {
+     "ticker": "SWBI",
+     "cik": 1092796,
+     "name": "SMITH & WESSON BRANDS, INC.",
+     "x": 0.02694,
+     "y": -0.01704,
+     "gap": null,
+     "filing_used": "0001193125-26-274254"
+    },
+    {
+     "ticker": "EYE",
+     "cik": 1710155,
+     "name": "National Vision Holdings, Inc.",
+     "x": 0.1058,
+     "y": -0.02898,
+     "gap": null,
+     "filing_used": "0001628280-26-014379"
+    },
+    {
+     "ticker": "WRBY",
+     "cik": 1504776,
+     "name": "Warby Parker Inc.",
+     "x": 0.1291,
+     "y": -0.07296,
+     "gap": null,
+     "filing_used": "0001504776-26-000006"
+    },
+    {
+     "ticker": "HAYW",
+     "cik": 1834622,
+     "name": "Hayward Holdings, Inc.",
+     "x": 0.06736,
+     "y": 0.007929,
+     "gap": null,
+     "filing_used": "0001834622-26-000008"
+    },
+    {
+     "ticker": "CTRN",
+     "cik": 1318484,
+     "name": "Citi Trends Inc",
+     "x": 0.04837,
+     "y": -0.04163,
+     "gap": null,
+     "filing_used": "0001104659-26-043813"
+    },
+    {
+     "ticker": "ZUMZ",
+     "cik": 1318008,
+     "name": "Zumiez Inc",
+     "x": 0.01386,
+     "y": -0.003826,
+     "gap": -0.1729,
+     "filing_used": "0001193125-26-104063"
+    },
+    {
+     "ticker": "DINO",
+     "cik": 1915657,
+     "name": "HF Sinclair Corp",
+     "x": 0.01523,
+     "y": 0.2333,
+     "gap": 0.2119,
+     "filing_used": "0001915657-26-000016"
+    },
+    {
+     "ticker": "KTB",
+     "cik": 1760965,
+     "name": "Kontoor Brands, Inc.",
+     "x": 0.09425,
+     "y": 0.117,
+     "gap": 0.07002,
+     "filing_used": "0001760965-26-000014"
+    },
+    {
+     "ticker": "INNV",
+     "cik": 1834376,
+     "name": "InnovAge Holding Corp.",
+     "x": 0.1288,
+     "y": -0.08123,
+     "gap": null,
+     "filing_used": "0001834376-26-000049"
+    },
+    {
+     "ticker": "JRSH",
+     "cik": 1696558,
+     "name": "Jerash Holdings (US), Inc.",
+     "x": 0.08267,
+     "y": 0.01703,
+     "gap": 0.1615,
+     "filing_used": "0001213900-26-070227"
+    },
+    {
+     "ticker": "CRON",
+     "cik": 1656472,
+     "name": "Cronos Group Inc.",
+     "x": 0.303,
+     "y": -0.09277,
+     "gap": null,
+     "filing_used": "0001656472-26-000016"
+    },
+    {
+     "ticker": "STLD",
+     "cik": 1022671,
+     "name": "STEEL DYNAMICS INC",
+     "x": 0.04649,
+     "y": 0.06565,
+     "gap": -0.05491,
+     "filing_used": "0001104659-26-021395"
+    },
+    {
+     "ticker": "CGNX",
+     "cik": 851205,
+     "name": "COGNEX CORP",
+     "x": 0.06848,
+     "y": 0.05812,
+     "gap": -0.2341,
+     "filing_used": "0000851205-26-000012"
+    }
+   ],
+   "r3": [
+    {
+     "ticker": "NPKI",
+     "cik": 71829,
+     "name": "NPK International Inc.",
+     "x": 0.1868,
+     "y": 0.02494,
+     "gap": 0.000307,
+     "filing_used": "0000071829-26-000009"
+    },
+    {
+     "ticker": "CCOI",
+     "cik": 1158324,
+     "name": "COGENT COMMUNICATIONS HOLDINGS, INC.",
+     "x": 0.1124,
+     "y": 0.04515,
+     "gap": 0.1026,
+     "filing_used": "0001104659-26-017968"
+    },
+    {
+     "ticker": "AR",
+     "cik": 1433270,
+     "name": "ANTERO RESOURCES Corp",
+     "x": 0.05151,
+     "y": 0.04657,
+     "gap": 0.08114,
+     "filing_used": "0001104659-26-013386"
+    },
+    {
+     "ticker": "DLTR",
+     "cik": 935703,
+     "name": "DOLLAR TREE, INC.",
+     "x": 0.06984,
+     "y": 0.2062,
+     "gap": 0.0386,
+     "filing_used": "0000935703-26-000025"
+    },
+    {
+     "ticker": "HON",
+     "cik": 773840,
+     "name": "HONEYWELL INTERNATIONAL INC",
+     "x": 0.01208,
+     "y": 0.09697,
+     "gap": 0.02723,
+     "filing_used": "0000773840-26-000013"
+    },
+    {
+     "ticker": "TPC",
+     "cik": 77543,
+     "name": "TUTOR PERINI CORP",
+     "x": 0.1637,
+     "y": 0.1194,
+     "gap": 0.09556,
+     "filing_used": "0000077543-26-000028"
+    },
+    {
+     "ticker": "TER",
+     "cik": 97210,
+     "name": "TERADYNE, INC",
+     "x": 0.2224,
+     "y": 0.337,
+     "gap": 0.08838,
+     "filing_used": "0001193125-26-059002"
+    },
+    {
+     "ticker": "KALU",
+     "cik": 811596,
+     "name": "KAISER ALUMINUM CORP",
+     "x": 0.1279,
+     "y": 0.05284,
+     "gap": 0.1738,
+     "filing_used": "0001193125-26-059575"
+    },
+    {
+     "ticker": "DINO",
+     "cik": 1915657,
+     "name": "HF Sinclair Corp",
+     "x": 0.01523,
+     "y": 0.2333,
+     "gap": 0.2119,
+     "filing_used": "0001915657-26-000016"
+    },
+    {
+     "ticker": "KTB",
+     "cik": 1760965,
+     "name": "Kontoor Brands, Inc.",
+     "x": 0.09425,
+     "y": 0.117,
+     "gap": 0.07002,
+     "filing_used": "0001760965-26-000014"
+    },
+    {
+     "ticker": "STX",
+     "cik": 1137789,
+     "name": "Seagate Technology Holdings plc",
+     "x": 0.2659,
+     "y": 0.8875,
+     "gap": 0.1439,
+     "filing_used": "0001137789-26-000159"
+    },
+    {
+     "ticker": "SM",
+     "cik": 893538,
+     "name": "SM Energy Co",
+     "x": 0.2783,
+     "y": 0.1269,
+     "gap": 0.4477,
+     "filing_used": "0000893538-26-000032"
+    },
+    {
+     "ticker": "JRSH",
+     "cik": 1696558,
+     "name": "Jerash Holdings (US), Inc.",
+     "x": 0.08267,
+     "y": 0.01703,
+     "gap": 0.1615,
+     "filing_used": "0001213900-26-070227"
+    },
+    {
+     "ticker": "INVA",
+     "cik": 1080014,
+     "name": "Innoviva, Inc.",
+     "x": 0.1485,
+     "y": 0.06077,
+     "gap": 0.2265,
+     "filing_used": "0001193125-26-071776"
+    },
+    {
+     "ticker": "SON",
+     "cik": 91767,
+     "name": "SONOCO PRODUCTS CO",
+     "x": 0.1415,
+     "y": 0.01382,
+     "gap": 0.1627,
+     "filing_used": "0000091767-26-000008"
+    },
+    {
+     "ticker": "DELL",
+     "cik": 1571996,
+     "name": "Dell Technologies Inc.",
+     "x": 0.1733,
+     "y": 0.4183,
+     "gap": 0.07542,
+     "filing_used": "0001571996-26-000008"
+    },
+    {
+     "ticker": "VLO",
+     "cik": 1035002,
+     "name": "VALERO ENERGY CORP/TX",
+     "x": 0.004893,
+     "y": 0.5335,
+     "gap": 0.1036,
+     "filing_used": "0001628280-26-011499"
+    },
+    {
+     "ticker": "LPG",
+     "cik": 1596993,
+     "name": "DORIAN LPG LTD.",
+     "x": 0.1129,
+     "y": 0.1061,
+     "gap": 0.1908,
+     "filing_used": "0001596993-26-000025"
+    },
+    {
+     "ticker": "RMR",
+     "cik": 1644378,
+     "name": "RMR GROUP INC.",
+     "x": 0.2233,
+     "y": 0.1217,
+     "gap": 0.3701,
+     "filing_used": "0001644378-25-000043"
+    },
+    {
+     "ticker": "CENX",
+     "cik": 949157,
+     "name": "CENTURY ALUMINUM CO",
+     "x": 0.05137,
+     "y": 0.4971,
+     "gap": 0.1996,
+     "filing_used": "0001628280-26-013788"
+    },
+    {
+     "ticker": "CCLD",
+     "cik": 1582982,
+     "name": "CareCloud, Inc.",
+     "x": 0.00795,
+     "y": 0.1076,
+     "gap": 0.05719,
+     "filing_used": "0001493152-26-009872"
+    },
+    {
+     "ticker": "FLXS",
+     "cik": 37472,
+     "name": "FLEXSTEEL INDUSTRIES INC",
+     "x": 0.05628,
+     "y": 0.1432,
+     "gap": 0.1192,
+     "filing_used": "0001193125-26-357097"
+    },
+    {
+     "ticker": "MLI",
+     "cik": 89439,
+     "name": "MUELLER INDUSTRIES INC",
+     "x": 0.1194,
+     "y": 0.3405,
+     "gap": 0.1285,
+     "filing_used": "0000089439-26-000008"
+    },
+    {
+     "ticker": "SNX",
+     "cik": 1177394,
+     "name": "TD SYNNEX CORP",
+     "x": 0.08408,
+     "y": 0.06517,
+     "gap": 0.09065,
+     "filing_used": "0001628280-26-003598"
+    },
+    {
+     "ticker": "LOGI",
+     "cik": 1032975,
+     "name": "LOGITECH INTERNATIONAL S.A.",
+     "x": 0.05141,
+     "y": 0.8091,
+     "gap": 0.02073,
+     "filing_used": "0001032975-26-000021"
+    }
+   ]
+  }
+ }
+}

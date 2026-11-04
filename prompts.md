@@ -828,3 +828,79 @@ Go ahead on 1 & 2
   - Fill the deck placeholders.
   - Edit `help.md`.
   - Submit the repo link.
+
+---
+
+## รอบ 18 · 2026-11-04 · v3.0 Moat Map and Expectation Gap (rules failed; shipped as a description)
+
+- **ทำอะไร:**
+  - **Brainstorm → spec → plan → build, approved at each step:**
+    - spec: `docs/specs/2026-11-04-moat-map-v3-design.md` (reading copy `output/moat_map_v3_spec.html`);
+    - plan: `docs/plans/2026-11-04-moat-map-v3.md`.
+  - **New code:**
+    - `mm_moatmap.py`: Moat Map positions from 12-month figures, quadrants, 5-year trails, rules R1/R2/R3, top 25, leading items.
+    - `mm_revdcf.py`: reverse DCF giving implied growth and the Expectation Gap.
+    - `mm_v3_test.py`: the one-time test, plus a `correct` step.
+  - **Extended code:**
+    - `mm_valuation.py`: EV and multiples; prices and shares as known at each date; undoing stock splits.
+    - `mm_market.py`: yesterday's close and split history.
+    - `mm_extract.py`: backlog and deferred revenue.
+  - **Product:**
+    - Screener tab "Moat Map (v3.0)" and a Deep-Dive card;
+    - 6 Terminology entries;
+    - Proof v3.0 section; Methodology change log; spec.md §3 note;
+    - Sheet `moatmap.csv` and Google Sheet tab "Moat Map (v3.0)";
+    - freeze `track_record/2026-11-03_v3.0.json`.
+  - **Independent review:** 1 critical and 3 important issues fixed, each with a test; 5 minor issues deferred. 88 tests pass.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · review subagent (Opus) · SEC bulk files (retrieved 2026-11-03) · Yahoo Finance (monthly + daily close 2026-11-03, split history)
+- **Prompt ที่ใช้:**
+
+```text
+Read AGENTS.md, spec.md, PROJECT_MEMORY.md, the latest entry in prompts.md, and output/signal_framework_review.pdf
+(the agreed signal framework). Then brainstorm with me and get approval before building.
+
+GOAL
+Add two stages to Moat Momentum. Stages 2 (narrative), 4 (price timing) and 5 (feedback loop) are out of scope for now.
+```
+
+```text
+My feedback on assumption:
+
+* Stage 1: I want to use TTM (10Q and 10K) instead of FY. To reflect latest status.
+* Stage 3 : Yes point in time of market closing price yesterday with latest 10Q or 10K data.
+* Make this as new version, V3.0
+* Yes.
+
+I want to test based on year 2021 which most of Covid impact is gone. So it have 5 full year 2021-2025, plus 2026 latest status.
+```
+
+```text
+Build views, labelled failed
+```
+
+- **ผลที่ได้:**
+  - **One-time test (11 quarterly dates, 2021-03-15 to 2023-08-15, moat-compounder label):** all three rules failed.
+
+    | Rule | Became compounders vs the rest |
+    |---|---|
+    | R1 entered top-right | 0.69× |
+    | R2 moving toward | 0.59× |
+    | R3 not priced in | 0.62×, corrected to **0.65×** after the split fix |
+  - **Same dates, same measure:** v1.1 top 25 2.32× (10 winners), v2.0 top 25 0.30×.
+  - **12-month return of each top 25 (2021–2025):** R1 11.0%, R2 10.7%, R3 7.7% vs S&P 500 13.7%.
+  - **Still top-right a year later:** R1 62% vs others 18%. Positions persist, but they don't predict compounding.
+  - **Coverage today:** map 83%, implied growth 37% (no answer for losses or when ROIC < 9%), backlog 22%, deferred revenue 63%, R&D 40%, capex 90%.
+  - **Checks in the browser:** light, dark and 375 px; no errors.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Test only from 2021.** Most of the COVID effect is gone by then, giving 2021–2025 plus 2026 as the current state. No training period, because the rules have no weights to fit.
+  - **12-month figures (10-Q + 10-K) and yesterday's close.** They reflect the latest state.
+  - **Fixed in advance:**
+    - the 10% line on the chart, plus "above the industry median" for the rules;
+    - rules R1–R3 as written;
+    - the reverse DCF: 10 years, 9% discount, 3% after, 21% tax;
+    - the pass rule: 2× the rest, and better in every year.
+  - **Shipped as a description, labelled failed.** The chart is still useful for research, and the lists are frozen so the live record can test them.
+  - **Split bug: corrected and shown beside the original.** The rules were not changed; only wrong price data was fixed.
+- **ขั้นต่อไป:**
+  - Deferred minor issues: crash when Yahoo returns no prices; missing cash counted as zero in EV; the filing referenced in the freeze; the KPI label; single-company industries.
+  - Fill the deck placeholders, edit `help.md`, submit the repo link.

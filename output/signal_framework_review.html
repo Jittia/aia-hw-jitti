@@ -1,0 +1,87 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Moat Momentum Signal Framework</title>
+<style>
+@page { size: A4; margin: 16mm 15mm; }
+body { font-family: "Source Sans 3", "Helvetica Neue", Arial, sans-serif; color:#262A33; font-size:10.5pt; line-height:1.45; }
+h1 { font-family: Georgia, serif; color:#1F3A5F; font-size:21pt; margin:0 0 2px; }
+h2 { font-family: Georgia, serif; color:#1F3A5F; font-size:14pt; margin:18px 0 6px; border-bottom:2px solid #1F3A5F; padding-bottom:3px; }
+h3 { color:#0F7B78; font-size:11.5pt; margin:12px 0 4px; }
+.sub { color:#66605A; margin:0 0 10px; }
+table { border-collapse:collapse; width:100%; font-size:9.5pt; margin:6px 0 10px; page-break-inside:avoid; }
+th { background:#1F3A5F; color:#fff; text-align:left; padding:5px 6px; }
+td { border-bottom:1px solid #E3D3C4; padding:5px 6px; vertical-align:top; }
+.box { background:#FBE6D4; border-left:4px solid #0F7B78; padding:8px 12px; margin:8px 0; }
+ul { margin:4px 0 8px 18px; padding:0; } li { margin:2px 0; }
+.foot { color:#66605A; font-size:8.5pt; border-top:1px solid #ccc; margin-top:18px; padding-top:6px; }
+</style></head><body>
+<h1>Moat Momentum: signal framework review</h1>
+<p class="sub">Feedback on the three-signal idea (financial, narrative, price) and a suggested long-term structure · 4 November 2026</p>
+
+<div class="box"><b>In short.</b> The three-signal frame is a good starting point. The weak spots are less in the categories than in how they are ordered and how each one is tested. The biggest gap is a fourth signal: what the market already expects (valuation). The next step is one simple chart, ROIC versus growth with each company's trail, rather than more settings.</div>
+
+<h2>What is right</h2>
+<ul>
+<li><b>The financial database is the real asset.</b> Point-in-time SEC data, cleaned of one-off items and traceable to filings, is hard to build, and most retail tools do not have it. Keep it whatever else changes.</li>
+<li><b>Splitting fact, story and price is correct.</b> They answer different questions: is the business improving, why, and is now a good price.</li>
+<li><b>Doubt about the narrative is well placed.</b> Management talks its own book; an AI that compares across sources is the right fix.</li>
+</ul>
+
+<h2>Where to push back</h2>
+<h3>1. Missing signal: valuation, meaning what the market already expects</h3>
+<ul>
+<li>The back-test showed it: the screen found good businesses, but returns matched the S&amp;P 500. Good companies are usually already priced as good.</li>
+<li>An investment signal is "the business improves <i>more than the price assumes</i>". That is neither a financial, narrative nor price signal; it sits between them.</li>
+<li>Valuation should be a full signal, not a late filter, because it is where the gap between company quality and stock return comes from.</li>
+</ul>
+
+<h3>2. Financial signals are not only lagging</h3>
+<p>Some items in filings move before revenue does:</p>
+<ul><li>deferred revenue and remaining performance obligations (backlog);</li><li>R&amp;D and capex intensity;</li><li>customer counts, and changes in segment mix.</li></ul>
+<p>A small number of these may beat 13 indicators.</p>
+
+<h3>3. Simpler is right, but a two-axis chart is not automatically a signal</h3>
+<p>Rule of 40 works because both axes have economic meaning and trade off against each other (grow fast <i>or</i> earn margin). It is a description, not a proven predictor. Well-known two-axis frames:</p>
+<table><tr><th>Frame</th><th>Axes</th><th>What it shows</th></tr>
+<tr><td>Rule of 40</td><td>Revenue growth vs profit margin (FCF or EBITDA)</td><td>Efficient growth (mainly software)</td></tr>
+<tr><td>ROIC vs growth (McKinsey value matrix)</td><td>ROIC minus cost of capital vs revenue growth</td><td>Growth creates value only when ROIC is above the hurdle; the best quadrant is high on both</td></tr>
+<tr><td>Reinvestment vs return</td><td>Share of profit reinvested vs incremental ROIC</td><td>Compounding runway; closest to "moat momentum"</td></tr>
+<tr><td>Gross-margin trend vs revenue growth</td><td>Change in margin vs growth</td><td>Pricing power while growing</td></tr>
+<tr><td>Growth vs valuation (EV/Sales or PEG)</td><td>Growth vs price</td><td>Whether the growth is already paid for</td></tr>
+<tr><td>Quality vs value (Piotroski F-score vs P/B or P/E)</td><td>Quality score vs cheapness</td><td>Classic academic combination</td></tr></table>
+<p><b>Recommendation:</b> make "ROIC vs growth", with a trail showing where each company was in earlier years, the main Moat Momentum chart.</p>
+<ul><li><b>The movement is the signal:</b> a company moving toward the high-ROIC, high-growth corner is exactly what "moat momentum" means.</li>
+<li><b>It is easy to read</b> and uses data already in the database; the Deep-Dive already contains both series.</li>
+<li><b>Add valuation as the colour or size of each dot</b> to show what is already priced in.</li></ul>
+
+<h3>4. Narrative: the bottleneck is the question, not the data</h3>
+<p>"Get insight from everything" will not converge. Give the AI narrow, checkable tasks tied to the financial data:</p>
+<ul><li><b>Claim vs filing:</b> did what management promised (margins, launches, guidance) show up in the next 10-Q? This builds a credibility score per company over time.</li>
+<li><b>Cross-company read:</b> a supplier's outlook vs its customers' capex, or a competitor's price cuts vs the company's gross margin. This is the "bad news for one is good news for another" idea, and a procurement background is a real edge here.</li>
+<li><b>Change detection:</b> new risk factors, wording that shifts between calls, more mentions of a competitor.</li></ul>
+<p>Every narrative signal should point to a financial number it predicts, so it can be tested later against the database.</p>
+
+<h3>5. Price signal: keep it narrow</h3>
+<p>Technical analysis has weak evidence on its own. Use it for timing and risk only:</p>
+<ul><li>entry zones;</li><li>momentum confirmation (12-month relative strength is the one price factor with strong evidence);</li><li>stop rules and position sizing.</li></ul>
+<p>Do not use it to find ideas. Putting it last in the sequence is right.</p>
+
+<h3>6. Testing: change what counts as proof</h3>
+<p>The 2013–2023 back-test was hard because winners are rare (about 1–2% of companies) and many years are needed to see them. Two adjustments:</p>
+<ul><li><b>Judge the shortlist by its hit rate, not its average return.</b> The real use is researching 10–25 names, not buying 1,000.</li>
+<li><b>Rely on the live track record</b>, already set up, scored quarterly. In 2–3 years it becomes better evidence than any back-test, and it cannot have been fitted to the past.</li></ul>
+
+<h2>Suggested long-term structure</h2>
+<table><tr><th>Stage</th><th>Question</th><th>Source</th><th>Output</th></tr>
+<tr><td>1. Financial momentum</td><td>Is the business getting better?</td><td>SEC database (built)</td><td>ROIC × growth chart plus a few leading items</td></tr>
+<tr><td>2. Narrative check</td><td>Why, and will it last?</td><td>Second Brain, with narrow AI tasks</td><td>Credibility score; confirms or contradicts</td></tr>
+<tr><td>3. Expectation gap</td><td>Is it already priced in?</td><td>Price plus simple valuation</td><td>Implied growth vs actual growth</td></tr>
+<tr><td>4. Price timing</td><td>When, and how much?</td><td>TradingView, momentum</td><td>Entry, size, exit rules</td></tr>
+<tr><td>5. Feedback loop</td><td>Was I right?</td><td>Track record, journal</td><td>What to change, from evidence</td></tr></table>
+<p>Stages 1 and 2 run in parallel. Stage 3 is the one to add.</p>
+
+<h2>Next step</h2>
+<ul><li>Build one chart, not more settings: ROIC minus 9% (y-axis) vs 3-year revenue growth (x-axis), with each company's 5-year trail and a valuation colour.</li>
+<li>Test one simple rule on the existing data: "moved into the top-right quadrant this year" vs everyone else. That gives a visual, explainable signal and quickly shows whether the simpler approach beats the 13-indicator score.</li>
+<li>For the Second Brain, start with one narrow task, "claims vs next filing", on the 25 shortlist names.</li></ul>
+
+<p class="foot">Moat Momentum is a research tool, not investment advice. This is a design review of the method; it contains no new test results.</p>
+</body></html>

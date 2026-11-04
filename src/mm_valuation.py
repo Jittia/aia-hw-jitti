@@ -36,3 +36,40 @@ def valuation(latest: pd.DataFrame, px: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame({"cik": latest["cik"].to_numpy(), "price": price.to_numpy(), "price_month": str(month),
                          "mcap": mcap.to_numpy(), "pe": pe.to_numpy(), "check": check.to_numpy(),
                          "shares_source": source})
+
+
+# ---- v3.0 (spec docs/specs/2026-11-04-moat-map-v3-design.md §4) ----
+
+def price_before(px: pd.DataFrame, date: str) -> pd.Series:
+    """Close of the latest month in `px` earlier than the month of `date` (never a price from after the date)."""
+    month = pd.Period(date[:7], "M")
+    earlier = px.index[px.index < month]
+    return px.loc[earlier[-1]] if len(earlier) else pd.Series(dtype=float)
+
+
+def cover_at(cover: pd.DataFrame, date: str) -> pd.Series:
+    """cik → shares outstanding from the latest filing cover page filed on or before `date`."""
+    c = cover[cover["filed"] <= pd.Timestamp(date)].sort_values(["filed", "end"])
+    return c.drop_duplicates("cik", keep="last").set_index("cik")["val"]
+
+
+def multiples(df: pd.DataFrame) -> pd.DataFrame:
+    """EV and multiples from mcap, debt, cash, revenue, clean_oi, clean_ni, fcf (12-month figures)."""
+    out = df.copy()
+    pos = lambda s: s.where(s > 0)  # noqa: E731
+    out["ev"] = out["mcap"] + out["debt"].fillna(0) - out["cash"].fillna(0)
+    out["ev_sales"] = out["ev"] / pos(out["revenue"])
+    out["ev_ebit"] = out["ev"] / pos(out["clean_oi"])
+    out["pe"] = out["mcap"] / pos(out["clean_ni"])
+    out["fcf_yield"] = out["fcf"] / pos(out["mcap"])
+    return out
+
+
+def split_factor_after(splits: pd.Series, month: pd.Period) -> float:
+    """Product of split ratios dated after the end of `month`. Yahoo adjusted closes are divided by later splits, so
+    multiplying by this factor gives the price actually quoted then (to pair with share counts filed then)."""
+    if splits is None or not len(splits):
+        return 1.0
+    end = month.to_timestamp(how="end")
+    later = splits[pd.to_datetime(splits.index) > end]
+    return float(later.prod()) if len(later) else 1.0

@@ -35,6 +35,7 @@ TAG_PRIORITY: dict[str, list[str]] = {
     "da_tag": ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet",
                "DepreciationAndAmortization"],
     "sbc": ["ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"],
+    "rnd": ["ResearchAndDevelopmentExpense", "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost"],  # v3.0 display
     "restructuring": ["RestructuringCharges", "RestructuringSettlementAndImpairmentProvisions"],
     "litigation": ["LitigationSettlementExpense", "LossContingencyLossInPeriod"],
     "acq_costs": ["BusinessCombinationAcquisitionRelatedCosts"],

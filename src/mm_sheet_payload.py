@@ -52,6 +52,20 @@ def main() -> None:
                                  round(c["mcap"] / 1e6) if c.get("mcap") else "", r(c.get("pe")) if c.get("pe") else "",
                                  r(c.get("cs")) if c.get("cs") is not None else "", int(c["cs_rank"]) if c.get("cs_rank") else ""])
 
+    tabs["moatmap"] = [["Ticker", "Company", "Industry (SIC)", "Quadrant", "3-yr revenue growth", "ROIC minus 9%",
+                        "Distance moved (1 yr)", "R1 entered", "R2 moving toward", "R3 not priced in", "EV/Sales",
+                        "EV/clean EBIT", "Clean P/E", "FCF yield", "Implied growth", "Expectation Gap", "Market value ($M)",
+                        "Backlog vs revenue growth", "Deferred revenue vs revenue growth", "R&D / revenue", "Capex / revenue"]]
+    for c in comp:
+        m = c.get("mm")
+        if not m or m.get("x") is None:
+            continue
+        f = lambda k, d=3: round(m[k], d) if m.get(k) is not None else ""  # noqa: E731
+        tabs["moatmap"].append([c["ticker"], c["name"], c["sic_desc"], m["quad"] or "", f("x"), f("y"), f("moved"),
+                                "yes" if m["r1"] else "", "yes" if m["r2"] else "", "yes" if m["r3"] else "",
+                                f("ev_sales", 2), f("ev_ebit", 1), f("pe", 1), f("fcf_yield"), f("g_implied"), f("gap"),
+                                round(m["mcap"] / 1e6) if m.get("mcap") else "", f("backlog_g"), f("defrev_g"),
+                                f("rnd_int"), f("capex_int")])
     kept = meta["compounder"]["kept"]
     tabs["compounder"] = [["Candidate rank", "Ticker", "Company", "Industry (SIC)", "Compounder Signal", "Market value ($M)",
                            "Clean P/E (12 months)", "Moat Score", "On Moat shortlist"] + [k["label"] + " (rank)" for k in kept]]

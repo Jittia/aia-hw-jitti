@@ -96,6 +96,15 @@ fieldset.ctl-set[disabled] { opacity:.45; }
 .listwrap thead th { position:sticky; top:0; background:var(--card); z-index:2; box-shadow:0 1px 0 var(--grid); }
 .topscroll { overflow-x:auto; overflow-y:hidden; height:14px; margin-bottom:4px; }
 .topscroll > div { height:1px; }
+.mapsvg { width:100%; height:auto; display:block; }
+.mapsvg text { font:11px var(--sans); fill:var(--ink-2); }
+.mapsvg .ql { font:600 12px var(--sans); fill:var(--ink-2); opacity:.75; }
+.mapsvg circle.dot { cursor:pointer; stroke:var(--paper); stroke-width:.6; }
+.mapsvg circle.dot.sel { stroke:var(--ink); stroke-width:2; }
+.mapsvg .pin { stroke:var(--ink); stroke-width:1.2; stroke-dasharray:2 1.5; }
+.maplegend { display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--ink-2); margin:6px 0 0; }
+.maplegend i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; vertical-align:-1px; }
+.mapinfo { font-size:14px; margin-top:8px; }
 td.reason { max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @media (max-width:640px) { .hm { display:none; } .tab { padding:12px 9px; } }
 .controls { position:sticky; top:72px; max-height:calc(100vh - 84px); overflow:auto; }
@@ -255,7 +264,7 @@ const state = { s: clone(DEFAULT), view: "screener", filter: "shortlist", q: "",
   list: "moat", ind: "", cap: "all", sort: {key: "pos", dir: 1}, scenario: "Early Moat — Default", hideSet: false };
 let _ls = null; try { _ls = localStorage.getItem("mm-hide-settings"); } catch (e) {}
 state.hideSet = _ls === null ? window.innerWidth < 760 : _ls === "1";
-const LIST_TABS = [["Early Moat — Default", "Early Moat"], ["Proven Leaders", "Proven Leaders"], ["Strict Risk", "Strict Risk"], ["Compounder", "Compounder"]];
+const LIST_TABS = [["Early Moat — Default", "Early Moat"], ["Proven Leaders", "Proven Leaders"], ["Strict Risk", "Strict Risk"], ["Compounder", "Compounder"], ["Moat Map", "Moat Map (v3.0)"]];
 const SCN_BRIEF = {
   "Early Moat — Default": "Default (Methodology v1.1). Each indicator is ranked in its industry on level 30%, 5-year trend 50% and consistency 20%; themes weigh value 25, pricing 20, scale 15, peers 20, quality 20. A company needs at least 3 of 5 themes improving. Risk gate: interest cover below 3x removes it; high debt, dilution, stock pay and bought growth cost 5 points each; Altman Z'' and Beneish are off.",
   "Proven Leaders": "Same as Early Moat, but level counts 70%, trend 20% and consistency 10%: it favours companies that are already strong today over those that are improving fastest.",
@@ -291,10 +300,10 @@ function render() {
 function controlsHtml() {
   const s = state.s, b = s.scoring.blend, w = s.scoring.theme_weights;
   const slider = (id, label, val, min, max, step = 1) => `<div class="ctl"><label for="${id}"><span>${label}</span><span class="num" id="${id}-v">${val}</span></label><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"></div>`;
-  const comp = state.list === "comp", ok = weightsOk(s);
+  const comp = state.list === "comp" || state.list === "map", ok = weightsOk(s);
   return `<div class="card controls" id="controls">
     <h3 style="margin-top:0">Settings</h3>
-    ${comp ? `<div class="ctlnote">These settings apply to the Moat Score scenarios (Early Moat, Proven Leaders, Strict Risk and your own). The Compounder list is fixed. Pick a Moat Score tab to adjust and re-rank.</div>` : ""}
+    ${comp ? `<div class="ctlnote">These settings apply to the Moat Score scenarios (Early Moat, Proven Leaders, Strict Risk and your own). The Compounder list and the Moat Map are fixed. Pick a Moat Score tab to adjust and re-rank.</div>` : ""}
     <fieldset class="ctl-set" ${comp ? "disabled" : ""}>
     <div class="ctl"><label><span>Scenario</span></label><select id="preset" style="width:100%">${Object.keys(PRESETS).concat(Object.keys(saved)).map(n => `<option>${esc(n)}</option>`).join("")}</select></div>
     <h4 style="margin:10px 0 4px;font-size:14px">Blend</h4>
@@ -354,7 +363,7 @@ function showTotals() {
 }
 function update() {
   showTotals();
-  if (!weightsOk(state.s)) { renderBlocked(); return; }
+  if (state.list === "moat" && !weightsOk(state.s)) { renderBlocked(); return; }
   recompute(); renderTable();
 }
 function renderBlocked() {
@@ -376,6 +385,7 @@ function viewScreener(m) {
     <div id="expnote"></div>
     <div class="kpis" id="kpis"></div>
     <div class="card" id="chg" style="margin-bottom:12px"></div>
+    <div id="mapwrap"></div>
     <div class="toolbar">
       <span class="seg" id="flt"></span>
       <select id="ind" aria-label="Industry" style="max-width:260px"><option value="">All industries</option>${indOpts}</select>
@@ -414,11 +424,12 @@ function sizeTopScroll() {
 function listTabs() {
   return LIST_TABS.slice(0, 3).concat(Object.keys(saved).map(n => [n, n]), LIST_TABS.slice(3));
 }
-function activeTab() { return state.list === "comp" ? "Compounder" : state.scenario; }
+function activeTab() { return state.list === "comp" ? "Compounder" : state.list === "map" ? "Moat Map" : state.scenario; }
 function pickScenario(k) {
   if (k === "Compounder") { state.list = "comp"; state.filter = "top"; }
+  else if (k === "Moat Map") { state.list = "map"; state.filter = "all"; }
   else { state.list = "moat"; state.filter = "shortlist"; state.s = clone(PRESETS[k] || saved[k]); state.scenario = k; recompute(); }
-  state.sort = {key: "pos", dir: 1}; render();
+  state.sort = k === "Moat Map" ? {key: "moved", dir: -1} : {key: "pos", dir: 1}; render();
 }
 function scnSummary(d) {
   const b = d.scoring.blend, w = d.scoring.theme_weights, rg = d.risk_gate;
@@ -428,6 +439,7 @@ function scnSummary(d) {
 function pctx(v) { return v === null || v === undefined ? "–" : (v * 100).toFixed(1) + "%"; }
 function scenarioBox() {
   const E = META.scenario_eval || {}, k = activeTab();
+  if (k === "Moat Map") return mapBox();
   if (k === "Compounder") {
     const V2 = META.compounder, e = E.Compounder || {};
     return `<div class="card note-exp" style="margin-bottom:12px"><p style="margin:0"><b>Compounder (v2.0, experimental, not proven).</b> Averages ${V2.kept.length} quarterly signals chosen on 2013–2019 (${V2.kept.map(x => esc(x.label)).join(", ")}). Use it to find names worth a closer look, not as a ranking you can trust. The settings on the left do not change it.</p>
@@ -448,6 +460,98 @@ function scenarioBox() {
     <p class="small" style="margin:8px 0 0">Back-test 2013–2023, ${e.n} shortlist picks, using only filings available at each date. Picks stay high quality but do not keep improving more often than average. <a href="#proof">Proof</a></p>` : "";
   return `<div class="card note-scn" style="margin-bottom:12px"><p style="margin:0"><b>${esc(k)}.</b> ${esc(brief)}${edited ? ` <b>You have changed settings since choosing this scenario; the list shows your changes, the back-test results below are for the scenario as defined. Save your settings as a new scenario in the Settings box.</b>` : ""}</p>${ev}</div>`;
 }
+
+// ---------- MOAT MAP (v3.0) ----------
+const GROWTH_LINE = 0.10;
+function gapColor(g) {
+  if (g === null || g === undefined || !isFinite(g)) return "var(--neutral)";
+  const t = Math.min(1, Math.abs(g) / 0.20), a = (0.35 + 0.6 * t).toFixed(2);
+  return g > 0 ? `color-mix(in srgb, var(--good) ${Math.round(a * 100)}%, transparent)` : `color-mix(in srgb, var(--risk) ${Math.round(a * 100)}%, transparent)`;
+}
+function quantile(arr, q) { const a = arr.filter(v => v !== null && isFinite(v)).sort((p, r) => p - r); if (!a.length) return 0; const i = (a.length - 1) * q, lo = Math.floor(i); return a[lo] + (a[Math.min(lo + 1, a.length - 1)] - a[lo]) * (i - lo); }
+// clamp a value into [lo, hi]; pinned = true when it was outside (drawn at the edge, marked)
+function clampAxis(v, lo, hi) { return v < lo ? {v: lo, pinned: true} : v > hi ? {v: hi, pinned: true} : {v, pinned: false}; }
+function moatScatter(rows, opt = {}) {
+  const narrow = window.innerWidth < 640, W = narrow ? 420 : 760, H = narrow ? 380 : 470, L = 52, Rr = 16, T = 16, B = 40, pw = W - L - Rr, ph = H - T - B;
+  const xs = rows.map(r => r.c.mm.x), ys = rows.map(r => r.c.mm.y);
+  if (opt.trail) opt.trail.forEach(([tx, ty]) => { if (tx !== null) xs.push(tx); if (ty !== null) ys.push(ty); });
+  let x0 = Math.min(quantile(xs, 0.02), -0.05), x1 = Math.max(quantile(xs, 0.98), 0.25), y0 = Math.min(quantile(ys, 0.02), -0.10), y1 = Math.max(quantile(ys, 0.98), 0.20);
+  const px = (x1 - x0) * 0.04, py = (y1 - y0) * 0.04; x0 -= px; x1 += px; y0 -= py; y1 += py;
+  const X = v => L + (v - x0) / (x1 - x0) * pw, Y = v => T + ph - (v - y0) / (y1 - y0) * ph;
+  const mc = Math.max(...rows.map(r => r.c.mm.mcap || 0), 1);
+  let g = `<rect x="${X(GROWTH_LINE)}" y="${T}" width="${L + pw - X(GROWTH_LINE)}" height="${Y(0) - T}" fill="var(--good)" opacity=".06"/>`;
+  const tick = v => (Math.abs(v) < 0.005 ? 0 : v * 100).toFixed(0) + "%";
+  for (let i = 0; i <= 4; i++) { const xv = x0 + (x1 - x0) * i / 4, yv = y0 + (y1 - y0) * i / 4;
+    g += `<line x1="${X(xv)}" x2="${X(xv)}" y1="${T}" y2="${T + ph}" stroke="var(--grid)"/><text x="${X(xv)}" y="${H - 22}" text-anchor="middle">${tick(xv)}</text>`;
+    g += `<line x1="${L}" x2="${L + pw}" y1="${Y(yv)}" y2="${Y(yv)}" stroke="var(--grid)"/><text x="${L - 6}" y="${Y(yv) + 4}" text-anchor="end">${tick(yv)}</text>`; }
+  g += `<line x1="${X(GROWTH_LINE)}" x2="${X(GROWTH_LINE)}" y1="${T}" y2="${T + ph}" stroke="var(--ink-2)" stroke-dasharray="4 3"/><line x1="${L}" x2="${L + pw}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--ink-2)" stroke-dasharray="4 3"/>`;
+  if (opt.indMed !== undefined && opt.indMed !== null) g += `<line x1="${X(clampAxis(opt.indMed, x0, x1).v)}" x2="${X(clampAxis(opt.indMed, x0, x1).v)}" y1="${T}" y2="${T + ph}" stroke="var(--teal)" stroke-dasharray="1 3"/><text x="${X(clampAxis(opt.indMed, x0, x1).v) + 4}" y="${T + 12}" style="fill:var(--teal-text)">industry median</text>`;
+  g += `<text class="ql" x="${L + pw - 6}" y="${T + 16}" text-anchor="end">Compounder</text><text class="ql" x="${L + 6}" y="${T + 16}">Profitable, slow</text>`;
+  g += `<text class="ql" x="${L + pw - 6}" y="${T + ph - 8}" text-anchor="end">Growing, below hurdle</text><text class="ql" x="${L + 6}" y="${T + ph - 8}">Neither</text>`;
+  g += `<text x="${L + pw / 2}" y="${H - 4}" text-anchor="middle">3-year revenue growth a year (line at 10%)</text><text transform="rotate(-90)" x="${-(T + ph / 2)}" y="12" text-anchor="middle">Clean ROIC minus 9% hurdle</text>`;
+  const fg = rows.filter(r => !opt.fg || opt.fg(r)), bg = opt.fg ? rows.filter(r => !opt.fg(r)) : [];
+  bg.forEach(r => { const cx = clampAxis(r.c.mm.x, x0, x1), cy = clampAxis(r.c.mm.y, y0, y1);
+    g += `<circle cx="${X(cx.v).toFixed(1)}" cy="${Y(cy.v).toFixed(1)}" r="2.4" fill="var(--neutral)" opacity=".45"/>`; });
+  fg.sort((a, b) => (b.c.mm.mcap || 0) - (a.c.mm.mcap || 0)).forEach(r => { const m = r.c.mm, cx = clampAxis(m.x, x0, x1), cy = clampAxis(m.y, y0, y1);
+    const rad = 3 + 9 * Math.sqrt((m.mcap || 0) / mc), sel = r.c.cik === opt.sel;
+    g += `<circle class="dot${sel ? " sel" : ""}${cx.pinned || cy.pinned ? " pin" : ""}" data-cik="${r.c.cik}" cx="${X(cx.v).toFixed(1)}" cy="${Y(cy.v).toFixed(1)}" r="${rad.toFixed(1)}" fill="${gapColor(m.gap)}"><title>${esc(r.c.ticker || r.c.name)} · growth ${fp(m.x)} · ROIC−9% ${fp(m.y)} · gap ${m.gap === null ? "n/a" : fp(m.gap)} · ${esc(m.quad || "")}${cx.pinned || cy.pinned ? " · off the chart, shown at the edge" : ""}</title></circle>`; });
+  if (opt.trail && opt.cur) {
+    const pts = opt.trail.concat([opt.cur]).filter(([tx, ty]) => tx !== null && ty !== null).map(([tx, ty]) => [X(clampAxis(tx, x0, x1).v), Y(clampAxis(ty, y0, y1).v)]);
+    if (pts.length > 1) g += `<polyline points="${pts.map(p => p.map(v => v.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--navy)" stroke-width="2"/>` + pts.slice(0, -1).map(([a, b], i) => `<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="3" fill="var(--paper)" stroke="var(--navy)"/><text x="${(a + 5).toFixed(1)}" y="${(b - 5).toFixed(1)}">−${pts.length - 1 - i}y</text>`).join("");
+  }
+  return `<svg class="mapsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.label || "Moat Map")}">${g}</svg>
+  <div class="maplegend"><span><i style="background:${gapColor(0.2)}"></i>growing faster than the price implies</span><span><i style="background:${gapColor(-0.2)}"></i>slower than the price implies</span><span><i style="background:var(--neutral)"></i>no implied growth (loss, low ROIC or no fit)</span><span>dot size = market value</span><span>dashed outline = off the chart, shown at the edge</span></div>`;
+}
+function mapRows() {
+  return state.res.all.filter(x => x.c.mm && x.c.mm.x !== null && x.c.mm.y !== null);
+}
+function mapBox() {
+  const T = (META.moatmap || {}).test || {}, Rr = T.rules || {}, P = T.price || {}, C = T.compare || {}, S = T.still_top_right || {}, A = (META.moatmap || {}).assumptions || {};
+  const SF = T.split_fix || {};
+  const row = k => Rr[k] ? `<div><b>${fx(k === "r3" && SF.r3 ? SF.r3.multiple : Rr[k].multiple, 2)}</b><span>${{r1: "R1 entered top-right", r2: "R2 moving toward", r3: "R3 and not priced in"}[k]}: became moat compounders vs the rest, 2021–2023 (needed 2×: <b style="display:inline;font-size:12px;color:var(--risk)">failed</b>)</span></div>` : "";
+  return `<div class="card note-exp" style="margin-bottom:12px"><p style="margin:0"><b>Moat Map (v3.0): a description, not a proven signal.</b> Each dot is a company: 3-year revenue growth (across) against clean ROIC minus the 9% hurdle (up). Top-right = growing at least 10% a year while earning above the hurdle. Colour shows the Expectation Gap: the growth the company delivered minus the growth its price implies (reverse DCF: 10 years, 9% discount, 3% after, 21% tax). The three movement rules were fixed in advance and tested once on 2021–2023: all three <b>failed</b>.</p>
+  <div class="scn-eval">${row("r1")}${row("r2")}${row("r3")}
+  <div><b>${pctx(P.r1?.avg_neutral)}</b><span>R1 top 25, average 12-month return 2021–2025 (S&amp;P 500 ${pctx(P.r1?.avg_spx)})</span></div>
+  <div><b>${pctx(S.r1?.share)}</b><span>R1 companies still top-right a year later (others ${pctx(S.rest)}): positions persist, but do not predict compounding</span></div></div>
+  <p class="small" style="margin:8px 0 0">Prices: Yahoo Finance close ${esc(META.moatmap?.price_date || "")} (retrieved ${esc(META.moatmap?.prices_retrieved || "")}); filings: SEC EDGAR bulk ${esc(META.sec_retrieved)}. Same test for v1.1 top 25: ${fx(C.v11_top25?.multiple, 2)}; v2.0 top 25: ${fx(C.v20_top25?.multiple, 2)}. <a href="#proof">Proof</a> · <a href="#learn">How to read it</a></p></div>`;
+}
+function renderMap() {
+  const R = state.res;
+  document.getElementById("chg").style.display = "none";
+  const fl = [["all", "All"], ["r1", "R1 entered"], ["r2", "R2 moving toward"], ["r3", "R3 not priced in"]];
+  if (!fl.some(f => f[0] === state.filter)) state.filter = "all";
+  document.getElementById("flt").innerHTML = fl.map(([k, n]) => `<button type="button" data-f="${k}" class="${state.filter === k ? "on" : ""}">${n}</button>`).join("");
+  document.getElementById("expnote").innerHTML = mapBox();
+  let rows = mapRows();
+  if (state.ind) rows = rows.filter(x => x.c.sic_desc === state.ind);
+  rows = rows.filter(x => capOkV(x.c.mm.mcap));
+  if (state.q) rows = rows.filter(x => [x.c.ticker, x.c.name, x.c.sic_desc].filter(Boolean).join(" ").toLowerCase().includes(state.q));
+  const inRule = x => state.filter === "all" || x.c.mm[state.filter];
+  const sel = rows.find(x => x.c.cik === state.mapSel);
+  const quad = q => rows.filter(x => x.c.mm.quad === q).length;
+  document.getElementById("kpis").innerHTML = [[rows.length, "companies on the map"], [quad("Compounder"), "in the top-right quadrant"], [rows.filter(x => x.c.mm.r1).length, "entered it this year (R1)"], [rows.filter(x => x.c.mm.r3).length, "moving in and not priced in (R3)"]]
+    .map(([v, l]) => `<div class="kpi"><b>${v.toLocaleString()}</b><span>${l}</span></div>`).join("");
+  document.getElementById("mapwrap").innerHTML = `<div class="card" style="margin-bottom:12px">${moatScatter(rows, {fg: state.filter === "all" ? null : inRule, sel: state.mapSel,
+      trail: sel ? sel.c.mm.trail : null, cur: sel ? [sel.c.mm.x, sel.c.mm.y] : null, label: "Moat Map of " + (state.ind || "all industries")})}
+    <div class="mapinfo" id="mapinfo">${sel ? `<b>${esc(sel.c.ticker || "")}</b> ${esc(sel.c.name)}: ${esc(sel.c.mm.quad || "")}, growth ${fp(sel.c.mm.x)}, ROIC−9% ${fp(sel.c.mm.y)}, implied growth ${sel.c.mm.g_implied === null ? "n/a" : fp(sel.c.mm.g_implied)}, gap ${sel.c.mm.gap === null ? "n/a" : fp(sel.c.mm.gap)}. Line = where it was 1–5 years ago. <a href="#deepdive/${sel.c.cik}">Open Deep-Dive</a>` : `<span class="small">Click a dot to see its 5-year trail. Pick an industry above to compare a company with its peers.</span>`}</div></div>`;
+  document.querySelectorAll("#mapwrap circle.dot").forEach(c => c.addEventListener("click", () => { state.mapSel = +c.dataset.cik; renderMap(); }));
+  rows = rows.filter(inRule);
+  rows.forEach((x, i) => x._pos = i + 1);
+  const k = state.sort.key, d = state.sort.dir, get = SORTV[k] || SORTV.pos;
+  rows = rows.slice().sort((a, b) => { const va = get(a), vb = get(b), na = va === null || va === undefined || (typeof va === "number" && !isFinite(va)), nb = vb === null || vb === undefined || (typeof vb === "number" && !isFinite(vb));
+    if (na || nb) return na === nb ? 0 : na ? 1 : -1; return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * d; });
+  const th = (key, label, cls = "", title = "") => `<th class="sort ${cls}" data-k="${key}" ${title ? `title="${esc(title)}"` : ""} aria-sort="${state.sort.key === key ? (state.sort.dir === 1 ? "ascending" : "descending") : "none"}"><button type="button">${label}</button></th>`;
+  const f1x = v => v === null || v === undefined ? "–" : fx(v, 1), mv = m => m.r1 ? badge("GOOD", "R1 entered") : m.r2 ? badge("NEUTRAL", "R2 moving") : "";
+  document.getElementById("tbl").innerHTML = `<thead><tr>${th("pos", "#", "r")}${th("ticker", "Company")}${th("industry", "Industry", "hm")}${th("quad", "Quadrant")}${th("mx", "Growth (3 yrs)", "r")}${th("my", "ROIC − 9%", "r")}${th("moved", "Moved (1 yr)", "r hm", "Fall in distance to the top-right corner over the last year")}<th>Movement</th>${th("evs", "EV/Sales", "r hm")}${th("eve", "EV/clean EBIT", "r hm")}${th("pe", "Clean P/E", "r")}${th("fcfy", "FCF yield", "r hm")}${th("gimp", "Implied growth", "r", "Revenue growth a year the price implies (reverse DCF)")}${th("gap", "Gap", "r", "Growth delivered minus implied growth")}${th("mcap", "Market value", "r hm")}</tr></thead><tbody>` +
+    rows.slice(0, 300).map(x => { const m = x.c.mm; return `<tr class="click" data-cik="${x.c.cik}"><td class="r">${x._pos}</td><td><b>${esc(x.c.ticker || "")}</b> <span class="small">${esc(x.c.name)}</span></td><td class="small hm">${esc(x.c.sic_desc)}</td><td class="small">${esc(m.quad || "")}</td><td class="r">${fp(m.x)}</td><td class="r">${fp(m.y)}</td><td class="r hm">${m.moved === null ? "–" : fp(m.moved)}</td><td>${mv(m)}${m.r3 ? " " + badge("MOAT", "R3") : ""}</td><td class="r hm">${f1x(m.ev_sales)}</td><td class="r hm">${f1x(m.ev_ebit)}</td><td class="r">${fpe(m.pe)}</td><td class="r hm">${fp(m.fcf_yield)}</td><td class="r">${m.g_implied === null ? "n/a" : fp(m.g_implied)}</td><td class="r"><span style="color:${m.gap === null ? "var(--ink-2)" : m.gap > 0 ? "var(--good)" : "var(--risk)"}">${m.gap === null ? "n/a" : fp(m.gap)}</span></td><td class="r hm">${fusd(m.mcap)}</td></tr>`; }).join("") + `</tbody>` +
+    (rows.length > 300 ? `<caption class="small" style="caption-side:bottom;text-align:left;padding:8px">Showing 300 of ${rows.length}. Filter or search to find others.</caption>` : "") +
+    (!rows.length ? `<caption class="small" style="caption-side:bottom;text-align:left;padding:8px">No company matches these filters.</caption>` : "");
+  sizeTopScroll();
+  const cv = (META.moatmap || {}).coverage || {};
+  document.getElementById("tblnote").innerHTML = `Growth = 12-month revenue now vs 12 quarters earlier, a year. ROIC − 9% = clean return on invested capital (12 months) minus the hurdle. Top-right also needs growth above the industry median for R1–R3. EV = market value + debt − cash. Implied growth: reverse DCF with fixed assumptions (10 years at that growth, then 3%; 9% discount; reinvestment at today's ROIC); n/a for losses, ROIC at or below zero, or when no growth rate fits the price (common when ROIC is below 9%). Coverage today: map ${pctx(cv.xy)}, implied growth ${pctx(cv.gap)}. Market value: Yahoo Finance close ${esc(META.moatmap?.price_date || "")} × cover-page shares. Sources: SEC EDGAR, Yahoo Finance.`;
+}
+
+function capOkV(v) { return capOk({mcap: v === undefined ? null : v}); }
 function capOk(c) {
   const b = CAPS.find(x => x[0] === state.cap);
   if (!b || b[0] === "all") return true;
@@ -455,10 +559,14 @@ function capOk(c) {
   return c.mcap !== null && c.mcap !== undefined && c.mcap >= b[2] && c.mcap < b[3];
 }
 const SORTV = {pos: x => x._pos, rank: x => x.rank, csrank: x => x.c.cs_rank, ticker: x => x.c.ticker || "", industry: x => x.c.sic_desc || "",
-  moat: x => x.moat, nimp: x => x.nImp, cs: x => x.c.cs, mcap: x => x.c.mcap, pe: x => x.c.pe};
+  moat: x => x.moat, nimp: x => x.nImp, cs: x => x.c.cs, mcap: x => x.c.mcap, pe: x => x.c.pe,
+  quad: x => x.c.mm?.quad || "", mx: x => x.c.mm?.x, my: x => x.c.mm?.y, moved: x => x.c.mm?.moved, evs: x => x.c.mm?.ev_sales,
+  eve: x => x.c.mm?.ev_ebit, fcfy: x => x.c.mm?.fcf_yield, gimp: x => x.c.mm?.g_implied, gap: x => x.c.mm?.gap};
 function renderTable() {
   document.getElementById("chg").style.display = "";
-  const R = state.res, comp = state.list === "comp", V2 = META.compounder;
+  const R = state.res, comp = state.list === "comp", map = state.list === "map", V2 = META.compounder;
+  if (map) return renderMap();
+  document.getElementById("mapwrap").innerHTML = "";
   const fl = comp ? [["top", `Top ${V2.shortlist_size}`], ["all", "All with a signal"]] : [["shortlist", "Shortlist"], ["strong", "Strengthening"], ["all", "All companies"]];
   if (!fl.some(f => f[0] === state.filter)) state.filter = fl[0][0];
   document.getElementById("flt").innerHTML = fl.map(([k, n]) => `<button type="button" data-f="${k}" class="${state.filter === k ? "on" : ""}">${n}</button>`).join("");
@@ -621,6 +729,7 @@ function viewDeep(m) {
   </section>
   <h2>Top 3 reasons</h2><ol>${c.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
   ${compCard(c)}
+  ${mapCard(c)}
   <h2>Scorecard</h2>
   <div class="tbl"><table class="num"><thead><tr><th>Theme</th><th class="r">Score</th><th class="r">Industry median</th><th class="r">Improving score</th><th>Improving?</th></tr></thead><tbody>
   ${THEMES.map(t => `<tr><td>${t.name}</td><td class="r"><b>${f0(x.themes[t.key])}</b></td><td class="r">${f0(tmed(t.key))}</td><td class="r">${f0(x.improving[t.key])}</td><td>${x.improving[t.key] === null ? badge("NEUTRAL", "No data") : x.improving[t.key] >= s.scoring.improving_rank ? badge("GOOD", "Yes") : badge("NEUTRAL", "No")}</td></tr>`).join("")}</tbody></table></div>
@@ -648,6 +757,20 @@ function viewDeep(m) {
   </div>`;
   document.querySelectorAll("#deep tr.click[data-cik]").forEach(tr => tr.addEventListener("click", () => go("deepdive", +tr.dataset.cik)));
   document.getElementById("export").addEventListener("click", () => exportDeep(c));
+}
+function mapCard(c) {
+  const m = c.mm; if (!m || m.x === null || m.y === null) return "";
+  const peers = mapRows().filter(z => z.c.group === c.group);
+  const A = (META.moatmap || {}).assumptions || {}, nr = v => v === null || v === undefined ? "not reported" : fp(v);
+  const val = [["Market value", fusd(m.mcap)], ["EV (market value + debt − cash)", fusd(m.ev)], ["EV/Sales", m.ev_sales === null ? "–" : fx(m.ev_sales, 1)],
+    ["EV/clean EBIT", m.ev_ebit === null ? "–" : fx(m.ev_ebit, 1)], ["Clean P/E", fpe(m.pe)], ["FCF yield", fp(m.fcf_yield)],
+    ["Implied revenue growth a year", m.g_implied === null ? "n/a" : fp(m.g_implied)], ["Growth delivered (3 yrs)", fp(m.x)], ["Expectation Gap", m.gap === null ? "n/a" : fp(m.gap)]];
+  const lead = [["Backlog growth minus revenue growth (1 yr)", nr(m.backlog_g)], ["Deferred revenue growth minus revenue growth (1 yr)", nr(m.defrev_g)], ["R&D ÷ revenue", nr(m.rnd_int)], ["Capex ÷ revenue", nr(m.capex_int)]];
+  const tbl = rows => `<div class="tbl"><table class="num"><tbody>${rows.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="r"><b>${esc(b)}</b></td></tr>`).join("")}</tbody></table></div>`;
+  return `<h2>Moat Map (v3.0, description only)</h2><div class="card note-scn"><p style="margin-top:0">${esc(c.ticker || c.name)} is in <b>${esc(m.quad || "–")}</b>${m.r1 ? ", entered the top-right this year (R1)" : m.r2 ? ", moving toward the top-right (R2)" : ""}. Grey dots: the ${peers.length} companies in ${esc(c.group)} today; dashed teal line: the industry median growth. The line shows where ${esc(c.ticker || "the company")} was 1–5 years ago. The movement rules failed their 2021–2023 test, so read this as a description. <a href="#screener" id="openmap">Open the full map</a></p>
+  ${moatScatter([{c}].concat(peers.filter(z => z.c.cik !== c.cik)), {fg: z => z.c.cik === c.cik, sel: c.cik, trail: m.trail, cur: [m.x, m.y], indMed: m.ind_med_x, label: "Moat Map: " + (c.ticker || c.name) + " vs its industry"})}
+  <div class="grid g2" style="margin-top:12px"><div><h3 style="margin-top:0">Valuation and Expectation Gap</h3>${tbl(val)}<p class="small">Reverse DCF with fixed assumptions: ${A.horizon_years} years at the implied growth, then ${fp(A.terminal_growth, 0)}; ${fp(A.discount, 0)} discount; ${fp(A.tax, 0)} tax; reinvestment at today's ROIC. Price: Yahoo Finance close ${esc(META.moatmap?.price_date || "")}.</p></div>
+  <div><h3 style="margin-top:0">Leading items (shown, not tested)</h3>${tbl(lead)}<p class="small">From the latest 10-Q/10-K (SEC EDGAR). "Not reported" means the company does not tag it, not zero.</p></div></div></div>`;
 }
 function compCard(c) {
   const V2 = META.compounder; if (!V2 || c.cs === null || c.cs === undefined) return "";
@@ -702,11 +825,17 @@ const LEARN = [
   {k:"altman_z", t:"Altman Z'' (risk)", theme:"Risk gate", def:"A bankruptcy-risk score from four balance-sheet and profit ratios.", why:"Below 1.1 the company is in the distress zone in Altman's studies.", watch:"Companies with negative equity from buybacks score low even when healthy. That is why the score uses book values: EDGAR has no prices.", f:"6.56·(working capital ÷ assets) + 3.26·(retained earnings ÷ assets) + 6.72·(EBIT ÷ assets) + 1.05·(equity ÷ liabilities)", dia:["Liquidity","+","Past profits","+","Current profit","+","Solvency"], ev:"Altman (1968; Z'' 1995 for non-manufacturers)", ex:z => `${z.p}: ${f1(z.v("altman_z"))}.`},
   {k:"beneish", t:"Beneish M-Score (risk)", theme:"Risk gate", def:"An eight-ratio score that looks for signs of earnings manipulation.", why:"Above −1.78 Beneish found a higher chance of manipulation.", watch:"Fast growth alone raises it; needs at least 6 of 8 inputs or it is not tested.", f:"−4.84 + 0.92·DSRI + 0.528·GMI + 0.404·AQI + 0.892·SGI + 0.115·DEPI − 0.172·SGAI + 4.679·TATA − 0.327·LVGI", dia:["8 ratios","→","M-Score"], ev:"Beneish (1999), Financial Analysts Journal", ex:z => "See the risk table in each Deep-Dive."},
   {k:"dilution", t:"Dilution, stock pay, goodwill (risk)", theme:"Risk gate", def:"Share count growth per year, stock-based pay as a share of revenue, and goodwill added in 3 years as a share of assets.", why:"Growth paid for with new shares or bought through acquisitions is not a moat.", watch:"Mergers paid in stock show up in both dilution and goodwill.", f:"(shares now ÷ 3 yrs ago)^(1/3) − 1 · SBC ÷ revenue · Δ goodwill ÷ assets", dia:["Shares","·","Stock pay","·","Goodwill"], ev:"Own rules from the brief", ex:z => `${z.p}: stock pay ${fp(z.v("sbc_rev"))} of revenue.`},
+  {k:"moatmap", t:"Moat Map", theme:"Moat Map (v3.0)", def:"A chart of every company: 3-year revenue growth across, clean ROIC minus the 9% hurdle up. A line behind a dot shows where the company was in each of the last 5 years.", why:"Growth creates value only when the return on capital is above its cost. The top-right corner holds companies that grow fast and earn well; movement toward it is what a strengthening moat looks like.", watch:"It describes, it does not predict: the movement rules failed their 2021–2023 test. Cyclical booms (energy in 2021–22) also land in the top-right.", f:"x = (12-month revenue now ÷ 12 quarters earlier)^(1/3) − 1\ny = clean ROIC (12 months) − 9%", dia:["Revenue growth","→","across","·","ROIC − 9%","→","up"], ev:"McKinsey value matrix (Koller, Goedhart & Wessels, “Valuation”); signal framework review, 4 Nov 2026", ex:z => `${z.t}: growth ${fp(z.mm.x)}, ROIC minus hurdle ${fp(z.mm.y)}, quadrant ${z.mm.quad || "–"}.`},
+  {k:"quadrants", t:"The four quadrants", theme:"Moat Map (v3.0)", def:"Compounder: growth ≥ 10% and ROIC above 9%. Profitable, slow: ROIC above 9%, growth below 10%. Growing, below hurdle: growth ≥ 10%, ROIC below 9%. Neither: both below.", why:"Each quadrant asks a different question: is the growth worth having, and is the profit growing?", watch:"For the movement rules a company must also grow faster than its industry median, so a whole industry booming together does not count.", f:"Compounder = x ≥ 10% and y ≥ 0 (rules also need x > industry median)", dia:["Growth ≥ 10%","+","ROIC ≥ 9%","=","Compounder"], ev:"Spec v3.0 §2", ex:z => `${z.t} is in “${z.mm.quad || "–"}”.`},
+  {k:"rules", t:"Movement rules R1, R2, R3", theme:"Moat Map (v3.0)", def:"R1: in the top-right now, not a year earlier. R2: not there yet, but growth and ROIC both rose, and the distance to the corner fell by at least 5 points to 10 points or less. R3: R1 or R2 and the price does not yet assume that growth (Expectation Gap above zero).", why:"They turn the chart into lists you can check. All three were fixed before testing.", watch:"Tested once on 2021–2023: their lists became compounders less often than other companies (0.6–0.7×), so treat them as a description.", f:"distance = max(0, 10% − x) + max(0, −y)\nR2: distance fell ≥ 5 points and is ≤ 10 points now", dia:["Entered","·","Moving toward","·","Not priced in"], ev:"Spec v3.0 §3; results in the Proof tab", ex:z => `${z.t}: ${z.mm.r1 ? "R1" : z.mm.r2 ? "R2" : "no movement rule"} today.`},
+  {k:"ev", t:"EV and the multiples", theme:"Expectation Gap (v3.0)", def:"EV (enterprise value) is what buying the whole business would cost: market value plus debt minus cash. EV/Sales and EV/clean EBIT compare it with revenue and with operating profit after one-offs; clean P/E compares market value with clean net income; FCF yield is free cash flow over market value.", why:"They show how much the market pays for each dollar of sales, profit or cash, comparable across companies with different debt.", watch:"Market value uses the cover-page share count; values that look mis-scaled are hidden as “check”.", f:"EV = market value + debt − cash\nEV/Sales = EV ÷ revenue · EV/clean EBIT = EV ÷ clean operating income", dia:["Market value","+","Debt","−","Cash","=","EV"], ev:"Standard valuation practice (McKinsey “Valuation”)", ex:z => `${z.t}: EV/Sales ${z.mm.ev_sales === null || z.mm.ev_sales === undefined ? "–" : fx(z.mm.ev_sales, 1)}, FCF yield ${fp(z.mm.fcf_yield)}.`},
+  {k:"revdcf", t:"Reverse DCF and implied growth", theme:"Expectation Gap (v3.0)", def:"Instead of guessing a fair value, ask what revenue growth today's price assumes. The model: 10 years of growth at g, then 3% a year, free cash flow = revenue × after-tax operating margin × (1 − g ÷ ROIC), discounted at 9%. The g that matches today's EV is the implied growth.", why:"A good business is only a good investment if it improves more than the price already assumes.", watch:"Simple on purpose: one margin, one ROIC, fixed rates. No answer for companies with losses or ROIC at or below zero, or when no growth rate fits (often when ROIC is below 9%, because growth then lowers value in the model).", f:"Value(g) = Σ FCF_t ÷ 1.09^t + terminal ÷ 1.09^10\nimplied g: Value(g) = EV", dia:["Price","→","EV","→","Implied growth"], ev:"Mauboussin & Rappaport, “Expectations Investing”; McKinsey value-driver formula", ex:z => `${z.t}: implied growth ${z.mm.g_implied === null || z.mm.g_implied === undefined ? "n/a" : fp(z.mm.g_implied)} a year.`},
+  {k:"gap", t:"Expectation Gap", theme:"Expectation Gap (v3.0)", def:"Growth the company delivered over 3 years minus the growth its price implies. Positive: growing faster than the price assumes. Negative: the price already expects more.", why:"It is the bridge between “the business is improving” and “the stock may be mispriced”.", watch:"Past growth may not continue; a positive gap can be the market correctly expecting a slowdown.", f:"Gap = 3-year revenue growth − implied growth", dia:["Growth delivered","−","Implied growth","=","Gap"], ev:"Signal framework review, 4 Nov 2026", ex:z => `${z.t}: gap ${z.mm.gap === null || z.mm.gap === undefined ? "n/a" : fp(z.mm.gap)}.`}
 ];
 function viewLearn(m) {
   const top = state.res.ranked.find(x => x.shortlist) || state.res.ranked[0];
   const D = window.MM_DEEP ? window.MM_DEEP[String(top.c.cik)] : null;
-  const z = {fy: top.c.fy, p: top.c.period || "FY" + top.c.fy, v: k => D && D.s[k] ? D.s[k][D.s[k].length - 1] : null, min: k => D ? Math.min(...D.s[k].slice(-5).filter(v => v !== null)) : null, max: k => D ? Math.max(...D.s[k].slice(-5).filter(v => v !== null)) : null};
+  const z = {fy: top.c.fy, p: top.c.period || "FY" + top.c.fy, mm: top.c.mm || {}, t: top.c.ticker, v: k => D && D.s[k] ? D.s[k][D.s[k].length - 1] : null, min: k => D ? Math.min(...D.s[k].slice(-5).filter(v => v !== null)) : null, max: k => D ? Math.max(...D.s[k].slice(-5).filter(v => v !== null)) : null};
   m.innerHTML = `<h1>Terminology</h1><p class="muted">Every indicator and risk check: what it is, why it matters, what to watch, the formula, and a worked example with real numbers from ${esc(top.c.name)} (${esc(top.c.ticker)}), the top shortlist name today.</p>
   <div class="grid g2">${LEARN.map(e => `<div class="card learn" id="learn-${e.k}"><span class="small">${e.theme}</span><h3>${e.t}</h3><p>${e.def}</p><p><b>Why it matters.</b> ${e.why}</p><p><b>Watch out.</b> ${e.watch}</p>
   <div class="diagram">${e.dia.map(d => ["÷","−","+","×","=","→","·"].includes(d) ? `<span class="op">${d}</span>` : `<span class="box">${d}</span>`).join("")}</div>
@@ -743,6 +872,7 @@ function viewMethod(m) {
   <tr><td>1.0-draft</td><td>2026-11-03</td><td>First build from brief v4: point-in-time store, clean-up, risk gate, five themes, confirmation rule.</td></tr>
   <tr><td>1.0-draft</td><td>2026-11-03</td><td>Peer ranks use the full SIC group (fixes leftover groups of 1–7). Incremental ROIC only when capital grew ≥ 10%.</td></tr>
   <tr><td><b>1.1</b></td><td>2026-11-03</td><td>Altman Z'' and Beneish M-Score switched from Remove to Off (values still shown in Deep-Dives). Reason: they removed 20 of the 100 largest companies (e.g. NVIDIA for fast growth, AbbVie for buyback-driven negative equity) while changing back-test false alarms by less than 1 point. Chosen after seeing results; see the Proof tab.</td></tr>
+  <tr><td><b>v3.0 Moat Map</b></td><td>2026-11-04</td><td>New Screener view and Deep-Dive card: 3-year revenue growth against clean ROIC minus 9%, with 5-year trails, and valuation (EV multiples, reverse-DCF implied growth, Expectation Gap) as dot colour. The three movement rules (R1 entered, R2 moving toward, R3 not priced in) were fixed in advance and failed their one-time 2021–2023 test (0.6–0.7× the rest), so the map is shown as a description. Leading items (backlog, deferred revenue, R&amp;D, capex) shown, not tested.</td></tr>
   <tr><td><b>1.1 + v2.0 list</b></td><td>2026-11-04</td><td>Second, experimental list in the Screener: Compounder candidates (v2.0), 8 quarterly signals chosen on 2013–2019. It failed its one-time 2020–2023 test (top 10% won 1.19× the base rate; 2× needed), so it is shown as a prompt for research, not a proven ranking. Added market value and clean P/E (display only), industry and market-value filters, and sorting by any column.</td></tr>
   <tr><td>1.2 (not adopted)</td><td>2026-11-03</td><td>Tried scoring on trailing-12-month (TTM) figures from the latest 10-Q. Not adopted: no better than fiscal years once the back-test's look-ahead was removed, and a lower market return. The 12-quarter charts in the Deep-Dive were kept. See the Proof tab.</td></tr>
   <tr><td>1.0-draft</td><td>2026-11-03</td><td>After the 10-K spot-check (<a href="spotcheck.html">report</a>): gains on selling a whole business are no longer removed (they sit below operating income); when the operating-income tag differs from revenue − total costs by more than 10% of operating income, data confidence drops one level. Shortlist unchanged.</td></tr></tbody></table></div>`;

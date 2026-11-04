@@ -15,7 +15,7 @@ Kept: forms 10-K, 10-KT, 10-Q and their amendments; annual (350–380 days), qua
 (170–290 days) durations, and instants. Quarter / YTD rows from 2011 on (v1.2: needed for point-in-time TTM in the back-test).
 Coarse filter here (finer rules in mm_universe): SIC outside 6000–6799 and annual revenue ≥ $50M at least once.
 
-Run:  .venv/bin/python src/mm_extract.py          (cover-page share counts only: ... mm_extract.py cover)
+Run:  .venv/bin/python src/mm_extract.py          (cover-page share counts only: ... cover; v3.0 leading items: ... leading)
 """
 from __future__ import annotations
 
@@ -225,6 +225,41 @@ def cover_shares() -> None:
     print(f"cover shares: {len(df):,} rows, {df['cik'].nunique():,} companies", flush=True)
 
 
+LEADING_TAGS = ["RevenueRemainingPerformanceObligation", "ContractWithCustomerLiability",
+                "ContractWithCustomerLiabilityCurrent", "DeferredRevenue", "DeferredRevenueCurrent"]
+
+
+def _leading_work(ciks: list[int]) -> list[tuple]:
+    out = []
+    with zipfile.ZipFile(BULK / "companyfacts.zip") as cz:
+        for cik in ciks:
+            try:
+                g = json.loads(cz.read(f"CIK{cik:010d}.json")).get("facts", {}).get("us-gaap", {})
+            except KeyError:
+                continue
+            for tag in LEADING_TAGS:
+                for f in g.get(tag, {}).get("units", {}).get("USD", []):
+                    if f.get("form") in FORMS and not f.get("start"):  # balances at a date only
+                        out.append((cik, tag, f["end"], float(f["val"]), f["filed"]))
+    return out
+
+
+def leading() -> None:
+    """v3.0 leading items (backlog, deferred revenue) → data/cache/mm/leading.pkl; shown in the product, not tested."""
+    ciks = pd.read_pickle(OUT / "companies.pkl")["cik"].tolist()
+    rows = []
+    with Pool(8) as pool:
+        for r in pool.imap_unordered(_leading_work, [ciks[i::32] for i in range(32)]):
+            rows.extend(r)
+    df = pd.DataFrame(rows, columns=["cik", "tag", "end", "val", "filed"])
+    for c in ("end", "filed"):
+        df[c] = pd.to_datetime(df[c])
+    df = df.sort_values("filed").drop_duplicates(["cik", "tag", "end"], keep="last")  # latest restatement
+    df.to_pickle(OUT / "leading.pkl")
+    print(f"leading items: {len(df):,} rows, {df['cik'].nunique():,} companies", flush=True)
+
+
 if __name__ == "__main__":
     import sys
-    cover_shares() if sys.argv[1:] == ["cover"] else main()
+    cmd = sys.argv[1:]
+    cover_shares() if cmd == ["cover"] else leading() if cmd == ["leading"] else main()

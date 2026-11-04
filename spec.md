@@ -40,7 +40,7 @@ Product framing: a research tool sold by subscription and as data/signal licensi
 | SEC EDGAR `submissions` (bulk `submissions.zip` + API) | universe, SIC, filing links | SIC code = industry; 10-K / 10-Q / 8-K links for Deep-Dive and Phase 2 |
 | SEC `company_tickers_exchange.json` | universe | Ticker ↔ CIK ↔ exchange |
 | Academic / practitioner papers (cited, not data) | method | Mauboussin "Measuring the Moat"; McKinsey "Valuation"; Novy-Marx (2013); Sloan (1996); Piotroski (2000); Mohanram (2005); Altman; Beneish (1999) |
-| Price data for market validation (6B) | Q7 market test only | **Not chosen yet** — options proposed at step 6, you decide. Never in the moat score |
+| Price data for market validation (6B) | Q7 market test; since v3.0 (2026-11-04) also the Expectation Gap view (market value, EV, reverse DCF) | Yahoo Finance (chosen at step 6). Never in the Moat Score |
 
 Rules: every number has a source URL (filing) and retrieval date; missing = blank and flagged, never guessed.
 No licensed data (Stock Analysis, GuruFocus) in this tool — the old universe file is no longer used.

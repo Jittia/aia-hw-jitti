@@ -110,6 +110,64 @@ def prices(tickers: list[str]) -> pd.DataFrame:
     return px
 
 
+def last_closes(frame: pd.DataFrame, run_date: str) -> tuple[dict, dict]:
+    """Each column's last close strictly before `run_date` (a bar dated today may be intraday)."""
+    f = frame[pd.to_datetime(frame.index).normalize() < pd.Timestamp(run_date)]
+    closes, dates = {}, {}
+    for t in f.columns:
+        col = f[t].dropna()
+        if len(col):
+            closes[t], dates[t] = float(col.iloc[-1]), str(pd.Timestamp(col.index[-1]).date())
+    return closes, dates
+
+
+def splits_history(tickers: list[str], path: Path | None = None) -> dict:
+    """Yahoo split history per ticker (date → ratio), 2013 onward, cached in splits.pkl (v3.0 back-test valuation)."""
+    path = path or CACHE / "splits.pkl"
+    if path.exists():
+        old = pd.read_pickle(path)
+        if set(tickers) <= set(old):
+            return old
+    out = {}
+    for i in range(0, len(tickers), 200):
+        chunk = tickers[i:i + 200]
+        d = yf.download(chunk, start="2013-01-01", end=str(date.today()), interval="1d", actions=True, auto_adjust=True,
+                        progress=False, threads=True, group_by="column")["Stock Splits"]
+        if isinstance(d, pd.Series):
+            d = d.to_frame(chunk[0])
+        for t in d.columns:
+            s = d[t][d[t] > 0]
+            out[t] = s
+        print(f"  splits {min(i + 200, len(tickers))}/{len(tickers)}", flush=True)
+    pd.to_pickle(out, path)
+    return out
+
+
+def prices_daily(tickers: list[str], path: Path | None = None) -> pd.Series:
+    """v3.0 live valuation: each ticker's latest daily close (not adjusted), from Yahoo Finance.
+    attrs: 'date' = close date of most tickers, 'retrieved' = run date. Cached for the day in prices_daily.pkl."""
+    path = path or CACHE / "prices_daily.pkl"
+    if path.exists():
+        old = pd.read_pickle(path)
+        if old.attrs.get("retrieved") == str(date.today()) and set(tickers) <= set(old.index):
+            return old
+    closes, dates = {}, {}
+    for i in range(0, len(tickers), 200):
+        chunk = tickers[i:i + 200]
+        data = yf.download(chunk, period="7d", interval="1d", auto_adjust=False, progress=False, threads=True,
+                           group_by="column")["Close"]
+        if isinstance(data, pd.Series):
+            data = data.to_frame(chunk[0])
+        c, dd = last_closes(data, str(date.today()))
+        closes.update(c)
+        dates.update(dd)
+    out = pd.Series(closes, dtype=float)
+    out.attrs["date"] = pd.Series(dates).mode().iloc[0] if dates else None
+    out.attrs["retrieved"] = str(date.today())
+    out.to_pickle(path)
+    return out
+
+
 def sec_status(ciks: set[int]) -> pd.DataFrame:
     rows = []
     with zipfile.ZipFile(ROOT / "data" / "cache" / "bulk" / "submissions.zip") as z:

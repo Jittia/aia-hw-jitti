@@ -189,6 +189,21 @@ def _clean(x):
     return x
 
 
+def moat_map_rec(mmap: pd.DataFrame, cik: int) -> dict | None:
+    """Per-company Moat Map block for the web page (v3.0)."""
+    if cik not in mmap.index:
+        return None
+    r = mmap.loc[cik]
+    trail = [[_clean(r.get(f"x_t{k}")), _clean(r.get(f"y_t{k}"))] for k in (5, 4, 3, 2, 1)]
+    keys = ("x", "y", "d", "moved", "ev", "ev_sales", "ev_ebit", "pe", "fcf_yield", "g_implied", "gap", "mcap",
+            "backlog_g", "defrev_g", "rnd_int", "capex_int", "ind_med_x")
+    out = {k: _clean(r.get(k)) for k in keys}
+    out.update({"quad": r.get("quadrant") if isinstance(r.get("quadrant"), str) else None, "trail": trail,
+                "r1": bool(r.get("r1")), "r2": bool(r.get("r2")), "r3": bool(r.get("r3")),
+                "top": [k for k in ("r1", "r2", "r3") if bool(r.get(f"top_{k}"))]})
+    return out
+
+
 def scenario_eval(disc: dict) -> dict:
     """Back-test results per scenario shown in the Screener's list tabs (validation.json, market.json, discovery.json)."""
     V = json.loads((OUTD / "validation.json").read_text())["variants"]
@@ -249,6 +264,19 @@ def main(as_of: str) -> None:
     lat["cover_shares"] = lat["cik"].map(cov.set_index("cik")["val"])
     px = prices(sorted({t.replace(".", "-") for t in lat["ticker"].dropna()}) + list(BENCH))
     val = valuation(lat, px).set_index("cik")
+
+    # v3.0 Moat Map + Expectation Gap (spec docs/specs/2026-11-04-moat-map-v3-design.md); its rules failed the
+    # one-time 2021–2023 test (output/data/v3_test.json) and are shown as a description, labelled failed
+    from mm_market import prices_daily
+    from mm_moatmap import leading_at, map_at, top25, value_at
+    mmap = map_at(facts, companies, as_of, settings, live=True)
+    daily = prices_daily(sorted({t.replace(".", "-") for t in mmap["ticker"].dropna()}))
+    mmap = value_at(mmap.assign(ticker=mmap["ticker"].map(lambda t: t.replace(".", "-") if isinstance(t, str) else t)),
+                    as_of, px, pd.read_pickle(CACHE / "cover_shares.pkl"), live=True, daily=daily)
+    mmap = leading_at(mmap, pd.read_pickle(CACHE / "leading.pkl"), as_of)
+    for rule in ("r1", "r2", "r3"):
+        mmap[f"top_{rule}"] = mmap.index.isin(top25(mmap, rule).index)
+    mmap = mmap.set_index("cik")
     u = res[res["in_universe"]].copy()
     u["grp"] = u["industry_group"]
 
@@ -299,6 +327,7 @@ def main(as_of: str) -> None:
             "mcap_check": bool(val["check"].get(cik, False)), "shares_src": val["shares_source"].get(cik),
             "cs": _clean(sx["cs"].get(cik)), "cs_rank": _clean(sx["cs_rank"].get(cik)),
             "cs_short": bool(sx["cs_short"].get(cik, False)),
+            "mm": moat_map_rec(mmap, cik),
             "sig": [_clean(sx[f"r_{n}"].get(cik)) for n in kept],
             "themes": {t: _clean(r[f"theme_{t}"]) for t in THEMES},
             "improving": {t: _clean(r[f"improving_{t}"]) for t in THEMES},
@@ -327,7 +356,17 @@ def main(as_of: str) -> None:
                "train_multiple": None, "shortlist_size": settings["compounder"]["shortlist_size"]}
     meta_val = {"price_month": str(px.index[-1]), "prices_retrieved": px.attrs.get("retrieved"),
                 "source": "Yahoo Finance month-end close × SEC cover-page shares outstanding (else diluted shares); P/E on clean net income (12 months)"}
-    meta = {"as_of": as_of, "compounder": meta_v2, "valuation": meta_val, "scenario_eval": scenario_eval(disc), "medians": med_out, "pct_cols": PCT_COLS, "methodology": settings["methodology_version"], "sec_retrieved": settings["data"]["sec_retrieved"],
+    v3 = json.loads((OUTD / "v3_test.json").read_text()) if (OUTD / "v3_test.json").exists() else {}
+    meta_mm = {"price_date": daily.attrs.get("date"), "prices_retrieved": daily.attrs.get("retrieved"),
+               "assumptions": {"horizon_years": 10, "discount": 0.09, "terminal_growth": 0.03, "tax": 0.21,
+                               "hurdle": 0.09, "growth_line": 0.10},
+               "coverage": {"xy": float((mmap["x"].notna() & mmap["y"].notna()).mean())}
+                           | {k: float(mmap[c].notna().mean()) for k, c in (("gap", "gap"), ("backlog", "backlog_g"),
+                            ("defrev", "defrev_g"), ("rnd", "rnd_int"), ("capex", "capex_int"))},
+               "test": {k: v3.get(k) for k in ("rules", "top25", "no_rebound", "compare", "still_top_right", "coverage")}
+               | {"split_fix": {k: v for k, v in v3.get("split_fix", {}).items() if k != "price_r3"}}
+               | {"price": {r: {k: x for k, x in v.items() if k != "per_date"} for r, v in v3.get("price", {}).items()}}}
+    meta = {"as_of": as_of, "compounder": meta_v2, "moatmap": meta_mm, "valuation": meta_val, "scenario_eval": scenario_eval(disc), "medians": med_out, "pct_cols": PCT_COLS, "methodology": settings["methodology_version"], "sec_retrieved": settings["data"]["sec_retrieved"],
             "settings": settings, "funnel": funnel,
             "indicators": [{"name": n, "theme": t, "comps": c, "label": IND_LABEL[n]} for n, t, _col, _d, c in INDICATORS],
             "themes": [{"key": t, "name": THEME_NAMES[t]} for t in THEMES],

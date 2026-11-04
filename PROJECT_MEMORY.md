@@ -46,6 +46,9 @@
 - A document generator must read each result from a fixed, named file (e.g. archive_v1.0) for the version it describes, never "the current results", or a re-run silently mixes versions.
 - Google Slides `updateSlidesPosition` counts the insertion index in the order before the move; read the slide order back after moving a slide.
 - When a control has no effect in the current view, disable it and say why on screen; a control that silently does nothing looks like a bug.
+- Before any new code multiplies a price by a share count, find the existing rule on splits and apply it; Yahoo history is split- and dividend-adjusted, SEC share counts are as filed.
+- A "yesterday's close" must exclude bars dated on the run date (they can be intraday).
+- On one screen, every number derived from price (market value, P/E, EV, gap) must come from the same price and date.
 - Cross-check the OperatingIncomeLoss tag against revenue − CostsAndExpenses; some filers tag a segment total.
 - Fingerprint settings and scoring code before a validation run, and report every variant tried, including results against the hypothesis.
 - Test a "momentum" signal against companies with the same starting level, not only against the industry median; otherwise picking already-strong companies looks like skill.
@@ -264,4 +267,18 @@
 - **สาเหตุ:** I was on the Compounder list, which is fixed and does not use the settings; the page did not say so. The settings could also total more or less than 100% without any warning.
 - **แก้อย่างไร:** Settings are greyed out on the Compounder tab with a note. Totals are shown and the list pauses until both reach 100%.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** —
+
+### 2026-11-04 · v3.0 back-test valued companies with split-adjusted prices (rule already existed)
+
+- **เจออะไร:** The independent review found NVIDIA's 2021 market value at $8.5B instead of about $338B (also Amazon, Broadcom, Walmart, Chipotle). Past gaps and R3 were wrong.
+- **สาเหตุ:** Yahoo monthly closes are adjusted for later splits; I multiplied them by share counts filed before those splits. A rule in this file already said "undo later splits first"; I did not apply it to new code.
+- **แก้อย่างไร:** Split history from Yahoo (472 of 1,912 tickers); price × later split ratios; a `correct` step reran only the price-based results: R3 0.62× → 0.65×, still failed. The original result stays on record.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Relying on the 0.2%–200× sanity check: split errors stay inside that range.
+
+### 2026-11-04 · v3.0 movement rules failed their one-time test
+
+- **เจออะไร:** R1/R2/R3 lists became moat compounders 0.6–0.7× as often as other companies (2021–2023); their top 25 trailed the S&P 500.
+- **สาเหตุ:** Entering or approaching the high-ROIC, high-growth corner mostly catches companies near a peak (energy in 2021–22), the same pattern as v1.0 and v2.0.
+- **แก้อย่างไร:** Shipped as a description, labelled failed; lists frozen for the live record.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Strong current numbers, alone or with a price gap, as a guide to becoming a compounder.
 

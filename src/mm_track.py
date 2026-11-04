@@ -7,6 +7,7 @@ verify:  recomputes every fingerprint.
 page:    writes output/data/track_data.js for the Track Record tab (performance since each freeze is added once
          a month-end price exists after the freeze date).
 freeze_compounder: the same for the experimental v2.0 Compounder candidates (top 25 by Compounder Signal).
+freeze_v3: the v3.0 Moat Map lists (top 25 of R1, R2, R3); "shortlist" holds R3 for the Track record page.
 Run:     .venv/bin/python src/mm_track.py freeze | freeze_compounder | verify | page
 """
 from __future__ import annotations
@@ -69,6 +70,30 @@ def freeze_compounder() -> None:
     print(f"frozen {path.name}: {len(sl)} names, fingerprint {fp}")
 
 
+def freeze_v3() -> None:
+    """v3.0 Moat Map lists (R1, R2, R3 top 25). Their rules failed the one-time 2021–2023 test; frozen so live
+    results from 2026 onward test them again."""
+    s = (ROOT / "output" / "data" / "site_data.js").read_text(encoding="utf-8")
+    M = json.loads(s[len("window.MM = "):s.rindex(";")])
+    v3 = json.loads((ROOT / "output" / "data" / "v3_test.json").read_text())
+    lists = {}
+    for rule in ("r1", "r2", "r3"):
+        rows = [c for c in M["companies"] if c.get("mm") and rule in c["mm"]["top"]]
+        rows.sort(key=lambda c: (-(c["mm"]["moved"] or 0), -(c["mm"]["y"] or 0)))
+        lists[rule] = [{"ticker": c["ticker"], "cik": c["cik"], "name": c["name"], "x": c["mm"]["x"], "y": c["mm"]["y"],
+                        "gap": c["mm"]["gap"], "filing_used": c["accn"]} for c in rows]
+    record = {"as_of": M["meta"]["as_of"], "methodology": "3.0", "list": "Moat Map R1/R2/R3 top 25",
+              "price_date": M["meta"]["moatmap"]["price_date"], "assumptions": M["meta"]["moatmap"]["assumptions"],
+              "test_2021_2023_passed": {r: v3["rules"][r]["passed"] for r in ("r1", "r2", "r3")},
+              "shortlist": lists["r3"], "lists": lists}
+    fp = hashlib.sha256(canonical(record)).hexdigest()
+    path = DIR / f"{record['as_of']}_v3.0.json"
+    if path.exists():
+        raise SystemExit(f"{path.name} already frozen; a frozen record is never overwritten")
+    path.write_text(json.dumps({"fingerprint_sha256": fp, "record": record}, indent=1, ensure_ascii=False), encoding="utf-8")
+    print(f"frozen {path.name}: R1 {len(lists['r1'])}, R2 {len(lists['r2'])}, R3 {len(lists['r3'])}, fingerprint {fp}")
+
+
 def verify() -> None:
     for path in sorted(DIR.glob("*.json")):
         d = json.loads(path.read_text(encoding="utf-8"))
@@ -103,10 +128,10 @@ def page() -> None:
             d = json.loads(path.read_text(encoding="utf-8"))
             for x in d["record"]["shortlist"]:
                 w.writerow([d["record"]["as_of"], d["record"]["methodology"], d["fingerprint_sha256"], x["ticker"], x["name"],
-                            x["moat_score"], x["rank_in_universe"]])
+                            x.get("moat_score", ""), x.get("rank_in_universe", "")])
     (ROOT / "output" / "data" / "track_data.js").write_text("window.MM_TRACK = " + json.dumps({"html": body}) + ";\n", encoding="utf-8")
     print("wrote output/data/track_data.js")
 
 
 if __name__ == "__main__":
-    {"freeze": freeze, "freeze_compounder": freeze_compounder, "verify": verify, "page": page}[sys.argv[1] if len(sys.argv) > 1 else "verify"]()
+    {"freeze": freeze, "freeze_compounder": freeze_compounder, "freeze_v3": freeze_v3, "verify": verify, "page": page}[sys.argv[1] if len(sys.argv) > 1 else "verify"]()

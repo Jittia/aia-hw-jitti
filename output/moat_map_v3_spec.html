@@ -1,0 +1,222 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Moat Map v3 Spec</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet"><style>
+:root {
+  --paper:#FFF1E5; --card:#FBE6D4; --ink:#262A33; --ink-2:#66605A; --grid:#E3D3C4; --navy:#1F3A5F; --teal:#0F7B78; --teal-text:#0B6F6C;
+  --good:#2E7D4F; --good-text:#266C44; --good-bg:#E3EFE6; --neutral:#8A847D; --neutral-text:#5A544E; --neutral-bg:#ECE6E0;
+  --risk:#B3261E; --risk-text:#9E2119; --risk-bg:#F6DEDB; --on-solid:#FFFFFF; --hover:#F7DCC6;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif; --sans:"Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --r:4px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper:#1E1B18; --card:#2A2622; --ink:#F2E8DE; --ink-2:#B5AA9E; --grid:#3D3731; --navy:#8FB3E0; --teal:#4FC2BC; --teal-text:#4FC2BC;
+  --good:#6CC28F; --good-text:#6CC28F; --good-bg:#23382B; --neutral:#A8A198; --neutral-text:#C9C1B8; --neutral-bg:#33302C;
+  --risk:#F08A80; --risk-text:#F08A80; --risk-bg:#3E2523; --on-solid:#1E1B18; --hover:#332E29; color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --paper:#1E1B18; --card:#2A2622; --ink:#F2E8DE; --ink-2:#B5AA9E; --grid:#3D3731; --navy:#8FB3E0; --teal:#4FC2BC; --teal-text:#4FC2BC;
+  --good:#6CC28F; --good-text:#6CC28F; --good-bg:#23382B; --neutral:#A8A198; --neutral-text:#C9C1B8; --neutral-bg:#33302C;
+  --risk:#F08A80; --risk-text:#F08A80; --risk-bg:#3E2523; --on-solid:#1E1B18; --hover:#332E29; color-scheme:dark; }
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--paper); color:var(--ink); font:400 16px/1.5 var(--sans); }
+.wrap { max-width:1180px; margin:0 auto; padding:0 16px 48px; }
+h1,h2,h3,h4 { font-family:var(--serif); color:var(--navy); font-weight:600; line-height:1.2; }
+h1 { font-size:clamp(26px,4vw,34px); margin:20px 0 4px; }
+h2 { font-size:22px; margin:28px 0 8px; }
+h3 { font-size:17px; margin:18px 0 6px; }
+p { margin:0 0 10px; max-width:75ch; }
+a { color:var(--teal-text); }
+.num, td.r, .r { font-variant-numeric:tabular-nums lining-nums; }
+.small { font-size:13px; color:var(--ink-2); }
+.muted { color:var(--ink-2); }
+.bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:2px solid var(--navy); }
+.wordmark { display:flex; align-items:center; gap:10px; color:var(--navy); text-decoration:none; }
+.wordmark span { font:600 21px/1 var(--serif); }
+.tagline { font:italic 500 14px/1.3 var(--serif); color:var(--ink-2); }
+.tabs { display:flex; gap:2px; border-bottom:1px solid var(--grid); overflow-x:auto; position:sticky; top:0; background:var(--paper); z-index:5; }
+.tab { font:600 14px/1 var(--sans); padding:13px 12px; color:var(--ink-2); border:0; background:none; border-bottom:3px solid transparent; white-space:nowrap; cursor:pointer; }
+.tab[aria-selected="true"] { color:var(--navy); border-bottom-color:var(--teal); }
+.btn { font:600 14px/1 var(--sans); padding:9px 13px; border-radius:var(--r); border:1px solid var(--navy); background:var(--navy); color:var(--on-solid); cursor:pointer; }
+.btn.ghost { background:transparent; color:var(--navy); }
+.btn.sm { padding:6px 9px; font-size:13px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, .tab:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
+.card { background:var(--card); border:1px solid var(--grid); border-radius:var(--r); padding:16px; min-width:0; }
+.grid { display:grid; gap:14px; }
+.g2 { grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+.g3 { grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); }
+.badge { display:inline-flex; align-items:center; gap:5px; font:700 11px/1 var(--sans); letter-spacing:.5px; text-transform:uppercase; padding:5px 7px; border-radius:3px; border:1px solid transparent; white-space:nowrap; }
+.badge.dot::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.b-good { background:var(--good-bg); color:var(--good-text); border-color:var(--good); }
+.b-neutral { background:var(--neutral-bg); color:var(--neutral-text); border-color:var(--neutral); }
+.b-risk { background:var(--risk-bg); color:var(--risk-text); border-color:var(--risk); }
+.b-moat { background:var(--navy); color:var(--on-solid); }
+.b-conf { color:var(--ink-2); border-color:var(--grid); }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th,td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--grid); vertical-align:top; }
+th { font-weight:600; color:var(--ink-2); font-size:12px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; }
+td.r, th.r { text-align:right; }
+.tbl { overflow-x:auto; }
+th.sort { cursor:pointer; user-select:none; }
+th.sort:hover { color:var(--ink); }
+th.sort[aria-sort="ascending"] button::after { content:" ▲"; }
+th.sort[aria-sort="descending"] button::after { content:" ▼"; }
+th.sort button { all:inherit; cursor:pointer; }
+.note-exp { border-left:4px solid var(--risk); }
+tr.click { cursor:pointer; }
+tr.click:hover td { background:var(--hover); }
+.layout { display:grid; grid-template-columns:290px 1fr; gap:18px; align-items:start; margin-top:14px; }
+@media (max-width:900px) { .layout { grid-template-columns:1fr; } }
+.layout > * { min-width:0; }
+.layout.noset { grid-template-columns:1fr; }
+.layout.noset > .controls { display:none; }
+.tgroup { display:flex; flex-direction:column; padding:0 6px; }
+.tgroup + .tgroup { border-left:1px solid var(--grid); }
+.tglabel { font:600 10px/1 var(--sans); text-transform:uppercase; letter-spacing:.6px; color:var(--ink-2); padding:8px 12px 0; }
+.tgroup > div { display:flex; gap:2px; }
+.note-scn { border-left:4px solid var(--teal); }
+.tot { font-size:12px; margin:-2px 0 8px; color:var(--ink-2); }
+.tot.bad { color:var(--risk); font-weight:600; }
+.ctlnote { font-size:13px; background:var(--paper); border:1px solid var(--grid); border-left:3px solid var(--teal); padding:8px 10px; border-radius:var(--r); margin-bottom:10px; }
+fieldset.ctl-set { border:0; padding:0; margin:0; min-width:0; }
+fieldset.ctl-set[disabled] { opacity:.45; }
+.scn-eval { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-top:10px; }
+.scn-eval div { background:var(--paper); border:1px solid var(--grid); border-radius:var(--r); padding:8px 10px; }
+.scn-eval b { display:block; font:600 18px/1.2 var(--serif, var(--sans)); color:var(--navy); }
+.scn-eval span { font-size:12px; color:var(--ink-2); }
+.listwrap { max-height:calc(100vh - 110px); overflow:auto; scroll-margin-top:84px; border:1px solid var(--grid); border-radius:var(--r); }
+.listwrap thead th { position:sticky; top:0; background:var(--card); z-index:2; box-shadow:0 1px 0 var(--grid); }
+.topscroll { overflow-x:auto; overflow-y:hidden; height:14px; margin-bottom:4px; }
+.topscroll > div { height:1px; }
+td.reason { max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@media (max-width:640px) { .hm { display:none; } .tab { padding:12px 9px; } }
+.controls { position:sticky; top:72px; max-height:calc(100vh - 84px); overflow:auto; }
+@media (max-width:900px) { .controls { position:static; max-height:none; } }
+.ctl { margin-bottom:12px; }
+.ctl label { display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:var(--ink); }
+.ctl input[type=range] { width:100%; accent-color:var(--teal); }
+.seg { display:inline-flex; border:1px solid var(--grid); border-radius:var(--r); overflow:hidden; }
+.seg button { font:600 12px/1 var(--sans); padding:6px 8px; color:var(--ink-2); background:transparent; border:0; cursor:pointer; }
+.seg button.on { background:var(--teal); color:var(--on-solid); }
+.rule { display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; padding:7px 0; border-bottom:1px solid var(--grid); font-size:13px; }
+.rule input { width:64px; font:13px var(--sans); padding:3px 5px; border:1px solid var(--grid); border-radius:3px; background:var(--paper); color:var(--ink); }
+input[type=search], select, input[type=text] { font:14px var(--sans); padding:8px 10px; border:1px solid var(--grid); border-radius:var(--r); background:var(--paper); color:var(--ink); }
+.toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+.mini { display:inline-flex; gap:2px; vertical-align:middle; }
+.mini i { display:block; width:9px; height:16px; border-radius:1px; background:var(--grid); }
+.mini i.on { background:var(--teal); }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:12px 0; }
+.kpi { background:var(--card); border:1px solid var(--grid); border-radius:var(--r); padding:12px; }
+.kpi b { display:block; font:600 26px/1.1 var(--serif); color:var(--navy); font-variant-numeric:tabular-nums; }
+.kpi span { font-size:12px; color:var(--ink-2); }
+.chg { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.chart-scroll { overflow-x:auto; }
+svg.chart { width:100%; min-width:420px; height:auto; display:block; }
+svg.chart text { font-family:var(--sans); fill:var(--ink-2); font-size:11px; font-variant-numeric:tabular-nums; }
+.ctitle { font:600 15px/1.3 var(--serif); color:var(--ink); margin:0 0 2px; }
+.csub, .csrc { font-size:12px; color:var(--ink-2); margin:0 0 6px; }
+.csrc { margin-top:4px; }
+.obs { display:grid; grid-template-columns:78px 1fr; gap:10px; padding:9px 0; border-bottom:1px solid var(--grid); font-size:14px; }
+.obs:last-child { border-bottom:0; }
+.funnel-row { display:grid; grid-template-columns:minmax(160px,1fr) 2fr 70px; gap:10px; align-items:center; padding:7px 0; border-bottom:1px solid var(--grid); font-size:14px; }
+.funnel-bar { height:18px; background:var(--navy); border-radius:2px; }
+.funnel-bar.hl { background:var(--teal); }
+.learn h3 { margin-top:0; }
+.formula { font-family:ui-monospace,Menlo,monospace; font-size:13px; background:var(--paper); border:1px solid var(--grid); padding:8px 10px; border-radius:var(--r); overflow-x:auto; }
+.diagram { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:8px 0; font-size:13px; }
+.diagram .box { border:1px solid var(--navy); color:var(--navy); padding:5px 8px; border-radius:3px; background:var(--paper); }
+.diagram .op { color:var(--ink-2); font-weight:700; }
+.empty { border:1px dashed var(--grid); padding:18px; border-radius:var(--r); color:var(--ink-2); }
+.hide { display:none !important; }
+.disclaimer { margin-top:36px; padding-top:12px; border-top:2px solid var(--navy); font-size:12px; color:var(--ink-2); }
+.back { margin:14px 0 0; }
+.score-big { font:600 40px/1 var(--serif); color:var(--navy); font-variant-numeric:tabular-nums; }
+.hdr { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; justify-content:space-between; }
+details summary { cursor:pointer; font-weight:600; color:var(--navy); }
+@media print { body { background:#fff; } .tabs, .controls, .btn, .bar button { display:none !important; } }
+</style></head>
+<body><div class="wrap"><header class="bar"><span class="wordmark"><span>Moat Momentum</span></span><span class="tagline">v3.0 design spec · reading copy of docs/specs/2026-11-04-moat-map-v3-design.md</span></header>
+<h1>Moat Momentum v3.0 · Moat Map and Expectation Gap — design spec</h1>
+<p>Status: design approved by Jitti in chat, 2026-11-04. Written spec for review; no v3.0 code yet.</p>
+<p>Reading copy: <code>output/moat_map_v3_spec.html</code>. Based on the framework review <code>output/signal_framework_review.pdf</code> (stages 1 and 3; stages 2, 4 and 5 out of scope).</p>
+<h2>1. Goal</h2>
+<ul>
+<li><b>Stage 1 · Financial momentum:</b> is the business getting better? One visual signal, the <b>Moat Map</b> (clean ROIC above the hurdle against revenue growth, with each company&#x27;s trail), instead of more settings.</li>
+<li><b>Stage 3 · Expectation gap:</b> is the improvement already priced in? Compare the growth the share price implies with the growth the company is delivering.</li>
+<li><b>Product rule:</b> v1.1 stays the main ranking and v2.0 stays an experimental list. v3.0 adds a view, columns and lists. It replaces nothing unless a later test supports it.</li>
+</ul>
+<h2>2. Positions on the Moat Map</h2>
+<p>At each date, for each company, using only filings made on or before that date (existing point-in-time store) and 12-month figures (TTM: the latest 10-Q or 10-K; <code>mm_quarterly.ttm_panel</code>).</p>
+<div class="tbl"><table><thead><tr><th>Item</th><th>Definition</th></tr></thead><tbody><tr><td>x · revenue growth</td><td>3-year revenue growth a year = (revenue TTM now ÷ revenue TTM 12 quarters earlier)^(1/3) − 1; missing if the earlier revenue is missing or ≤ 0</td></tr><tr><td>y · return above hurdle</td><td>clean ROIC (TTM, <code>roic_ttm</code>) − 9%</td></tr><tr><td>Industry median x</td><td>median x of universe companies in the same industry group (v1.x SIC grouping) at that date</td></tr><tr><td><b>Top-right (&quot;Compounder&quot;)</b></td><td>x ≥ 10% <b>and</b> y ≥ 0 <b>and</b> x &gt; industry median x</td></tr><tr><td>Other quadrants (chart labels only)</td><td>&quot;Profitable, slow&quot; (y ≥ 0, x &lt; 10%); &quot;Growing, below hurdle&quot; (y &lt; 0, x ≥ 10%); &quot;Neither&quot; (y &lt; 0, x &lt; 10%)</td></tr><tr><td>Distance to the corner d</td><td>max(0, 10% − x) + max(0, −y), in percentage points (0 inside the corner)</td></tr><tr><td>Trail</td><td>x and y at the same quarter 1, 2, 3, 4 and 5 years earlier (period ends matched within ±20 days)</td></tr></tbody></table></div>
+<p>The chart line is drawn at x = 10% and y = 0 for every view. The industry-median condition applies to the signal only, and the Deep-Dive marks the industry median with a second, dashed line.</p>
+<h2>3. Movement rules (fixed before any run)</h2>
+<p>&quot;A year earlier&quot; = the company&#x27;s point 4 quarters earlier. A rule needs both points; companies without the earlier point are not in it.</p>
+<div class="tbl"><table><thead><tr><th>Rule</th><th>Definition</th></tr></thead><tbody><tr><td><b>R1 Entered</b></td><td>top-right now and not top-right a year earlier</td></tr><tr><td><b>R2 Moving toward</b></td><td>not top-right now; x and y both higher than a year earlier; d fell by at least 5 points over the year; d now ≤ 10 points</td></tr><tr><td><b>R3 Improving and not priced in</b></td><td>(R1 or R2) and Expectation Gap &gt; 0; companies with no gap are excluded</td></tr></tbody></table></div>
+<p><b>Rule list</b> = every universe company meeting the rule at that date.</p>
+<p><b>Top 25</b> = the 25 from the rule list that pass the existing v1.1 risk gate (no Remove rule hit), ranked by distance moved (d a year earlier − d now), highest first; ties broken by y, highest first.</p>
+<h2>4. Valuation and Expectation Gap</h2>
+<div class="tbl"><table><thead><tr><th>Item</th><th>Definition</th></tr></thead><tbody><tr><td>Market value</td><td>price × shares outstanding from the latest filing cover page (dei), else diluted shares; hidden if below 0.2% or above 200× of revenue TTM (existing <code>mm_valuation</code> sanity check)</td></tr><tr><td>Price</td><td><b>Back-test:</b> Yahoo Finance adjusted close at the last month-end <b>before</b> the date. <b>Live:</b> Yahoo Finance close of the previous trading day, retrieved on the run date</td></tr><tr><td>EV</td><td>market value + debt (including finance leases) − cash and short-term investments, from the latest filing&#x27;s balance sheet (same definitions as invested capital)</td></tr><tr><td>EV/Sales</td><td>EV ÷ revenue TTM</td></tr><tr><td>EV/clean EBIT</td><td>EV ÷ clean operating income TTM; none if ≤ 0</td></tr><tr><td>Clean P/E</td><td>market value ÷ clean net income TTM; none if ≤ 0</td></tr><tr><td>FCF yield</td><td>FCF TTM ÷ market value</td></tr></tbody></table></div>
+<p><b>Reverse DCF (implied growth g):</b></p>
+<ul>
+<li>R₀ = revenue TTM; m = clean operating margin TTM × (1 − 21%); ROIC = clean ROIC TTM.</li>
+<li>For years t = 1…10: FCF_t = R₀(1+g)^t × m × (1 − g ÷ ROIC).</li>
+<li>Terminal: FCF₁₁ = R₁₀ × 1.03 × m × (1 − 0.03 ÷ ROIC); terminal value = FCF₁₁ ÷ (9% − 3%).</li>
+<li>Value(g) = Σ FCF_t ÷ 1.09^t + terminal value ÷ 1.09^10.</li>
+<li><b>Implied g</b> = the first g, scanning upward from −20% to +60% in steps of 0.1 point, at which Value(g) − EV changes sign, refined by linear interpolation between the two steps.</li>
+<li><b>None (&quot;n/a&quot;)</b> when clean operating income ≤ 0, ROIC ≤ 0, EV ≤ 0, or there is no sign change in the range.</li>
+<li><b>Expectation Gap</b> = x − implied g. Positive means the company has grown faster than the price assumes.</li>
+</ul>
+<p>Fixed assumptions, shown on the page: horizon 10 years, discount rate 9%, terminal growth 3%, tax 21%.</p>
+<h2>5. Leading items (shown, not tested)</h2>
+<div class="tbl"><table><thead><tr><th>Item</th><th>SEC tags (first present)</th><th>Shown as</th></tr></thead><tbody><tr><td>Backlog (remaining performance obligations)</td><td>RevenueRemainingPerformanceObligation</td><td>growth over 4 quarters vs revenue growth</td></tr><tr><td>Deferred revenue</td><td>ContractWithCustomerLiability (+ …Current), DeferredRevenue, DeferredRevenueCurrent</td><td>growth over 4 quarters vs revenue growth</td></tr><tr><td>R&amp;D intensity</td><td>ResearchAndDevelopmentExpense (existing tag list)</td><td>R&amp;D TTM ÷ revenue TTM</td></tr><tr><td>Capex intensity</td><td>PaymentsToAcquirePropertyPlantAndEquipment / …ProductiveAssets (existing)</td><td>capex TTM ÷ revenue TTM</td></tr></tbody></table></div>
+<p>Coverage of today&#x27;s universe (read on 2026-11-04 from the bulk file retrieved 2026-11-03): backlog 37% (none before 2018), deferred revenue 82% (31% back to 2014), R&amp;D 54%, capex 97%. The page shows each item&#x27;s live coverage. A missing item is shown as &quot;not reported&quot;, never as zero. These items do not enter R1–R3 or the test.</p>
+<h2>6. Test (rules above fixed; nothing tuned)</h2>
+<ul>
+<li><b>Dates:</b> quarterly, 2021-03-15 to 2023-08-15 (11 dates). These are the dates with a full 3-year outcome. There is no training period, because the rules have no fitted parameters.</li>
+<li><b>Universe:</b> universe B as in v1.1/v2.0 back-tests (no exchange filter in the past).</li>
+<li><b>Winner:</b> the existing moat-compounder label (<code>mm_outcomes.label</code>, as fixed on 2026-11-04). Missing data means &quot;no outcome&quot;.</li>
+<li><b>Pass (each of R1, R2, R3, on the whole rule list):</b></li>
+<ul>
+<li>its compounder rate ≥ 2.0× the rate of the rest of the universe, pooled over the 11 dates; <b>and</b></li>
+<li>higher than the rest in each screen year 2021, 2022 and 2023.</li>
+</ul>
+<li><b>Reported, not deciding:</b></li>
+<ul>
+<li>top-25 lists;</li>
+<li>v1.1 (top 10% by Moat Score, and top 25 after the risk gate) and v2.0 (top 10% and top 25 by Compounder Signal) on the same 11 dates and measure;</li>
+<li>12-month share return from the month-end after each date against the S&amp;P 500 total return, for dates 2021-03-15 to 2025-08-15, top 25 equal weight, with the three missing-price cases (survivors, neutral, worst);</li>
+<li>share of each rule list still top-right 4 quarters later (dates to 2025-08-15);</li>
+<li>results without COVID rebounds (revenue TTM more than 20% below its best of the previous 8 quarters).</li>
+</ul>
+<li><b>If a rule fails:</b> published as failed in the Proof tab; nothing is re-tuned on these years. The Moat Map view still ships as a description.</li>
+<li><b>Output:</b> <code>output/data/v3_test.json</code>; track record <code>track_record/&lt;as_of&gt;_v3.0.json</code> with today&#x27;s top 25 of R1, R2 and R3.</li>
+</ul>
+<h2>7. Product</h2>
+<ul>
+<li><b>Screener:</b> new tab &quot;Moat Map (v3.0)&quot; next to Early Moat, Proven Leaders, Strict Risk and Compounder.</li>
+<ul>
+<li><b>Scatter</b> of the universe, or one industry chosen in a dropdown. Lines at x = 10% and y = 0 and labelled quadrants. Axes capped at the 2nd and 98th percentiles, with outliers pinned to the edge and marked.</li>
+<li><b>Dot colour</b> = Expectation Gap: green above 0, red below 0, deeper colour as the gap grows, capped at ±20 points; grey when there is no gap. <b>Dot size</b> = market value (square root, 3–12 px).</li>
+<li><b>Interaction:</b> hover shows the name, x, y, gap and quadrant. Click shows the 5-year trail and opens a link to the Deep-Dive.</li>
+<li><b>Filter chips:</b> All · R1 · R2 · R3 · &quot;Improving and gap positive&quot; (= R3).</li>
+<li><b>Table below the chart:</b> quadrant, movement (R1/R2), x, y, distance moved, EV/Sales, EV/clean EBIT, P/E, FCF yield, implied growth, gap, market value. Sortable, with the existing industry and market-value filters.</li>
+<li><b>Box above the chart:</b> what the view shows, and the v3.0 test result once it exists (pass/fail first).</li>
+</ul>
+<li><b>Deep-Dive:</b> a Moat Map card with the company&#x27;s 5-year trail against its industry&#x27;s current dots, the valuation block (EV, multiples, implied growth, gap, assumptions), and the leading items with &quot;not reported&quot; where missing.</li>
+<li><b>Terminology:</b> plain-language entries for Moat Map, the four quadrants, R1–R3, EV and the multiples, reverse DCF, implied growth and Expectation Gap.</li>
+<li><b>Proof:</b> a v3.0 section: pass or fail per rule first, then the comparison with v1.1 and v2.0, the reported results and every miss.</li>
+<li><b>Methodology:</b> v3.0 change-log row and the fixed assumptions.</li>
+<li><b>spec.md:</b> §3 notes that Yahoo prices are now also used for the Expectation Gap (a valuation view), never inside the Moat Score.</li>
+<li><b>Sheet:</b> <code>output/sheet/moatmap.csv</code> and a &quot;Moat Map (v3.0)&quot; tab importing it.</li>
+<li><b>Sources:</b> every number carries its source and date: SEC EDGAR (bulk retrieved date) and Yahoo Finance (close date, retrieved date).</li>
+<li><b>Checks:</b> the page is checked in the browser in light, dark and phone width (375 px, no horizontal page scroll) before it is called done.</li>
+</ul>
+<h2>8. Components</h2>
+<div class="tbl"><table><thead><tr><th>Unit</th><th>Does</th><th>Depends on</th></tr></thead><tbody><tr><td><code>mm_moatmap.py</code> (new)</td><td>x, y, quadrant, industry median, distance, trail, R1/R2 for one date</td><td><code>mm_quarterly.ttm_panel</code>, <code>mm_signals</code>/<code>mm_score</code> (universe, industry group, gate)</td></tr><tr><td><code>mm_revdcf.py</code> (new)</td><td>implied growth and gap for given inputs</td><td>none (pure function)</td></tr><tr><td><code>mm_valuation.py</code> (extended)</td><td>EV and multiples; point-in-time market value at a date</td><td>prices cache, cover shares, <code>ttm_panel</code></td></tr><tr><td><code>mm_extract.py</code> (extended)</td><td>deferred revenue and backlog facts → <code>data/cache/mm/leading.pkl</code></td><td>bulk companyfacts</td></tr><tr><td><code>mm_v3_test.py</code> (new)</td><td>the test in section 6 → <code>v3_test.json</code></td><td>the units above, <code>mm_outcomes</code>, discovery rows (v1.1/v2.0 comparison), prices</td></tr><tr><td><code>mm_run.py</code>, <code>mm_track.py</code>, <code>mm_sheet_payload.py</code>, <code>mm_proof.py</code>, web page (updated)</td><td>live v3.0 data, freeze, Sheet, Proof, views</td><td>all of the above</td></tr></tbody></table></div>
+<p>Testing: unit tests for x/y/quadrant (including the industry-median condition), distance, R1/R2/R3 edge cases (missing earlier point, exact thresholds), the reverse DCF (a hand-checked case, the n/a cases, the scan picking the first root), EV and multiples with missing items, and the point-in-time price (month-end before the date).</p>
+<h2>9. Limits</h2>
+<ul>
+<li>2021–2023 is one period; dates a quarter apart share most companies, so results are judged per year.</li>
+<li>The 3-year growth at 2021 dates still compares with pre-COVID years, and 12-month figures in 2021 include the rebound; the rebound check is reported.</li>
+<li>The reverse DCF is simple on purpose: one margin, one ROIC, fixed rates. It describes what the price implies under those assumptions, not a fair value.</li>
+<li>Yahoo prices miss many companies that no longer trade; returns are bounded with the three cases.</li>
+<li>Leading items are not tested; backlog has no history before 2018.</li>
+</ul></div></body></html>

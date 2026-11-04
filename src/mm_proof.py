@@ -126,6 +126,42 @@ def same_yardstick(kept: dict) -> dict:
     return out
 
 
+def v3_html() -> str:
+    path = ROOT / "output" / "data" / "v3_test.json"
+    if not path.exists():
+        return ""
+    T = json.loads(path.read_text())
+    name = {"r1": "R1 entered top-right", "r2": "R2 moving toward it", "r3": "R3 moving in, not priced in"}
+    yrs = ("2021", "2022", "2023")
+    PASSB, FAILB = '<span class="badge b-good">passed</span>', '<span class="badge b-risk">failed</span>'
+    rows = "".join(
+        f"<tr><td><b>{name[k]}</b></td><td class='r'>{pct(v['list_rate'], 2)}</td><td class='r'>{pct(v['rest_rate'], 2)}</td>"
+        f"<td class='r'><b>{v['multiple']:.2f}×</b></td><td>{' / '.join('yes' if v['by_year'][y]['list'] > v['by_year'][y]['rest'] else 'no' for y in yrs)}</td>"
+        f"<td>{PASSB if v['passed'] else FAILB}</td>"
+        f"<td class='r'>{v['winners_list']} of {v['n_list']}</td></tr>" for k, v in T["rules"].items())
+    t25 = "".join(f"<tr><td>{name[k]} · top 25</td><td class='r'>{v['multiple']:.2f}×</td><td class='r'>{v['winners_list']} of {v['n_list']}</td></tr>" for k, v in T["top25"].items())
+    c = T["compare"]
+    cmp_rows = "".join(f"<tr><td>{lab}</td><td class='r'>{c[k]['multiple']:.2f}×</td><td class='r'>{c[k]['winners']} of {c[k]['n']}</td></tr>"
+                       for k, lab in (("v11_top10", "v1.1 Moat Score · top 10%"), ("v11_top25", "v1.1 Moat Score · top 25"),
+                                      ("v20_top10", "v2.0 Compounder Signal · top 10%"), ("v20_top25", "v2.0 Compounder Signal · top 25")))
+    pr = "".join(f"<tr><td>{name[k]} · top 25</td><td class='r'>{pct(v['avg_neutral'])}</td><td class='r'>{pct(v['avg_worst'])} – {pct(v['avg_survivors'])}</td>"
+                 f"<td class='r'>{pct(v['avg_spx'])}</td><td class='r'>{pct(v['beat_spx_share'], 0)}</td></tr>" for k, v in T["price"].items())
+    nb = ", ".join(f"{name[k].split(' ')[0]} {v['multiple']:.2f}×" for k, v in T["no_rebound"].items())
+    st = T["still_top_right"]
+    sf = T.get("split_fix")
+    fixline = (f"<p><b>Correction (2026-11-04 review):</b> past market values had used split-adjusted prices with share counts from before later splits (NVIDIA in 2021 came out at $8.5B instead of about $338B). Recomputed with splits undone, on the same rows and rules: R3 {sf['r3']['multiple']:.2f}× ({sf['r3']['winners_list']} of {sf['r3']['n_list']}), still <b>failed</b>; R3 top 25 {sf['top25_r3']['multiple']:.2f}×; R3 top-25 12-month return {pct(sf['price_r3']['avg_neutral'])} vs S&amp;P 500 {pct(sf['price_r3']['avg_spx'])}. R1 and R2 do not use prices and are unchanged. The tables below show the original run.</p>"
+               if sf else "")
+    cv = T["coverage"]
+    return f"""<h2>v3.0 Moat Map and Expectation Gap: all three rules failed</h2>
+<div class="card" style="border-left:4px solid var(--risk)"><p style="margin-top:0">The rules were fixed in the spec before any run (docs/specs/2026-11-04-moat-map-v3-design.md) and tested once on 11 quarterly dates, 2021-03-15 to 2023-08-15, using only filings and prices available at each date. Winner = moat compounder within 3 years (the v2.0 label). Pass = the rule's list wins at least 2× as often as the rest, and more often in each of 2021, 2022 and 2023.</p>
+<div class="tbl"><table class="num"><thead><tr><th>Rule</th><th class="r">Became compounders</th><th class="r">Rest</th><th class="r">Multiple</th><th>Beat rest 2021 / 2022 / 2023</th><th>Result</th><th class="r">Winners</th></tr></thead><tbody>{rows}</tbody></table></div>
+{fixline}<p style="margin-bottom:0">Entering or approaching the top-right corner mostly caught companies near a peak (energy in 2021–22 among them), the same pattern as v1.0 and v2.0. The Moat Map ships as a description; its lists are frozen in the track record so live results from 2026 test them again.</p></div>
+<h3>Reported, not deciding</h3>
+<div class="grid g2"><div class="tbl"><table class="num"><thead><tr><th>Same 11 dates, same measure</th><th class="r">vs rest</th><th class="r">Winners</th></tr></thead><tbody>{t25}{cmp_rows}</tbody></table></div>
+<div class="tbl"><table class="num"><thead><tr><th>12-month return, 19 dates 2021–2025</th><th class="r">Average (neutral)</th><th class="r">Worst – survivors</th><th class="r">S&amp;P 500</th><th class="r">Dates beating it</th></tr></thead><tbody>{pr}</tbody></table></div></div>
+<p class="small">Without COVID rebounds: {nb}. Still in the top-right a year later: R1 {pct(st['r1']['share'], 0)}, R2 {pct(st['r2']['share'], 0)}, R3 {pct(st['r3']['share'], 0)}, others {pct(st['rest'], 0)}: positions persist, but that did not lead to compounding. Coverage: map positions {pct(cv['xy'], 0)} of company-dates; implied growth {pct(cv['gap'], 0)} ({pct(cv['gap_among_r1_r2'], 0)} among R1/R2), because the fixed reverse DCF has no answer for losses or when ROIC is below 9%. Past market values use Yahoo month-end adjusted closes, slightly lower than actual for dividend payers. Sources: output/data/v3_test.json; SEC EDGAR bulk retrieved 2026-11-03; Yahoo Finance retrieved 2026-11-03.</p>"""
+
+
 def v2_html() -> str:
     path = ROOT / "output" / "data" / "discovery.json"
     if not path.exists() or "test" not in json.loads(path.read_text()):
@@ -220,6 +256,7 @@ def main() -> None:
                         for r in names.sort_values(["year", "moat_score"], ascending=[True, False]).itertuples())
 
     body = f"""<h1>Proof</h1>
+{v3_html()}
 {v2_html()}
 <h2>v1.0 / v1.1: did a strengthening moat keep strengthening?</h2>
 <p class="muted">Fundamental validation, 2013–2023. Settings were locked before the first run (v1.0, fingerprint in prompts.md round 10); the figures below are re-run with the current v1.1 risk gate (Altman Z'' and Beneish off). v1.0 figures: output/data/archive_v1.0/. Each year the screen was re-run as of 30 June using only filings made by then, including companies that later delisted. Outcomes are read from later 10-Ks. No price data is used.</p>
@@ -281,7 +318,7 @@ def main() -> None:
     (ROOT / "output" / "proof.html").write_text(
         f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Moat Momentum Proof</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet"><style>{css}</style></head>
-<body><div class="wrap"><header class="bar"><span class="wordmark"><span>Moat Momentum</span></span><span class="tagline">Proof · v1.0 – v2.0</span></header>{body}
+<body><div class="wrap"><header class="bar"><span class="wordmark"><span>Moat Momentum</span></span><span class="tagline">Proof · v1.0 – v3.0</span></header>{body}
 <div class="disclaimer">Research tool, not investment advice. Past results do not guarantee future results. Source: SEC EDGAR.</div></div></body></html>""", encoding="utf-8")
     with open(ROOT / "output" / "sheet" / "validation.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
