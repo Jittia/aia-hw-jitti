@@ -45,6 +45,7 @@
 - Fix the success test and its definitions before looking at test-period results; any later check is reported as a second result, not a new pass rule.
 - A document generator must read each result from a fixed, named file (e.g. archive_v1.0) for the version it describes, never "the current results", or a re-run silently mixes versions.
 - Google Slides `updateSlidesPosition` counts the insertion index in the order before the move; read the slide order back after moving a slide.
+- When a control has no effect in the current view, disable it and say why on screen; a control that silently does nothing looks like a bug.
 - Cross-check the OperatingIncomeLoss tag against revenue − CostsAndExpenses; some filers tag a segment total.
 - Fingerprint settings and scoring code before a validation run, and report every variant tried, including results against the hypothesis.
 - Test a "momentum" signal against companies with the same starting level, not only against the industry median; otherwise picking already-strong companies looks like skill.
@@ -256,4 +257,11 @@
 - **สาเหตุ:** `updateSlidesPosition` counts the insertion index in the slide order before the move, so index 7 put it at position 6.
 - **แก้อย่างไร:** Read the order back and moved it with index 8. Now always read the order back after moving a slide.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Counting the target position after removing the slide.
+
+### 2026-11-04 · Screener settings looked broken
+
+- **เจออะไร:** I changed weights but the list did not change.
+- **สาเหตุ:** I was on the Compounder list, which is fixed and does not use the settings; the page did not say so. The settings could also total more or less than 100% without any warning.
+- **แก้อย่างไร:** Settings are greyed out on the Compounder tab with a note. Totals are shown and the list pauses until both reach 100%.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** —
 

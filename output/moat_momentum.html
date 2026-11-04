@@ -76,8 +76,29 @@ tr.click:hover td { background:var(--hover); }
 .layout { display:grid; grid-template-columns:290px 1fr; gap:18px; align-items:start; margin-top:14px; }
 @media (max-width:900px) { .layout { grid-template-columns:1fr; } }
 .layout > * { min-width:0; }
+.layout.noset { grid-template-columns:1fr; }
+.layout.noset > .controls { display:none; }
+.tgroup { display:flex; flex-direction:column; padding:0 6px; }
+.tgroup + .tgroup { border-left:1px solid var(--grid); }
+.tglabel { font:600 10px/1 var(--sans); text-transform:uppercase; letter-spacing:.6px; color:var(--ink-2); padding:8px 12px 0; }
+.tgroup > div { display:flex; gap:2px; }
+.note-scn { border-left:4px solid var(--teal); }
+.tot { font-size:12px; margin:-2px 0 8px; color:var(--ink-2); }
+.tot.bad { color:var(--risk); font-weight:600; }
+.ctlnote { font-size:13px; background:var(--paper); border:1px solid var(--grid); border-left:3px solid var(--teal); padding:8px 10px; border-radius:var(--r); margin-bottom:10px; }
+fieldset.ctl-set { border:0; padding:0; margin:0; min-width:0; }
+fieldset.ctl-set[disabled] { opacity:.45; }
+.scn-eval { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-top:10px; }
+.scn-eval div { background:var(--paper); border:1px solid var(--grid); border-radius:var(--r); padding:8px 10px; }
+.scn-eval b { display:block; font:600 18px/1.2 var(--serif, var(--sans)); color:var(--navy); }
+.scn-eval span { font-size:12px; color:var(--ink-2); }
+.listwrap { max-height:calc(100vh - 110px); overflow:auto; scroll-margin-top:84px; border:1px solid var(--grid); border-radius:var(--r); }
+.listwrap thead th { position:sticky; top:0; background:var(--card); z-index:2; box-shadow:0 1px 0 var(--grid); }
+.topscroll { overflow-x:auto; overflow-y:hidden; height:14px; margin-bottom:4px; }
+.topscroll > div { height:1px; }
+td.reason { max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 @media (max-width:640px) { .hm { display:none; } .tab { padding:12px 9px; } }
-.controls { position:sticky; top:52px; max-height:calc(100vh - 64px); overflow:auto; }
+.controls { position:sticky; top:72px; max-height:calc(100vh - 84px); overflow:auto; }
 @media (max-width:900px) { .controls { position:static; max-height:none; } }
 .ctl { margin-bottom:12px; }
 .ctl label { display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:var(--ink); }
@@ -231,7 +252,15 @@ const filingUrl = (cik, accn) => `https://www.sec.gov/Archives/edgar/data/${cik}
 // ---------- state ----------
 let saved = {}; try { saved = JSON.parse(localStorage.getItem("mm-scenarios") || "{}"); } catch (e) {}
 const state = { s: clone(DEFAULT), view: "screener", filter: "shortlist", q: "", base: null, res: null, cik: null,
-  list: "moat", ind: "", cap: "all", sort: {key: "pos", dir: 1} };
+  list: "moat", ind: "", cap: "all", sort: {key: "pos", dir: 1}, scenario: "Early Moat — Default", hideSet: false };
+let _ls = null; try { _ls = localStorage.getItem("mm-hide-settings"); } catch (e) {}
+state.hideSet = _ls === null ? window.innerWidth < 760 : _ls === "1";
+const LIST_TABS = [["Early Moat — Default", "Early Moat"], ["Proven Leaders", "Proven Leaders"], ["Strict Risk", "Strict Risk"], ["Compounder", "Compounder"]];
+const SCN_BRIEF = {
+  "Early Moat — Default": "Default (Methodology v1.1). Each indicator is ranked in its industry on level 30%, 5-year trend 50% and consistency 20%; themes weigh value 25, pricing 20, scale 15, peers 20, quality 20. A company needs at least 3 of 5 themes improving. Risk gate: interest cover below 3x removes it; high debt, dilution, stock pay and bought growth cost 5 points each; Altman Z'' and Beneish are off.",
+  "Proven Leaders": "Same as Early Moat, but level counts 70%, trend 20% and consistency 10%: it favours companies that are already strong today over those that are improving fastest.",
+  "Strict Risk": "Same as Early Moat, but every risk rule removes the company instead of costing points, including Altman Z'' (distress) and Beneish (earnings manipulation).",
+};
 const CAPS = [["all", "All sizes", 0, Infinity], ["mega", "Mega ≥ $200B", 2e11, Infinity], ["large", "Large $10–200B", 1e10, 2e11],
   ["mid", "Mid $2–10B", 2e9, 1e10], ["small", "Small $300M–2B", 3e8, 2e9], ["micro", "Micro < $300M", 0, 3e8], ["na", "Market value not available", null, null]];
 const fpe = v => v === null || v === undefined || !isFinite(v) ? "–" : v >= 100 ? Math.round(v).toString() : v.toFixed(1);
@@ -240,9 +269,12 @@ function recompute() { state.res = compute(state.s); }
 recompute();
 
 // ---------- tabs ----------
-const TABS = [["screener","Screener"],["deepdive","Deep-Dive"],["how","How it works"],["learn","Learn"],["scenarios","Scenarios"],["proof","Proof"],["track","Track record"],["method","Methodology"],["demo","Demo"]];
+const TAB_GROUPS = [["Action", [["screener","Screener"],["deepdive","Deep-Dive"],["learn","Terminology"]]],
+  ["Design", [["how","How it works"],["method","Methodology"],["demo","Demo"]]],
+  ["Evaluation", [["scenarios","Scenarios"],["proof","Proof"],["track","Track record"]]]];
 function renderTabs() {
-  document.getElementById("tabs").innerHTML = TABS.map(([k, n]) => `<button class="tab" role="tab" aria-selected="${state.view === k}" data-tab="${k}">${n}</button>`).join("");
+  document.getElementById("tabs").innerHTML = TAB_GROUPS.map(([g, tabs]) => `<div class="tgroup" role="group" aria-label="${g}"><span class="tglabel">${g}</span><div>${
+    tabs.map(([k, n]) => `<button class="tab" role="tab" aria-selected="${state.view === k}" data-tab="${k}">${n}</button>`).join("")}</div></div>`).join("");
 }
 document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) go(b.dataset.tab); });
 function go(view, cik) { state.view = view; if (cik) state.cik = cik; location.hash = view === "deepdive" && state.cik ? `deepdive/${state.cik}` : view; render(); window.scrollTo(0, 0); }
@@ -259,15 +291,20 @@ function render() {
 function controlsHtml() {
   const s = state.s, b = s.scoring.blend, w = s.scoring.theme_weights;
   const slider = (id, label, val, min, max, step = 1) => `<div class="ctl"><label for="${id}"><span>${label}</span><span class="num" id="${id}-v">${val}</span></label><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}"></div>`;
+  const comp = state.list === "comp", ok = weightsOk(s);
   return `<div class="card controls" id="controls">
     <h3 style="margin-top:0">Settings</h3>
+    ${comp ? `<div class="ctlnote">These settings apply to the Moat Score scenarios (Early Moat, Proven Leaders, Strict Risk and your own). The Compounder list is fixed. Pick a Moat Score tab to adjust and re-rank.</div>` : ""}
+    <fieldset class="ctl-set" ${comp ? "disabled" : ""}>
     <div class="ctl"><label><span>Scenario</span></label><select id="preset" style="width:100%">${Object.keys(PRESETS).concat(Object.keys(saved)).map(n => `<option>${esc(n)}</option>`).join("")}</select></div>
     <h4 style="margin:10px 0 4px;font-size:14px">Blend</h4>
     ${slider("bL", "Level (latest year)", b.level, 0, 100)}
     ${slider("bT", "Trend (5-yr slope)", b.trend, 0, 100)}
     ${slider("bC", "Consistency (yrs improved)", b.consistency, 0, 100)}
+    <div class="tot" id="totB"></div>
     <h4 style="margin:10px 0 4px;font-size:14px">Theme weights</h4>
     ${THEMES.map(t => slider("w_" + t.key, t.name, w[t.key], 0, 50)).join("")}
+    <div class="tot" id="totW"></div>
     <h4 style="margin:10px 0 4px;font-size:14px">Confirmation</h4>
     ${slider("conf", "Themes improving needed", s.scoring.confirm_themes, 1, 5)}
     ${slider("imprank", "Improving if theme trend rank ≥", s.scoring.improving_rank, 40, 90, 5)}
@@ -277,10 +314,24 @@ function controlsHtml() {
     ${RULES.map(r => { const g = s.risk_gate[r.key]; const t = thr(s, r); return `<div class="rule"><span>${r.label}<br><span class="small">${r.side} <input type="number" step="any" data-thr="${r.key}" value="${r.unit === "%" ? +(t * 100).toFixed(2) : t}" aria-label="${r.label} threshold">${r.unit === "%" ? "%" : r.unit}</span></span>
       <span class="seg" data-mode="${r.key}">${["off","flag","remove"].map(mo => `<button type="button" class="${g.mode === mo ? "on" : ""}" data-m="${mo}">${mo[0].toUpperCase() + mo.slice(1)}</button>`).join("")}</span></div>`; }).join("")}
     <div class="toolbar" style="margin-top:12px"><button class="btn ghost sm" id="reset" type="button">Reset to default</button></div>
+    <h4 style="margin:12px 0 4px;font-size:14px">Save as a new scenario</h4>
+    <div class="toolbar"><input type="text" id="newname" placeholder="Scenario name" maxlength="40" style="flex:1;min-width:0" aria-label="New scenario name">
+      <button class="btn sm" id="savescn" type="button" ${ok ? "" : "disabled"}>Save</button></div>
+    <p class="small" id="savemsg" style="margin:0">Saved in this browser; it appears as a tab above the list.</p>
+    </fieldset>
   </div>`;
 }
 function bindControls() {
   const s = state.s, on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener("input", () => { document.getElementById(id + "-v").textContent = el.value; fn(+el.value); update(); }); };
+  showTotals();
+  document.getElementById("savescn").addEventListener("click", () => {
+    const n = document.getElementById("newname").value.trim(), msg = document.getElementById("savemsg");
+    if (!n) { msg.textContent = "Type a name first."; return; }
+    if (PRESETS[n] || n === "Compounder") { msg.textContent = "That name is taken by a built-in scenario; choose another."; return; }
+    if (!weightsOk(state.s)) { msg.textContent = "Weights must total 100% before saving."; return; }
+    saved[n] = clone(state.s); try { localStorage.setItem("mm-scenarios", JSON.stringify(saved)); } catch (e) {}
+    state.scenario = n; state.list = "moat"; render();
+  });
   on("bL", v => s.scoring.blend.level = v); on("bT", v => s.scoring.blend.trend = v); on("bC", v => s.scoring.blend.consistency = v);
   THEMES.forEach(t => on("w_" + t.key, v => s.scoring.theme_weights[t.key] = v));
   on("conf", v => s.scoring.confirm_themes = v); on("imprank", v => s.scoring.improving_rank = v);
@@ -289,18 +340,39 @@ function bindControls() {
   document.querySelectorAll("[data-mode]").forEach(el => el.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b) return; s.risk_gate[el.dataset.mode].mode = b.dataset.m; el.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); update(); }));
   document.getElementById("reset").addEventListener("click", () => { state.s = clone(DEFAULT); recompute(); render(); });
   const p = document.getElementById("preset");
-  p.addEventListener("change", () => { state.s = clone(PRESETS[p.value] || saved[p.value]); state.scenario = p.value; recompute(); render(); });
+  p.addEventListener("change", () => { state.s = clone(PRESETS[p.value] || saved[p.value]); state.scenario = p.value; state.list = "moat"; state.filter = "shortlist"; recompute(); render(); });
   if (state.scenario) p.value = state.scenario;
 }
-function update() { recompute(); renderTable(); }
+function sumOf(o) { return Object.values(o).reduce((a, b) => a + (+b || 0), 0); }
+function weightsOk(s) { return sumOf(s.scoring.blend) === 100 && sumOf(s.scoring.theme_weights) === 100; }
+function showTotals() {
+  const s = state.s, b = sumOf(s.scoring.blend), w = sumOf(s.scoring.theme_weights);
+  const put = (id, label, v) => { const el = document.getElementById(id); if (!el) return; el.className = "tot" + (v === 100 ? "" : " bad");
+    el.textContent = v === 100 ? `${label} total 100%` : `${label} total ${v}%: must be exactly 100% (${v > 100 ? "remove " + (v - 100) : "add " + (100 - v)})`; };
+  put("totB", "Blend", b); put("totW", "Theme weights", w);
+  const sv = document.getElementById("savescn"); if (sv) sv.disabled = !weightsOk(s);
+}
+function update() {
+  showTotals();
+  if (!weightsOk(state.s)) { renderBlocked(); return; }
+  recompute(); renderTable();
+}
+function renderBlocked() {
+  document.getElementById("expnote").innerHTML = `<div class="card note-exp" style="margin-bottom:12px"><p style="margin:0"><b>Results paused.</b> Blend and theme weights must each total exactly 100% before the list is re-ranked. Current totals: blend ${sumOf(state.s.scoring.blend)}%, theme weights ${sumOf(state.s.scoring.theme_weights)}%.</p></div>`;
+  document.getElementById("kpis").innerHTML = ""; document.getElementById("chg").innerHTML = ""; document.getElementById("chg").style.display = "none";
+  document.getElementById("tbl").innerHTML = ""; document.getElementById("tblnote").textContent = "";
+  const ts = document.getElementById("topscroll"); if (ts) ts.style.visibility = "hidden";
+}
 function viewScreener(m) {
   const inds = {}; COMP.forEach(c => { inds[c.sic_desc] = (inds[c.sic_desc] || 0) + 1; });
   const indOpts = Object.keys(inds).filter(Boolean).sort().map(k => `<option value="${esc(k)}" ${state.ind === k ? "selected" : ""}>${esc(k)} (${inds[k]})</option>`).join("");
   const V2 = META.compounder;
   m.innerHTML = `<h1>Screener</h1>
-  <p class="muted">Two lists from the same SEC data. <b>Moat Score</b> (Methodology ${META.methodology}): companies whose moat is strengthening; move any setting and it re-ranks at once. <b>Compounder candidates</b> (v2.0, experimental): quarterly signals chosen on 2013–2019. Click a company for its Deep-Dive; click a column header to sort.</p>
-  <div class="layout">${controlsHtml()}<div>
-    <div class="toolbar"><span class="seg" id="lst">${[["moat", "Moat Score list"], ["comp", "Compounder candidates (experimental)"]].map(([k, n]) => `<button type="button" data-l="${k}" class="${state.list === k ? "on" : ""}">${n}</button>`).join("")}</span></div>
+  <p class="muted">Pick a scenario tab to see its list, what it does and how it did in the back-test. Early Moat, Proven Leaders and Strict Risk are versions of the Moat Score (Methodology ${META.methodology}); Compounder is the experimental v2.0 signal. Click a company for its Deep-Dive; click a column header to sort.</p>
+<div class="toolbar"><button class="btn ghost sm" id="togset" type="button" aria-expanded="${!state.hideSet}">${state.hideSet ? "Show settings" : "Hide settings"}</button>
+      <span class="seg" id="lst" role="tablist" aria-label="Scenario">${listTabs().map(([k, n]) => `<button type="button" role="tab" data-l="${esc(k)}" aria-selected="${activeTab() === k}" class="${activeTab() === k ? "on" : ""}">${n}</button>`).join("")}</span></div>
+  <div class="layout${state.hideSet ? " noset" : ""}" id="layout">${controlsHtml()}<div>
+
     <div id="expnote"></div>
     <div class="kpis" id="kpis"></div>
     <div class="card" id="chg" style="margin-bottom:12px"></div>
@@ -310,21 +382,71 @@ function viewScreener(m) {
       <select id="cap" aria-label="Market value">${CAPS.map(([k, n]) => `<option value="${k}" ${state.cap === k ? "selected" : ""}>${n}</option>`).join("")}</select>
       <input type="search" id="q" placeholder="Search ticker, name or industry" value="${esc(state.q)}" aria-label="Search" style="flex:1;min-width:160px">
     </div>
-    <div class="tbl"><table class="num" id="tbl"></table></div>
+    <div class="topscroll" id="topscroll" aria-hidden="true"><div></div></div>
+    <div class="tbl listwrap" id="listwrap"><table class="num" id="tbl"></table></div>
     <p class="small" id="tblnote"></p>
   </div></div>`;
   bindControls();
-  document.getElementById("lst").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (!b) return; state.list = b.dataset.l; state.filter = state.list === "comp" ? "top" : "shortlist"; state.sort = {key: "pos", dir: 1}; document.querySelectorAll("#lst button").forEach(x => x.classList.toggle("on", x === b)); renderTable(); });
+  document.getElementById("lst").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (!b) return; pickScenario(b.dataset.l); });
+  document.getElementById("togset").addEventListener("click", () => { state.hideSet = !state.hideSet; try { localStorage.setItem("mm-hide-settings", state.hideSet ? "1" : "0"); } catch (e) {} render(); });
   document.getElementById("flt").addEventListener("click", e => { const b = e.target.closest("[data-f]"); if (!b) return; state.filter = b.dataset.f; renderTable(); });
   document.getElementById("ind").addEventListener("change", e => { state.ind = e.target.value; renderTable(); });
   document.getElementById("cap").addEventListener("change", e => { state.cap = e.target.value; renderTable(); });
   document.getElementById("q").addEventListener("input", e => { state.q = e.target.value.toLowerCase(); renderTable(); });
+  const ts = document.getElementById("topscroll"), lw = document.getElementById("listwrap");
+  let syncing = false;
+  ts.addEventListener("scroll", () => { if (syncing) { syncing = false; return; } syncing = true; lw.scrollLeft = ts.scrollLeft; });
+  lw.addEventListener("scroll", () => { if (syncing) { syncing = false; return; } syncing = true; ts.scrollLeft = lw.scrollLeft; });
+  window.addEventListener("resize", sizeTopScroll);
   document.getElementById("tbl").addEventListener("click", e => {
     const h = e.target.closest("th[data-k]");
     if (h) { const k = h.dataset.k; state.sort = state.sort.key === k ? {key: k, dir: -state.sort.dir} : {key: k, dir: ["ticker", "industry", "pos", "rank", "csrank"].includes(k) ? 1 : -1}; renderTable(); return; }
     const tr = e.target.closest("tr[data-cik]"); if (tr) go("deepdive", +tr.dataset.cik);
   });
-  renderTable();
+  update();
+}
+function sizeTopScroll() {
+  const ts = document.getElementById("topscroll"), lw = document.getElementById("listwrap"), t = document.getElementById("tbl");
+  if (!ts || !lw || !t) return;
+  ts.firstElementChild.style.width = t.scrollWidth + "px";
+  ts.style.visibility = t.scrollWidth > lw.clientWidth + 1 ? "visible" : "hidden";
+}
+function listTabs() {
+  return LIST_TABS.slice(0, 3).concat(Object.keys(saved).map(n => [n, n]), LIST_TABS.slice(3));
+}
+function activeTab() { return state.list === "comp" ? "Compounder" : state.scenario; }
+function pickScenario(k) {
+  if (k === "Compounder") { state.list = "comp"; state.filter = "top"; }
+  else { state.list = "moat"; state.filter = "shortlist"; state.s = clone(PRESETS[k] || saved[k]); state.scenario = k; recompute(); }
+  state.sort = {key: "pos", dir: 1}; render();
+}
+function scnSummary(d) {
+  const b = d.scoring.blend, w = d.scoring.theme_weights, rg = d.risk_gate;
+  const modes = RULES.map(r => `${r.label.toLowerCase()} ${rg[r.key].mode}`).join(", ");
+  return `level ${b.level}% / trend ${b.trend}% / consistency ${b.consistency}%; themes ${THEMES.map(t => t.name.toLowerCase() + " " + w[t.key]).join(", ")}; at least ${d.scoring.confirm_themes} of 5 themes improving; risk rules: ${modes}.`;
+}
+function pctx(v) { return v === null || v === undefined ? "–" : (v * 100).toFixed(1) + "%"; }
+function scenarioBox() {
+  const E = META.scenario_eval || {}, k = activeTab();
+  if (k === "Compounder") {
+    const V2 = META.compounder, e = E.Compounder || {};
+    return `<div class="card note-exp" style="margin-bottom:12px"><p style="margin:0"><b>Compounder (v2.0, experimental, not proven).</b> Averages ${V2.kept.length} quarterly signals chosen on 2013–2019 (${V2.kept.map(x => esc(x.label)).join(", ")}). Use it to find names worth a closer look, not as a ranking you can trust. The settings on the left do not change it.</p>
+    <div class="scn-eval"><div><b>${fx(e.test_multiple, 2)}</b><span>Top 10% became moat compounders vs all companies, 2020–2023 (needed 2×: <b style="display:inline;font-size:12px;color:var(--risk)">failed</b>)</span></div>
+    <div><b>${fx(e.train_multiple, 2)}</b><span>Same, 2013–2019, the years used to choose the signals</span></div>
+    <div><b>${pctx(e.cagr_test)}</b><span>Top 25 a year, Apr 2020 – Feb 2024 (S&amp;P 500 ${pctx(e.spx_test)})</span></div>
+    <div><b>${pctx(e.cagr_all)}</b><span>Top 25 a year, May 2013 – Feb 2024 (S&amp;P 500 ${pctx(e.spx_all)})</span></div></div>
+    <p class="small" style="margin:8px 0 0">Compounder = within 3 years, revenue +20% a year and 10 points above its industry, ROIC above 9%. <a href="#proof">Proof</a></p></div>`;
+  }
+  const e = E[k];
+  const def = PRESETS[k] || saved[k];
+  const brief = SCN_BRIEF[k] || (def ? `Your scenario: ${scnSummary(def)} Not back-tested; the results below are not measured for it.` : "Settings changed from a scenario.");
+  const edited = def && JSON.stringify(state.s) !== JSON.stringify(def);
+  const ev = e ? `<div class="scn-eval"><div><b>${pctx(e.hit)}</b><span>Shortlist picks still improving 3 years later (everyone else ${pctx(e.rest_hit)})</span></div>
+    <div><b>${pctx(e.fa)}</b><span>Picks that fell more than 10 rank points (everyone else ${pctx(e.rest_fa)})</span></div>
+    <div><b>${pctx(e.top20)}</b><span>Reached their industry's top 20% on ROIC within 3 years</span></div>
+    <div><b>${e.cagr !== undefined ? pctx(e.cagr) : "not run"}</b><span>${e.cagr !== undefined ? `Shortlist a year, Jul 2013 – Oct 2026 (S&amp;P 500 ${pctx(e.spx)})` : "Market test: not run for this scenario"}</span></div></div>
+    <p class="small" style="margin:8px 0 0">Back-test 2013–2023, ${e.n} shortlist picks, using only filings available at each date. Picks stay high quality but do not keep improving more often than average. <a href="#proof">Proof</a></p>` : "";
+  return `<div class="card note-scn" style="margin-bottom:12px"><p style="margin:0"><b>${esc(k)}.</b> ${esc(brief)}${edited ? ` <b>You have changed settings since choosing this scenario; the list shows your changes, the back-test results below are for the scenario as defined. Save your settings as a new scenario in the Settings box.</b>` : ""}</p>${ev}</div>`;
 }
 function capOk(c) {
   const b = CAPS.find(x => x[0] === state.cap);
@@ -335,12 +457,12 @@ function capOk(c) {
 const SORTV = {pos: x => x._pos, rank: x => x.rank, csrank: x => x.c.cs_rank, ticker: x => x.c.ticker || "", industry: x => x.c.sic_desc || "",
   moat: x => x.moat, nimp: x => x.nImp, cs: x => x.c.cs, mcap: x => x.c.mcap, pe: x => x.c.pe};
 function renderTable() {
+  document.getElementById("chg").style.display = "";
   const R = state.res, comp = state.list === "comp", V2 = META.compounder;
   const fl = comp ? [["top", `Top ${V2.shortlist_size}`], ["all", "All with a signal"]] : [["shortlist", "Shortlist"], ["strong", "Strengthening"], ["all", "All companies"]];
   if (!fl.some(f => f[0] === state.filter)) state.filter = fl[0][0];
   document.getElementById("flt").innerHTML = fl.map(([k, n]) => `<button type="button" data-f="${k}" class="${state.filter === k ? "on" : ""}">${n}</button>`).join("");
-  const t = V2.test || {};
-  document.getElementById("expnote").innerHTML = comp ? `<div class="card note-exp" style="margin-bottom:12px"><p style="margin:0"><b>Experimental, not proven.</b> The Compounder Signal averages ${V2.kept.length} quarterly signals chosen on 2013–2019 (${V2.kept.map(k => esc(k.label)).join(", ")}). On the unseen years 2020–2023 its top 10% became moat compounders ${fx(t.multiple, 2)} as often as the average company; the test needed 2×, so it <b>failed</b>. Use it to find names worth a closer look, not as a ranking you can trust. The settings on the left do not change it. <a href="#proof">Proof</a></p></div>` : "";
+  document.getElementById("expnote").innerHTML = scenarioBox();
   let rows;
   if (comp) {
     // candidates are ranked once in Python with the default risk gate; the settings on the left do not change them
@@ -384,9 +506,10 @@ function renderTable() {
       (comp ? `<td class="r"><b>${f1(x.c.cs)}</b></td><td class="r hm">${f1(x.moat)}</td>` : `<td class="r"><b>${f1(x.moat)}</b></td><td>${mini(x)} <span class="small">${x.nImp}/5</span></td>`) +
       `<td class="r">${capCell(x.c)}</td><td class="r">${fpe(x.c.pe)}</td>
       <td>${comp ? (x.c.cs_short ? badge("NEUTRAL", "Candidate") : "") + (x.shortlist ? " " + badge("MOAT", "Moat shortlist") : "") : (x.removed ? badge("RISK", "Removed") : x.shortlist ? badge("MOAT", "Shortlist") : x.strengthening ? badge("GOOD", "Strengthening") : "")} ${x.flags ? badge("RISK", x.flags + " flag" + (x.flags > 1 ? "s" : "")) : ""} ${x.c.confidence !== "High" ? badge("CONF", x.c.confidence) : ""}</td>
-      ${comp ? "" : `<td class="small hm">${esc(x.c.reasons[0] || "")}</td>`}</tr>`).join("") + `</tbody>` +
+      ${comp ? "" : `<td class="small hm reason" title="${esc(x.c.reasons[0] || "")}">${esc(x.c.reasons[0] || "")}</td>`}</tr>`).join("") + `</tbody>` +
     (rows.length > 300 ? `<caption class="small" style="caption-side:bottom;text-align:left;padding:8px">Showing 300 of ${rows.length}. Filter or search to find others.</caption>` : "") +
     (!rows.length ? `<caption class="small" style="caption-side:bottom;text-align:left;padding:8px">No company matches these filters (${base} before filters).</caption>` : "");
+  sizeTopScroll();
   const vm = META.valuation || {};
   document.getElementById("tblnote").innerHTML = `#: position in this list before sorting. ${comp ? "Candidate rank: Compounder Signal rank among companies that pass the risk gate." : "Overall rank: Moat Score rank among all scored companies; gaps on the shortlist are companies removed by the risk gate or not confirmed as Moat Strengthening."} Market value: Yahoo Finance close for ${esc(vm.price_month || "")} (retrieved ${esc(vm.prices_retrieved || "")}) × shares outstanding from the latest 10-K/10-Q cover page (else diluted shares); "check" = SEC share count looks mis-scaled. Clean P/E: market value ÷ clean net income over the last 12 months (one-off items removed, 21% tax on them); blank when earnings are zero or negative. Display only: neither is used in either score.`;
 }
@@ -584,7 +707,7 @@ function viewLearn(m) {
   const top = state.res.ranked.find(x => x.shortlist) || state.res.ranked[0];
   const D = window.MM_DEEP ? window.MM_DEEP[String(top.c.cik)] : null;
   const z = {fy: top.c.fy, p: top.c.period || "FY" + top.c.fy, v: k => D && D.s[k] ? D.s[k][D.s[k].length - 1] : null, min: k => D ? Math.min(...D.s[k].slice(-5).filter(v => v !== null)) : null, max: k => D ? Math.max(...D.s[k].slice(-5).filter(v => v !== null)) : null};
-  m.innerHTML = `<h1>Learn</h1><p class="muted">Every indicator and risk check: what it is, why it matters, what to watch, the formula, and a worked example with real numbers from ${esc(top.c.name)} (${esc(top.c.ticker)}), the top shortlist name today.</p>
+  m.innerHTML = `<h1>Terminology</h1><p class="muted">Every indicator and risk check: what it is, why it matters, what to watch, the formula, and a worked example with real numbers from ${esc(top.c.name)} (${esc(top.c.ticker)}), the top shortlist name today.</p>
   <div class="grid g2">${LEARN.map(e => `<div class="card learn" id="learn-${e.k}"><span class="small">${e.theme}</span><h3>${e.t}</h3><p>${e.def}</p><p><b>Why it matters.</b> ${e.why}</p><p><b>Watch out.</b> ${e.watch}</p>
   <div class="diagram">${e.dia.map(d => ["÷","−","+","×","=","→","·"].includes(d) ? `<span class="op">${d}</span>` : `<span class="box">${d}</span>`).join("")}</div>
   <div class="formula">${esc(e.f).replace(/\n/g, "<br>")}</div><p style="margin-top:8px"><b>Example.</b> ${D ? esc(e.ex(z)) : "Loading…"} <a href="#deepdive/${top.c.cik}">Deep-Dive</a></p><p class="small">Evidence: ${e.ev}</p></div>`).join("")}</div>`;

@@ -189,6 +189,30 @@ def _clean(x):
     return x
 
 
+def scenario_eval(disc: dict) -> dict:
+    """Back-test results per scenario shown in the Screener's list tabs (validation.json, market.json, discovery.json)."""
+    V = json.loads((OUTD / "validation.json").read_text())["variants"]
+    mk = json.loads((OUTD / "market.json").read_text())
+    def sl(key):
+        f, r = V[key]["shortlist"]["flagged"], V[key]["shortlist"]["rest"]
+        return {"hit": f["hit_rate_3y"], "fa": f["false_alarm_3y"], "top20": f["reach_top20_roic_3y"], "n": f["n"],
+                "rest_hit": r["hit_rate_3y"], "rest_fa": r["false_alarm_3y"]}
+    w = mk.get("compounder", {}).get("windows", {})
+    lf = disc.get("label_fix", {})
+    return {
+        "Early Moat — Default": {**sl("Default (locked settings)"), "cagr": mk["portfolios"]["moat"]["neutral"]["cagr"],
+                                 "spx": mk["portfolios"]["^SP500TR"]["neutral"]["cagr"]},
+        "Proven Leaders": sl("Proven Leaders (70% level)"),
+        "Strict Risk": sl("Strict Risk (all rules remove)"),
+        "Compounder": {"test_multiple": lf.get("test", {}).get("multiple"), "train_multiple": lf.get("train", {}).get("multiple"),
+                       "test_base": lf.get("test", {}).get("base_rate"),
+                       "cagr_test": w.get("test 2020-2023", {}).get("compounder_neutral", {}).get("cagr"),
+                       "spx_test": w.get("test 2020-2023", {}).get("sp500", {}).get("cagr"),
+                       "cagr_all": w.get("all 2013-2023", {}).get("compounder_neutral", {}).get("cagr"),
+                       "spx_all": w.get("all 2013-2023", {}).get("sp500", {}).get("cagr")},
+    }
+
+
 def main(as_of: str) -> None:
     settings = yaml.safe_load((ROOT / "settings.yaml").read_text())
     facts = pd.read_pickle(CACHE / "facts.pkl")
@@ -300,7 +324,7 @@ def main(as_of: str) -> None:
                "train_multiple": None, "shortlist_size": settings["compounder"]["shortlist_size"]}
     meta_val = {"price_month": str(px.index[-1]), "prices_retrieved": px.attrs.get("retrieved"),
                 "source": "Yahoo Finance month-end close × SEC cover-page shares outstanding (else diluted shares); P/E on clean net income (12 months)"}
-    meta = {"as_of": as_of, "compounder": meta_v2, "valuation": meta_val, "medians": med_out, "pct_cols": PCT_COLS, "methodology": settings["methodology_version"], "sec_retrieved": settings["data"]["sec_retrieved"],
+    meta = {"as_of": as_of, "compounder": meta_v2, "valuation": meta_val, "scenario_eval": scenario_eval(disc), "medians": med_out, "pct_cols": PCT_COLS, "methodology": settings["methodology_version"], "sec_retrieved": settings["data"]["sec_retrieved"],
             "settings": settings, "funnel": funnel,
             "indicators": [{"name": n, "theme": t, "comps": c, "label": IND_LABEL[n]} for n, t, _col, _d, c in INDICATORS],
             "themes": [{"key": t, "name": THEME_NAMES[t]} for t in THEMES],

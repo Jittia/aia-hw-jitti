@@ -66,8 +66,23 @@ tr.click:hover td { background:var(--hover); }
 .layout { display:grid; grid-template-columns:290px 1fr; gap:18px; align-items:start; margin-top:14px; }
 @media (max-width:900px) { .layout { grid-template-columns:1fr; } }
 .layout > * { min-width:0; }
+.layout.noset { grid-template-columns:1fr; }
+.layout.noset > .controls { display:none; }
+.tgroup { display:flex; flex-direction:column; padding:0 6px; }
+.tgroup + .tgroup { border-left:1px solid var(--grid); }
+.tglabel { font:600 10px/1 var(--sans); text-transform:uppercase; letter-spacing:.6px; color:var(--ink-2); padding:8px 12px 0; }
+.tgroup > div { display:flex; gap:2px; }
+.note-scn { border-left:4px solid var(--teal); }
+.scn-eval { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-top:10px; }
+.scn-eval div { background:var(--paper); border:1px solid var(--grid); border-radius:var(--r); padding:8px 10px; }
+.scn-eval b { display:block; font:600 18px/1.2 var(--serif, var(--sans)); color:var(--navy); }
+.scn-eval span { font-size:12px; color:var(--ink-2); }
+.listwrap { max-height:72vh; overflow:auto; border:1px solid var(--grid); border-radius:var(--r); }
+.listwrap thead th { position:sticky; top:0; background:var(--card); z-index:2; box-shadow:0 1px 0 var(--grid); }
+.topscroll { overflow-x:auto; overflow-y:hidden; height:14px; margin-bottom:4px; }
+.topscroll > div { height:1px; }
 @media (max-width:640px) { .hm { display:none; } .tab { padding:12px 9px; } }
-.controls { position:sticky; top:52px; max-height:calc(100vh - 64px); overflow:auto; }
+.controls { position:sticky; top:72px; max-height:calc(100vh - 84px); overflow:auto; }
 @media (max-width:900px) { .controls { position:static; max-height:none; } }
 .ctl { margin-bottom:12px; }
 .ctl label { display:flex; justify-content:space-between; font-size:13px; font-weight:600; color:var(--ink); }

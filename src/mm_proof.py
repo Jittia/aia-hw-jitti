@@ -269,7 +269,7 @@ def main() -> None:
 <ol><li><b>Screener:</b> start from the shortlist. Each row shows the Moat Score, how many of the 5 themes are improving, and the top reason. <a href="#screener">Open</a></li>
 <li><b>Change a setting:</b> move “Level” up to 70 (or pick the “Proven Leaders” scenario) and watch which names join and drop.</li>
 <li><b>Deep-Dive:</b> click a company. Read Key observations first, then the charts; every number links to its 10-K. <a href="#deepdive">Open</a></li>
-<li><b>Learn:</b> each indicator explained with a worked example. <a href="#learn">Open</a></li>
+<li><b>Terminology:</b> each indicator explained with a worked example. <a href="#learn">Open</a></li>
 <li><b>Proof:</b> what happened to past picks, including the misses. <a href="#proof">Open</a></li></ol>
 <h2>Three cases from 2016</h2><p class="small">Chosen by a rule fixed before looking: the two highest Moat Scores on the 2016 shortlist, plus the highest-ranked 2016 pick that became a false alarm.</p>
 <div class="grid g3">{cards}</div>"""

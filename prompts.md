@@ -722,3 +722,67 @@ Yes, sync repo copies
   - Add the `compounder` tab to the Google Sheet.
   - Edit `help.md`.
   - Submit the repo link.
+
+---
+
+## รอบ 16 · 2026-11-04 · Dashboard layout: grouped tabs, scenario tabs, weight check, saved scenarios
+
+- **ทำอะไร:**
+  - **Tabs in 3 groups**, each with a small label and a divider line:
+    - Action: Screener, Deep-Dive, Terminology (renamed from Learn);
+    - Design: How it works, Methodology, Demo;
+    - Evaluation: Scenarios, Proof, Track record.
+  - **Screener:**
+    - Settings box can be hidden (remembered; hidden by default on a phone).
+    - List tabs: Early Moat · Proven Leaders · Strict Risk · Compounder. Each switches the list and loads its settings.
+    - A box above the list gives the scenario's settings in short and its back-test result.
+    - The list scrolls in its own box, with the header kept at the top and a horizontal scrollbar above the table.
+  - **Weights:**
+    - Running totals for blend and theme weights, each must be exactly 100%.
+    - The list pauses with a warning until both are 100%.
+    - "Save as a new scenario" (only when valid) adds the scenario as a tab.
+    - On the Compounder tab the settings are greyed out with an explanation.
+  - **Code:** `mm_run.py` adds each scenario's back-test result to the site data (`scenario_eval`); `mm_proof.py` renames Learn to Terminology in the Demo.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser (desktop and phone width)
+- **Prompt ที่ใช้:**
+
+```text
+Change layout of this tab in sub group, could be small line divided those sub group to get better understanding of scope.  3 sub groups are:
+
+1. Action :  Screener, Deep-dive, Terminology (change from Learn)
+2. Design : How it works, Methodology, Demo
+3. Evaluation : Scenarios, Proof, Track Record
+
+Also add feature:
+
+1. Settings Box; could be collapse to hide to expand size of list data
+2. 2 tabs above "Moat Score List" , "Compounder". make name shorter and sync with scenario we test.  So we can review each outcome.  Add short brief of those scenarios in first box to get understanding of the setting in that scenario.  In same box, show result evaluation as you did for Comounder.
+3. Make horizontal slide-bar of list to shown at top of header.  Now it's show at bottom and when we scroll down, we can't see header.  It's not convenience to read number.
+```
+
+```text
+In Screener, it only show result from setting in each scenarios.  But when I change weight or value from each setting, refresh result is not shown.  Also total weight could be higher/lower vs 100% , which is not correct.  I want it to have screener which we can adjust those value (with warning in case total weight is not 100% and not allow to show result until it meet 100%) and refresh the list.  Once we have that list, then user could save as new Scenarios Name.
+```
+
+- **ผลที่ได้:**
+  - **Back-test result shown on each tab:**
+    - Early Moat: 26.2% still improving vs 48.6%; market 15.5% vs S&P 14.3%.
+    - Proven Leaders: 26.1%, but 43.4% reached the industry's top 20% on ROIC.
+    - Strict Risk: 26.3%, fewest false alarms (36.4%).
+    - Compounder: 1.18×, failed.
+  - **Checks:**
+    - In the browser: switching tabs, an invalid total pausing the list, saving a scenario, the Compounder lock, the sticky header and the phone layout, with no errors.
+    - The page and Python give the same scores (difference ≤ 0.007).
+    - 61 tests pass.
+  - **Still missing:** the market test was not run for Proven Leaders, Strict Risk or saved scenarios ("not run" is shown).
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **The list tabs are the tested scenarios.** I want to compare each scenario's list and result side by side.
+  - **No results until weights total 100%.** Weights above or below 100% are not a valid setting, so showing a list for them would mislead.
+  - **Saved scenarios share browser storage with the Scenarios page.** One place to manage them. They are marked "not back-tested" because they were never tested.
+  - **Settings greyed out on Compounder.** The list did not change when I moved sliders there, which looked like a bug; the Compounder list is fixed by design.
+- **ขั้นต่อไป:**
+  - Run the market test for Proven Leaders and Strict Risk (optional).
+  - Add a `compounder` tab to the Google Sheet.
+  - Fill the deck placeholders.
+  - Edit `help.md`.
+  - Submit the repo link.
