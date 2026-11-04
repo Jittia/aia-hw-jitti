@@ -1,4 +1,6 @@
-pandas
-requests
-pyyaml
-yfinance
+# Python 3.10. Versions that run this project (checked 2026-11-04).
+pandas==2.3.3
+numpy==2.2.6
+requests==2.34.2
+PyYAML==6.0.3
+yfinance==1.7.0

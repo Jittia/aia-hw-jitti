@@ -1234,3 +1234,42 @@ Put yourself as Professional Dashboard design, focus on font, layout consistency
   - Deferred items from round 22 still stand.
   - Update the Google Sheet and pitch docs (still v1.1).
   - Fill the deck placeholders, edit `help.md`, submit the repo link.
+
+---
+
+## รอบ 24 · 2026-11-04 · Repo ready for submission; works from two Macs
+
+- **ทำอะไร:**
+  - **README rewritten for the current tool:**
+    - what the Moat Screener does;
+    - an honest table of results by version (v1.0 matched the S&P 500 with more risk; v1.2 look-ahead; v2.0 1.18×; v3.0 0.69/0.59/0.65×);
+    - links to the spec, design, log and lessons;
+    - a new "Work on another Mac" section: clone, `git pull` before work and save after, Python setup, `.env`, copy or rebuild the 4.1 GB data cache in the right order, tests, and the claude.ai dashboard shared across both Macs.
+  - **Other files:**
+    - `requirements.txt` pinned to the versions that run here (Python 3.10);
+    - old v1.0 screenshot replaced with `output/dashboard_screener.png`;
+    - README checklist updated (23 rounds; `help.md` still to review).
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · headless Chrome (screenshot and a check that the dashboard opens from a downloaded folder)
+- **Prompt ที่ใช้:**
+
+```text
+Ok, I am happy with this and ready to send to repo for my homework.   Let me know what I need to do and ensure I can continue work on it from either my iMac and MacBook
+```
+
+- **ผลที่ได้:**
+  - Checked that `output/moat_momentum.html` opens straight from the folder (no server) and shows the live Screener numbers (1,105 of 1,870 companies screened).
+  - **Still open for Jitti:**
+    - review `help.md` (my draft from 2026-11-03 describes v1.0);
+    - submit the repo link through the class Google Form by 21:00 today;
+    - optionally share the live dashboard from claude.ai.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti: submit the repo and be able to work from both the iMac and the MacBook.**
+  - **Claude's choices:**
+    - Keep the data cache out of git (4.1 GB, re-downloadable from SEC) and document copy-or-rebuild instead.
+    - Pin package versions so the second Mac gets the same results.
+    - Leave `help.md` to Jitti, because those are Jitti's own questions for the instructor.
+- **ขั้นต่อไป:**
+  - Review `help.md` and submit the repo link.
+  - Try the shared Watchlist and the deck download on claude.ai.
+  - Deferred items from round 22.
+  - Update the Google Sheet and pitch docs.
