@@ -68,6 +68,7 @@
 - A ratio read from today's filing (ADS, split) applies to past counts only when they are the same size; check the share-count history before applying it backward.
 - A user action that can be refused (save, remove) must never look done: roll back on refusal, and give one-click deletes an Undo.
 - After removing or renaming styles, check every class the page uses still has CSS ("grid2" had none, so two boxes stacked); review layout at a wide desktop width too, not only the narrow preview pane.
+- Google Slides: an inserted image keeps a tiny base size and is shown through its scale; to resize it, set the scale to the target size ÷ that base size (read it first), never a small ratio such as 0.9. Check every slide as an image (Slides thumbnails work when no PDF renderer is installed).
 
 ## บันทึกปัญหา
 
@@ -325,3 +326,10 @@
 - **สาเหตุ:** Earlier checks were done in the ~1,000 px preview pane only. The side-by-side boxes used a class ("grid2") that was never defined in the CSS.
 - **แก้อย่างไร:** Audited every tab at 1,440 px, phone width, light and dark; defined the grid; two-column layouts for the cover and company card; capped diagram width.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Checking only the default pane width.
+
+### 2026-11-04 · A screenshot vanished from a Google Slides deck after resizing
+
+- **เจออะไร:** After a resize on slide 4 of the FYI deck, the screenshot shrank to a dot.
+- **สาเหตุ:** Slides stores the image with a base size of 36,000 × 25,000 EMU and shows it through a scale of about 113; my request set the scale to 0.91.
+- **แก้อย่างไร:** Read the element's base size, then set the scale to the target width ÷ base width (113.28). Checked again with slide thumbnails (there is no PDF renderer on this Mac).
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Treating the scale as a ratio of the size I had asked for.

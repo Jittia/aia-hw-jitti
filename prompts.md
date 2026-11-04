@@ -1273,3 +1273,42 @@ Ok, I am happy with this and ready to send to repo for my homework.   Let me kno
   - Try the shared Watchlist and the deck download on claude.ai.
   - Deferred items from round 22.
   - Update the Google Sheet and pitch docs.
+
+---
+
+## รอบ 25 · 2026-11-04 · FYI deck for the working group; Watchlist scrolls like the Summary
+
+- **ทำอะไร:**
+  - **FYI deck (Google Slides, in Jitti's Drive, not in the repo):** "Moat Momentum · Moat Screener overview (FYI)", 5 slides:
+    1. title;
+    2. objective (three problems and the goal);
+    3. solution and features (1,870 → 1,105 → 4 questions → 96 → analyst tools);
+    4. example screen (Screener screenshot from the public repo, with three callouts);
+    5. data and sources (table with dates).
+    Every slide checked as an image; overlaps fixed (title over screenshot, table over note).
+  - **Watchlist:** horizontal scrollbar on top (synced), fixed header row, and its own vertical scrollbar, the same as the Screener Summary. One shared scroll helper is now used by both tables. Dashboard republished as version 20.
+  - Answered how others can open the dashboard from GitHub: GitHub Pages (needs Jitti to switch it on), Download ZIP, or sharing the claude.ai link.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · Google Drive and Slides connectors · built-in browser
+- **Prompt ที่ใช้:**
+
+```text
+Create presentation 5 slides, to explain the objective, solution + feature, example screen shot, database and source of information.  I want to share to my working group as FYI.
+```
+
+```text
+Watchlist Tab, adjust sliding bar both horisontal / vertical to be in same way as in Section 3 Summary of Screener tab.
+```
+
+- **ผลที่ได้:**
+  - **Deck:** in Drive; story titles written as a pre-read; all numbers are today's defaults with dates in the footers. It is private until Jitti shares it from Google Slides.
+  - **Watchlist check (5 companies):** the top bar moves the table, the header stays fixed after scrolling down, and there is no sideways page scroll.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti: a 5-slide FYI deck for the working group, and Watchlist scrolling to match the Summary.**
+  - **Claude's choices:**
+    - Build the deck in Google Slides, because the brief says Google ecosystem only and Slides is easy to share.
+    - Use the Moat Momentum identity and story titles.
+    - Take the screenshot from the public GitHub repo, because Slides can only insert images from a public URL.
+- **ขั้นต่อไป:**
+  - Share the deck with the group.
+  - Optionally switch on GitHub Pages for a public dashboard link.
+  - Review `help.md`; deferred items from round 22.

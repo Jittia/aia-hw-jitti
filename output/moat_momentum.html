@@ -807,11 +807,19 @@ function scrOverlap() {
     : `<p class="empty">No company in this list in any Moat Screener after the scope.</p>`;
   sizeSumScroll();
 }
-function sizeSumScroll() {
-  const top = document.getElementById("scr-ovtop"), box = document.getElementById("scr-ovt"); if (!top || !box) return;
+// a table box with its horizontal scrollbar on top (synced) and its own vertical scrollbar; header row fixed (CSS)
+function bindTopScroll(topId, boxId) {
+  const top = document.getElementById(topId), box = document.getElementById(boxId); if (!top || !box) return;
+  top.addEventListener("scroll", () => { if (box.scrollLeft !== top.scrollLeft) box.scrollLeft = top.scrollLeft; });
+  box.addEventListener("wheel", e => { const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0); if (dx && box.scrollWidth > box.clientWidth) { e.preventDefault(); top.scrollLeft += dx; } }, {passive: false});
+  window.addEventListener("resize", () => sizeTopScroll(topId, boxId));
+}
+function sizeTopScroll(topId, boxId) {
+  const top = document.getElementById(topId), box = document.getElementById(boxId); if (!top || !box) return;
   const w = box.scrollWidth, over = w > box.clientWidth + 1;
   top.firstElementChild.style.width = w + "px"; top.style.visibility = over ? "visible" : "hidden"; top.scrollLeft = box.scrollLeft;
 }
+function sizeSumScroll() { sizeTopScroll("scr-ovtop", "scr-ovt"); }
 // ---------- EVALUATION ----------
 const REPO = "https://github.com/Jittia/aia-hw-jitti";
 function viewTbd(m) {
@@ -1014,7 +1022,8 @@ function viewWatchlist(m) {
   ${wlStore.readOnly() ? `<div class="card note-exp" style="margin-bottom:10px"><b>View-only:</b> you can read this Watchlist but not change it. Ask the owner for edit access.</div>` : ""}
   <p class="small">${esc(modeNote)} Numbers are today's (filings retrieved ${esc(SCR.meta.sec_retrieved || "")}, close ${esc(SCR.meta.price_date || "")}), not frozen at the date added. M1–M4: percentile where the company is in that Moat Screener's top-right (default lines).</p>
   <div class="toolbar"><span class="small">Priority</span><span class="seg" id="wlpr">${["", "A", "B", "C"].map(p => `<button type="button" data-p="${p}">${p || "All"}</button>`).join("")}</span><span class="small" id="wln"></span></div>
-  <div class="tbl" id="wlt"></div>`;
+  <div class="topscroll" id="wltop" aria-hidden="true"><div></div></div><div class="listwrap sumwrap" id="wlt"></div>`;
+  bindTopScroll("wltop", "wlt");
   m.querySelector("#wlpr").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b) { state.wl.pr = b.dataset.p; renderWatchRows(); } });
   const t = m.querySelector("#wlt");
   t.addEventListener("click", e => { const h = e.target.closest("th[data-k]"); if (h) { const k = h.dataset.k; state.wl.sort = {key: k, dir: state.wl.sort.key === k ? -state.wl.sort.dir : (["ticker", "priority"].includes(k) ? 1 : -1)}; renderWatchRows(); return; }
@@ -1053,6 +1062,7 @@ function renderWatchRows() {
       <tr class="noterow"><td colspan="${7 + GKEYS.length + SUMCOLS.length}"><label class="small" for="nt${x.cik}">Note on ${esc(x.c.ticker || x.c.name || "")}: our thinking</label>
         <textarea id="nt${x.cik}" data-note="${x.cik}" rows="4" placeholder="Why we are watching it, what would make us act, open questions…">${esc(x.e.note || "")}</textarea><span class="small" data-st="${x.cik}">${x.e.updated ? "Last saved " + esc(x.e.updated) : ""}</span></td></tr>`).join("")}</tbody></table>`;
   t.querySelectorAll("textarea[data-note]").forEach(a => { a.style.height = "auto"; a.style.height = Math.max(96, a.scrollHeight) + "px"; });
+  sizeTopScroll("wltop", "wlt");
 }
 // ---------- PITCH DECK ----------
 // Pure: builds a complete, self-contained 5-slide HTML document from the tool's data (spec §5.4). No AI text.
