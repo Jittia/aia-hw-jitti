@@ -1328,3 +1328,21 @@ Remove current writing in this help.md, it's not relevant for our latest design.
 - **ผลที่ได้:** `help.md` keeps the template heading plus one dated line, so the instructor can see it was reviewed rather than skipped. The README pre-submission checklist is complete except "ส่งลิงก์แล้ว".
 - **ตัดสินใจอะไร และเพราะอะไร:** Removed the 3 drafted stuck points, because they described an earlier design (v1.0) that is no longer relevant to the latest Moat Screener, and I have no additional request for help for the Repair Clinic.
 - **ขั้นต่อไป:** Submit the repo link via the class Google Form before Wed 4 Nov 21:00.
+
+---
+
+## รอบ 27 · 2026-11-04 · Homework submitted
+
+- **ทำอะไร:** Ticked the last item of the README pre-submission checklist ("ส่งลิงก์แล้ว") after submitting the repo link via the class Google Form.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5
+- **Prompt ที่ใช้:**
+
+```text
+done
+```
+
+(answer "yes" to ticking the checklist item and saving)
+
+- **ผลที่ได้:** Every item in the README checklist is ticked; the repo is the submitted version.
+- **ตัดสินใจอะไร และเพราะอะไร:** Recorded the submission in the repo, so the checklist matches what actually happened.
+- **ขั้นต่อไป:** Read the instructor's comments in the repo's Issues tab (5–6 Nov) and bring them to the Repair Clinic (Sat 7 Nov, 13:30).
