@@ -1005,3 +1005,70 @@ Line :  Do as your proposed.
 - **ขั้นต่อไป:**
   - Deferred minor issues from review: price caches refresh only for new tickers; past prices include dividend adjustment; very small EV gives extreme yields in lists (MBLY); return on new capital when capital 12 quarters back was ≤ 0; Group 3 change shown as "%" not points; an emptied threshold box keeps the old value; the "Unknown" industry tick; the same split-timing gap in v3.0 `value_at`.
   - Fill the deck placeholders, edit `help.md`, submit the repo link.
+
+---
+
+## รอบ 21 · 2026-11-04 · Screener redesign: Screener Scope, Moat Screener, Screener Summary
+
+- **ทำอะไร:**
+  - **Section 1 · Screener Scope:** market value, risk factors and sector now sit in one box, as three columns left to right; the SEC industry list runs full width underneath and shows only industries inside the ticked sectors.
+  - **Sector (level 1):** our own mapping from SEC SIC codes to heatmap-style sectors (Technology, Health Care, Industrials…), labelled approximate on the page. Official GICS belongs to S&P and MSCI. Test `test_sic_to_sector` (24 cases).
+  - **Section 2 · Moat Screener:**
+    - groups renamed Moat Screener 1–4 (Value Creation, Compounding Runway, Pricing Power, Magic Formula), with a one-line question and the X/Y measures on a second row;
+    - Moat Screener 1 now plots plain clean ROIC with the 9% cost of capital as the line (data and test changed);
+    - each group has two editable line values with Reset; the chart, quadrants, lists and summary follow them;
+    - clicking a company in the three lists highlights its dot, 4-quarter trail and side box (Deep-Dive link moved to the side box);
+    - Moat Screener 3 shows margin change in points.
+  - **Section 3 · Screener Summary:** Company / Market cap / P/E TTM / # of moats / M1–M4 (percentile where it qualifies) / Growth / ROIC / Reinvest / Return on new capital / Δ gross margin / Earnings yield / Deep-Dive; every column sorts; the ①/②/③ selector stays.
+  - Terminology titles renamed to match. Dashboard republished at the same link (version 13).
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser
+- **Prompt ที่ใช้:**
+
+```text
+Request improvement in filter part.  Call it "Section 1 - Screener Scope"
+
+1. Combine Master filter and Risk Prescreen together in to one master box area.
+2. First part is market cap /  Second part is risk factor / third part is Industry (level 1 eg. Sercice).  Show this in 3 vertical section from left to right.
+3. The bottom part with full horizontal is to show level 2 of industry.    I am not sure it have 2 level of industry, but I prefer to have level 1 to be same as typical Market Heatmap e.g. Technology, Financial, Healthcare.  
+
+For 4 groups of evaluation call it "Section 2 - Moat Screener".  
+
+Change title of each group to be as below, move key indicator of X & Y axis to shown in 2'nd row instead.:   The statement after each - , improve it to be sound more professional but to the point - self explain key message.
+
+Moat Screener 1 : Value Creation  - Is growth create value right now ?  
+Moat Screener 2 : Compounding Runway - Can it keep compounding ?
+Moat Screener 3 : Pricing Power - XXXXXX ?
+Moat Screener 4 : Magic Formula - XXXXX ?
+
+Detail change of within group box, use Group 1 as example, follow same logic for group 2 to 4.
+
+* Should be clearer name of (ROIC - WACC). or something else as standard. Because this ROIC alone would mislead.  
+* In criteria, eg. 10% growth a year, 9% hurdle which create the dot line.  I want option to adjust this number from default and reflect in graph and company evaluation.
+* When I select each company at the bottom 3 buckets, I want to see the dot in chart show that company. So I can click to see movement.
+
+Last part which currently call Overlap, change it to "Section 3 - Screener Summary". See screen shot for my feedback.
+
+1. Column header show in this order. ( / means separate column) :  Company / Market Cap / PE TTM /  # of Moat / (4 columns M1, M2, M3, M4 and show their PCT in the right column which they meet condition) /  Value of each key parameter we use in 2 X 2 of each group e.g. % Growth / Deep Dive.
+```
+
+  Answers to Claude's three questions: "Our SIC→11 sectors (Recommended)", "Plain ROIC, line at 9% (Recommended)", "6 unique measures (Recommended)".
+- **ผลที่ได้:**
+  - Checked in the browser (light, dark, 375 px; no errors, no horizontal page scroll):
+    - Technology sector → 375 companies and 31 industries;
+    - raising Moat Screener 1's cost of capital from 9% to 15% cut its top-right from 229 to 171, and Reset restored it;
+    - a list row selects its dot and trail without leaving the page;
+    - the Summary shows columns in the requested order and sorts on each.
+  - 111 tests pass. v1.1 ranking unchanged (same run date, same inputs).
+  - **Found, not fixed:** BeOne Medicines (ONC) shows a $524.7B market value. The existing market-value code probably multiplies an ADR price by the ordinary-share count; the 0.2%–200× revenue check does not catch it.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti: sectors from our own SIC mapping.** Jitti wants level 1 to look like a market heatmap; SEC only has SIC codes and GICS is proprietary, so the page says it is approximate.
+  - **Jitti: plain ROIC with the 9% line,** instead of "ROIC − 9%", which could mislead. It reads like the McKinsey matrix, and changing the cost of capital moves only the line.
+  - **Jitti: 6 unique measures in the Summary,** since growth and ROIC appear in two groups each.
+  - **Claude's choices:**
+    - ticked industries take priority over ticked sectors, and unticking a sector drops industries outside it;
+    - the selected company is drawn last and larger so it shows on top of a dense cloud;
+    - line values are entered in % (points for margin change), and Moat Screener 4 starts at today's medians.
+- **ขั้นต่อไป:**
+  - Fix the ADR market-value bug (BeOne and similar companies) in the existing valuation code.
+  - Deferred minor issues from round 20 still stand.
+  - Fill the deck placeholders, edit `help.md`, submit the repo link.

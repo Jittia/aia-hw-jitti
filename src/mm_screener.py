@@ -49,7 +49,7 @@ def group_series(panel: pd.DataFrame) -> pd.DataFrame:
     ratio = p["revenue"] / base.where(base > 0)
     growth = (ratio.where(ratio > 0) ** (1 / 3) - 1).where(lambda s: np.isfinite(s))
     p["g1x"] = p["g3x"] = growth
-    p["g1y"] = p["roic_ttm"] - HURDLE
+    p["g1y"] = p["roic_ttm"]  # plain clean ROIC; the hurdle is the line
     ic4, ic12, n12 = lag_q(p, "ic", 4), lag_q(p, "ic", 12), lag_q(p, "nopat", 12)
     p["g2x"] = (p["ic"] - ic4) / _pos(p["nopat"])
     dic = p["ic"] - ic12
@@ -103,7 +103,7 @@ def _nz(v) -> float:
     return 0.0 if v is None or not np.isfinite(v) else float(v)
 
 
-LINES = {"g1": [0.10, 0.0], "g2": [0.50, HURDLE], "g3": [0.10, 0.0]}
+LINES = {"g1": [0.10, HURDLE], "g2": [0.50, HURDLE], "g3": [0.10, 0.0]}
 RISK_DEFAULTS = {"ic": 3.0, "nd": 3.0, "cd": 0.20}
 GROUPS = ("g1", "g2", "g3", "g4")
 

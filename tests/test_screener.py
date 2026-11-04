@@ -63,7 +63,7 @@ class Groups(unittest.TestCase):
         self.assertAlmostEqual(g["g2x"], (150 - 130) / 16)
         self.assertAlmostEqual(g["g2y"], (16 - 10) / (150 - 100))
         self.assertAlmostEqual(g["g3y"], 0.03)
-        self.assertAlmostEqual(g["g1y"], 0.15 - 0.09)
+        self.assertAlmostEqual(g["g1y"], 0.15)  # plain clean ROIC; the 9% cost of capital is the line (Jitti, 4 Nov)
         self.assertAlmostEqual(g["g4x"], 0.15)
         self.assertAlmostEqual(g["g1x"], g["g3x"])
 

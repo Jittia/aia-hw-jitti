@@ -63,6 +63,7 @@
 - In a risk filter, a missing figure is "not tested", never a failure; show how many are not tested and let the user decide whether to drop them.
 - When pairing a split-adjusted price with a share count, undo only the splits dated after the day the shares were counted, not after the price month.
 - Page logic that decides membership (filters, lists) gets unit tests too: extract the pure JS functions and run them in Node, not only by hand in the browser.
+- Sort a new table by market value and by each multiple once before shipping; the extremes show share-count errors (e.g. ADRs) that the revenue sanity range misses.
 
 ## บันทึกปัญหา
 
@@ -299,3 +300,10 @@
 - **สาเหตุ:** A 1-for-5 reverse split (Jan 2026) fell between the quarter-end price and the cover-page share count filed after it; I undid splits after the price month, so the price was pre-split and the shares post-split.
 - **แก้อย่างไร:** Undo only splits dated after the share-count date (test `test_past_yield_split_between_quarter_end_and_share_count`). The same gap exists in v3.0 `value_at`; left for later.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Undoing splits relative to the price month (the v3.0 fix), which is correct only when the count is from before the split.
+
+### 2026-11-04 · ADR market value 13× too high (BeOne Medicines), found by sorting
+
+- **เจออะไร:** Sorting the new Screener Summary by P/E put BeOne Medicines first at a $524.7B market value; the real value is tens of billions.
+- **สาเหตุ (probable, not yet confirmed):** the price is for the US-listed ADR, while the cover-page share count is ordinary shares, several of which make one ADR. The result (about 131× revenue) is inside the 0.2%–200× sanity range, so it was not hidden.
+- **แก้อย่างไร:** Not fixed yet; logged as the next step. It affects market cap, P/E, EV and earnings yield for such companies in every view.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Relying on the revenue sanity range alone.

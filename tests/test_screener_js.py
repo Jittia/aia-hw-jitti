@@ -22,7 +22,8 @@ def _fn(src: str, name: str) -> str:
 def run_js(expr: str):
     src = HTML.read_text()
     pre = "const MM = {}; const ok = v => v !== null && v !== undefined && isFinite(v);\n"
-    code = pre + "".join(_fn(src, n) for n in ("pctRanks", "groupLists", "overlap", "riskPass")) + \
+    m = re.search(r"^const SECTOR_RANGES = \[.*?^\];\n", src, re.S | re.M)
+    code = pre + m.group(0) + "".join(_fn(src, n) for n in ("pctRanks", "groupLists", "overlap", "riskPass", "sectorOf")) + \
         f"\nconsole.log(JSON.stringify({expr}));"
     out = subprocess.run([NODE, "-e", code], capture_output=True, text=True, check=True)
     return json.loads(out.stdout)
@@ -77,6 +78,19 @@ class Lists(unittest.TestCase):
     def test_overlap_ranks_by_group_count(self):
         ov = run_js("overlap({g1: {top: [{cik: 5, pct: 90}, {cik: 1, pct: 50}]}, g2: {top: [{cik: 1, pct: 70}]}}, 'top').map(e => [e.cik, e.count, e.pct])")
         self.assertEqual(ov, [[1, 2, 60], [5, 1, 90]])
+
+
+@unittest.skipUnless(NODE, "node not installed")
+class Sectors(unittest.TestCase):
+    def test_sic_to_sector(self):  # our approximate mapping from SEC SIC codes to 11 heatmap-style sectors
+        cases = {7372: "Technology", 3674: "Technology", 3571: "Technology", 2834: "Health Care", 3841: "Health Care",
+                 8062: "Health Care", 1311: "Energy", 2911: "Energy", 4911: "Utilities", 4953: "Industrials",
+                 5331: "Consumer Staples", 2086: "Consumer Staples", 5812: "Consumer Discretionary",
+                 3711: "Consumer Discretionary", 7011: "Consumer Discretionary", 4813: "Communication Services",
+                 7812: "Communication Services", 6798: "Real Estate", 6022: "Financials", 2821: "Materials",
+                 1040: "Materials", 3721: "Industrials", 4512: "Industrials", 9995: "Other"}
+        got = run_js(f"Object.fromEntries({json.dumps(list(cases))}.map(s => [s, sectorOf(s)]))")
+        self.assertEqual({int(k): v for k, v in got.items()}, cases)
 
 
 if __name__ == "__main__":
