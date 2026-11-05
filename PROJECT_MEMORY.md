@@ -72,6 +72,8 @@
 - When showing how a number was calculated, recompute it from the raw SEC parts and test every company against the stored value; never just display the stored value.
 - A page number shown for a value comes from its Inline XBRL tag; if it cannot be found, write "not located", never a guess.
 - The public copy (GitHub Pages) has no claude.ai runtime: every feature that uses `claude.use(...)` needs a plain-browser fallback or must say it only works in claude.ai; test it on the local server, not the file preview.
+- A file exists for others only after commit + push: before telling Jitti a file is ready to share, check `git status` and open its public link (GitHub and GitHub Pages) without logging in.
+- Investor.gov glossary addresses can return status 200 with an empty page: check the page contains the definition before citing it.
 
 ## บันทึกปัญหา
 
@@ -361,3 +363,10 @@
 - **สาเหตุ:** The download used claude.ai's `downloads` feature, which exists only when the page runs inside claude.ai. The built-in browser's file preview could not show the problem either: it opens a snapshot with no data files.
 - **แก้อย่างไร:** Use a plain browser download (Blob + link) when there is no claude.ai runtime. Tested on a local server (`python -m http.server`, moat-site in `.claude/launch.json`), which behaves like GitHub Pages.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Opening the HTML as a file preview to test.
+
+### 2026-11-05 · Others could not open the SEC guide PDF from GitHub
+
+- **เจออะไร:** Jitti said others could not open `output/sec_filings_guide.pdf` from the repo; both GitHub and GitHub Pages links returned 404.
+- **สาเหตุ:** The PDF was created but not committed or pushed (Jitti chose "Not now" for the save), so it existed only on this Mac.
+- **แก้อย่างไร:** `/save` (round 30) committed and pushed it; the public links were checked after the push.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Nothing. While checking sources for the guide, several Investor.gov glossary addresses returned status 200 with an empty page; only pages that contain the definition are cited.

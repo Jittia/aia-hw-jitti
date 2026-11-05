@@ -1464,3 +1464,58 @@ Update this new feature as key benefit and show example in all 3 sections under 
   - Look at the public page after the push.
   - Read the instructor's comments in Issues.
   - Decide on held-to-maturity securities as cash; check ZLAB's share count.
+
+## รอบ 30 · 2026-11-05 · SEC filings quick reference (PDF)
+
+- **ทำอะไร:**
+  - **Questions answered in chat:**
+    - Which dashboard version can make a Google Sheet: the claude.ai one. The public copy offers Download as Excel only.
+    - How new EDGAR filings reach the dashboard: they don't by themselves. It is a snapshot of filings dated on or before 2026-11-03; the pipeline must be rerun.
+    - Whether 8-Ks are read: only the filing list and item numbers (1.03 bankruptcy and 5.01 change in control, in the back-test). No 8-K documents are downloaded. The latest 8-K link is saved in `deep_data.js` but the page does not show it.
+  - **New `output/sec_filings_guide.pdf` (4 pages):**
+    - What each main SEC filing is for, its deadline and whether it is audited.
+    - Inside the 10-K and 10-Q.
+    - The 8-K items worth knowing.
+    - How to use filings for moat, history and outlook.
+    - A reading order for a new company.
+    - How the dashboard uses filings today.
+    - 13 sources.
+  - **New `src/sec_guide_pdf.py`:** rebuilds the PDF. `reportlab` added to `requirements.txt`.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · reportlab (build) and pypdfium2 (page check)
+- **Prompt ที่ใช้:**
+
+```text
+Can you explain key different type of SEC document like 10-K, 8-K in simple summary for me.  What is purpose and scope of that document ?  How it could benefit to understand company moat , historical situation, future projection to support our investment decision
+```
+
+```text
+Make summary of this SEC document filing in handy professional document in pdf format for future reference
+```
+
+```text
+check , why others can't open from the Github Repo ?
+```
+
+- **ผลที่ได้:**
+  - **Deadlines checked against the SEC form instructions:**
+    - 10-K: 60/75/90 days.
+    - 10-Q: 40/45 days.
+    - 8-K: 4 business days.
+    - Form 4: 2 business days.
+    - 13D: 5 days.
+    - 13F: 45 days for managers with at least $100 million.
+    - 20-F: 4 months.
+  - **Other sources:** the 8-K item names were taken from the SEC's Form 8-K, and Investor.gov pages were used for the other definitions.
+  - **Page check:** every page was rendered and looked at. No broken characters; the Sources heading stays with its list.
+  - **Why others could not open it:** the PDF was only on this Mac. Before this push, both the GitHub and GitHub Pages links returned 404.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti:**
+    - A professional PDF to keep for future reference.
+    - Push it, so others can open it from the repo.
+  - **Claude's choices:**
+    - **Only official sources (SEC.gov form instructions, Investor.gov):** they define the filings. Investor.gov pages were checked to contain the text, because some glossary addresses return an empty page with status 200.
+    - **Guidance and plans described as management's own unaudited statements:** the guide explains documents and does not recommend any security.
+    - **The build script is kept in `src/`:** the PDF can be rebuilt and checked, in line with the repo rule that every step is recorded.
+- **ขั้นต่อไป:**
+  - Possibly show the latest 8-K (date, items, link) in the Deep-Dive.
+  - Read the instructor's comments in Issues.
