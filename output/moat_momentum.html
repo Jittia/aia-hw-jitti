@@ -345,6 +345,7 @@ ol.steps { padding-left:22px; } ol.steps li { padding-left:4px; }
 .cblocks { margin:12px 0; }
 .cblocks summary { cursor:pointer; font-weight:600; color:var(--navy); }
 .calc-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:14px 0 6px; }
+.capd { border-bottom:1px dotted currentColor; cursor:help; white-space:nowrap; }
 </style>
 <script src="data/site_data.js"></script>
 <script src="data/deep_data.js" defer onload="onDataLoaded()"></script>
@@ -375,6 +376,13 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const f1 = v => v === null || v === undefined || !isFinite(v) ? "–" : v.toFixed(1);
 const f0 = v => v === null || v === undefined || !isFinite(v) ? "–" : Math.round(v).toString();
 const fp = (v, d = 1) => v === null || v === undefined || !isFinite(v) ? "–" : (v * 100).toFixed(d) + "%";
+// Clean ROIC display cap (docs/specs/2026-11-05-roic-display-cap.md): above 100% the number mostly reflects invested
+// capital near zero, so it is shown as "> 100%" (exact value on hover). Display only: data, lists and ranks use the true value.
+const ROIC_CAP = 1, overCap = v => v !== null && v !== undefined && isFinite(v) && v > ROIC_CAP;
+const roicNote = v => `Clean ROIC is ${(v * 100).toLocaleString("en-US", {maximumFractionDigits: 1})}%: invested capital is small next to after-tax profit. Read it as "very high", not as a precise number.`;
+const froicT = (v, d = 1) => overCap(v) ? "> 100%" : fp(v, d);  // plain text (chart labels, SVG titles)
+const froic = (v, d = 1) => overCap(v) ? `<span class="capd" title="${esc(roicNote(v))}">&gt; 100%</span>` : fp(v, d);
+const froicD = v => v !== null && v !== undefined && isFinite(v) && Math.abs(v) > ROIC_CAP ? "n.m." : fp(v);  // a change in ROIC
 const fx = (v, d = 1) => v === null || v === undefined || !isFinite(v) ? "–" : v.toFixed(d) + "x";
 const fusd = v => v === null || v === undefined || !isFinite(v) ? "–" : (Math.abs(v) >= 1e12 ? "$" + (v / 1e12).toFixed(2) + "T" : Math.abs(v) >= 1e9 ? "$" + (v / 1e9).toFixed(1) + "B" : "$" + (v / 1e6).toFixed(0) + "M");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
@@ -580,18 +588,18 @@ function ddCalcSection(cik) {
   const body = rows.map(r => { const g = r.grp !== grp ? `<tr class="cgrp"><th colspan="6">${esc(r.grp)}</th></tr>` : ""; grp = r.grp;
     return `${g}<tr><td>${esc(r.label)}</td><td class="cf">${esc(r.formula)}</td><td class="cu">${r.used.map(u => `<div>${esc(u[0])}: <b>${fmUsd(u[1])}</b>${u[2] ? ` <span class="muted">(${esc(fMonth(u[2]))})</span>` : ""}</div>`).join("")}</td>
       <td class="r"><b>${fres(r)}</b></td><td class="r">${fline(r)}</td><td>${esc(r.side)}</td></tr>`; }).join("");
-  const B = auditMeasures(a, M.blocks).blocks, n = B.now, htm = a.it && a.it.htm && a.it.htm.now && a.it.htm.now[0];
+  const B = auditMeasures(a, M.blocks).blocks, n = B.now;
   const shares = `${mk.shares ? Math.round(mk.shares).toLocaleString("en-US") : "–"} shares (${mk.shares_src === "cover page" ? "cover page" + (mk.ads_ratio ? `, ÷ ${mk.ads_ratio} ordinary shares per ADS` : "") : "diluted average, no cover-page count filed"})`;
   const blocks = [["Revenue, 12 months", n.revenue, "last fiscal year + this year to date − the same months a year earlier"],
     ["Clean operating income", n.clean_oi, "operating income + one-off items (impairment, restructuring, litigation, deal costs, less asset-sale gains)"],
     ["NOPAT", n.nopat, `clean operating income × (1 − ${Math.round(M.tax * 100)}% tax)`],
-    ["Cash and short-term investments", n.cash, "cash + the short-term investment tags the tool reads"],
+    ["Cash and short-term investments", n.cash, "cash + short-term investments (filed total, else available-for-sale + held-to-maturity)"],
     ["Excess cash", n.excess_cash, `cash above ${Math.round(M.cash_pct * 100)}% of revenue`], ["Debt", n.debt, "debt including finance leases"],
     ["Invested capital", n.ic, "equity + debt − excess cash"], ["EBITDA", B.ebitda, "clean operating income + depreciation and amortization"],
     ["Market value", mk.mcap, `Yahoo Finance close ${mk.date || ""} $${mk.price ? mk.price.toFixed(2) : "–"} × ${shares}`],
     ["Enterprise value", B.ev, "market value + debt − cash"]];
-  const notes = [];
-  if (htm) notes.push(`The balance sheet also shows ${fmUsd(htm)} of short-term investments filed as held-to-maturity securities, which the tool does not count as cash. The sheet shows what changes if they are counted.`);
+  const notes = [], roicNow = (rows.find(r => r.k === "g1y") || {}).res;
+  if (overCap(roicNow)) notes.push(`${roicNote(roicNow)} Elsewhere the dashboard shows it as "> 100%"; this table keeps the exact value because it is an audit.`);
   if (a.rc && a.rc.length) notes.push(`Does not reconcile with the Screener on ${a.rc.map(d => d[0]).join(", ")}; the Screener's values are the ones used in the lists.`);
   if (a.ck && a.ck.length) notes.push(`A building block differs from the Screener's data (${a.ck.map(d => d[0] + " " + d[1]).join(", ")}).`);
   return `${head}<p class="small">How each Moat Screener measure and risk check is calculated for ${esc(a.t || "this company")}, with the numbers used. 12 months to ${esc((a.pts.now || [])[0] || "–")}; lines and thresholds as set on the Screener.</p>
@@ -617,8 +625,8 @@ function auditWorkbook(a, meta, lines, thr, dash, co) {
   const ref = {};  // item -> {now: "C12", ...} cell of its total
   const NAMES = {revenue: "Revenue", gross_profit: "Gross profit", op_income: "Operating income", oneoffs: "One-off items added back",
     da: "Depreciation and amortization", cfo: "Operating cash flow", interest: "Interest expense", equity: "Shareholders' equity",
-    cash: "Cash and cash equivalents", st_invest: "Short-term investments the tool reads", debt: "Debt including finance leases",
-    htm: "Held-to-maturity securities, current (not counted by the tool)", shares: "Diluted average shares (12-month point)"};
+    cash: "Cash and cash equivalents", st_invest: "Short-term investments (incl. held-to-maturity)", debt: "Debt including finance leases",
+    shares: "Diluted average shares (12-month point)"};
   const KIND = {FY: 0, YTD: 1, PRIOR: 2, BAL: 0};
   Object.keys(NAMES).forEach(name => {
     const it = a.it[name]; if (!it) return;
@@ -728,17 +736,6 @@ function auditWorkbook(a, meta, lines, thr, dash, co) {
   meas("Interest cover", intr ? `=IF(AND(ISNUMBER(${b("coi")}),${intr}>0),${b("coi")}/${intr},"n/a")` : `="n/a"`, dash && dash.ic, sr(10), "x", "Clean operating income ÷ interest expense", 0.006);
   meas("Net debt ÷ EBITDA", `=IF(ISNUMBER(${b("ebitda")}),IF(${b("ebitda")}>0,${b("nd")}/${b("ebitda")},IF(${b("nd")}>0,999,"n/a")),"n/a")`, dash && dash.nd, sr(11), "x", "(Debt − cash) ÷ EBITDA; 999 = EBITDA ≤ 0 with net debt", 0.006);
   meas("Operating cash flow ÷ debt", r("cfo", "now") ? `=IF(${b("debt")}>0,${r("cfo", "now")}/${b("debt")},"n/a")` : `="n/a"`, dash && dash.cd, sr(12), "pct", "Operating cash flow ÷ debt", 0.0006);
-  const htm = a.it.htm && a.it.htm.now && a.it.htm.now[0];
-  if (htm && ref.htm && ref.htm.now) {
-    cc.push([], ["If held-to-maturity securities counted as cash", "Now", "4 quarters back"].map(h => V(h, {s: "h"})));
-    const h0 = cc.length + 1, hq = ref.htm.q4 ? SI + ref.htm.q4 : "0";
-    cc.push([V("Cash counted, including held-to-maturity securities"), F(`=${b("cash")}+${SI}${ref.htm.now}`, {n: "usd"}), F(`=${c("cash")}+${hq}`, {n: "usd"})]);
-    cc.push([V("Excess cash"), F(`=MAX(B${h0}-${sr(1)}*${b("rev")},0)`, {n: "usd"}), F(`=MAX(C${h0}-${sr(1)}*${c("rev")},0)`, {n: "usd"})]);
-    cc.push([V("Invested capital"), F(`=${r("equity", "now")}+${b("debt")}-B${h0 + 1}`, {n: "usd"}), F(`=${r("equity", "q4")}+${c("debt")}-C${h0 + 1}`, {n: "usd"})]);
-    cc.push([V("Clean ROIC"), F(`=IF(AVERAGE(B${h0 + 2},C${h0 + 2})>0,${b("nopat")}/AVERAGE(B${h0 + 2},C${h0 + 2}),"n/a")`, {n: "pct2"})]);
-    cc.push([V("Earnings yield"), F(`=${b("coi")}/(${b("mcap")}+${b("debt")}-B${h0})`, {n: "pct2"})]);
-    cc.push([V("The tool's cash list does not include held-to-maturity securities, so it counts them as invested capital instead of cash.", {s: "note"})]);
-  }
   return {title: `${a.t} · Moat Momentum calculation check (data as of ${meta.as_of})`,
     sheets: [{name: "Calculation check", rows: cc, widths: [360, 150, 150, 150, 110, 200, 460]},
       {name: "SEC inputs", rows: sec, widths: [360, 380, 170, 170, 170, 170, 170]},
@@ -951,7 +948,10 @@ const SGROUPS = [
 const QLBL = ["① Now in the top-right", "② Improving fastest on Y", "③ Improving fastest on X"], QKEY = ["top", "upY", "upX"];
 const COMP_BY = new Map(COMP.map(c => [c.cik, c]));
 const fpt = v => ok(v) ? (v * 100).toFixed(1) + " pts" : "–";
-const gfx = (G, v) => fp(v), gfy = (G, v) => G.pts ? fpt(v) : fp(v);
+const roicAx = (G, ax) => (G.k === "g1" && ax === "y") || (G.k === "g4" && ax === "x");
+const gfx = (G, v) => roicAx(G, "x") ? froicT(v) : fp(v), gfy = (G, v) => roicAx(G, "y") ? froicT(v) : G.pts ? fpt(v) : fp(v);
+const gfxH = (G, v) => roicAx(G, "x") ? froic(v) : fp(v), gfyH = (G, v) => roicAx(G, "y") ? froic(v) : G.pts ? fpt(v) : fp(v);
+const gdx = G => roicAx(G, "x") ? froicD : fp, gdy = G => roicAx(G, "y") ? froicD : (G.pts ? fpt : fp);
 state.scr = {caps: new Set(), sectors: new Set(), inds: new Set(), indQ: "", risk: clone(SCR.meta.defaults), filter: true, dropNT: false,
   lines: clone(SCR.meta.lines), sel: {}, ov: "top", ovSort: {key: "count", dir: -1}};
 // spec §4 (mirrors mm_screener.risk_measures): pass / fail / "nt" (not tested)
@@ -1007,12 +1007,12 @@ function scatter2x2(rows, cfg) {
   g += `<text class="ql" x="${L + pw - 6}" y="${T + 16}" text-anchor="end">${q[0]}</text><text class="ql" x="${L + 6}" y="${T + 16}">${q[1]}</text>`;
   g += `<text class="ql" x="${L + pw - 6}" y="${T + ph - 18}" text-anchor="end">${q[2]}</text><text class="ql" x="${L + 6}" y="${T + ph - 18}">${q[3]}</text>`;
   g += `<text x="${L + pw / 2}" y="${H - 4}" text-anchor="middle">${esc(cfg.xl)}</text><text transform="rotate(-90)" x="${-(T + ph / 2)}" y="12" text-anchor="middle">${esc(cfg.yl)}</text>`;
-  const mc = Math.max(...rows.map(r => r.mc || 0), 1), fy = cfg.fy || fp;
+  const mc = Math.max(...rows.map(r => r.mc || 0), 1), fy = cfg.fy || fp, fx = cfg.fx || fp;
   let selDot = null;
   rows.slice().sort((a, b) => (b.mc || 0) - (a.mc || 0)).forEach(r => { const cx = clampAxis(r.x, x0, x1), cy = clampAxis(r.y, y0, y1), pin = cx.pinned || cy.pinned;
     const rad = 2.5 + 8 * Math.sqrt((r.mc || 0) / mc), tr = r.x >= lx && r.y >= ly, sel = r.cik === cfg.sel, px = X(cx.v), py = Y(cy.v);
     if (sel) { selDot = {r, px, py}; return; }
-    g += `<circle class="dot ${tr ? "tr" : "bgd"}${pin ? " pin" : ""}" data-cik="${r.cik}" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${rad.toFixed(1)}"><title>${esc(r.c.ticker || r.c.name)} · ${cfg.xs} ${fp(r.x)} · ${cfg.ys} ${fy(r.y)}${pin ? " · off the chart, shown at the edge" : ""}</title></circle>`; });
+    g += `<circle class="dot ${tr ? "tr" : "bgd"}${pin ? " pin" : ""}" data-cik="${r.cik}" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${rad.toFixed(1)}"><title>${esc(r.c.ticker || r.c.name)} · ${cfg.xs} ${fx(r.x)} · ${cfg.ys} ${fy(r.y)}${pin ? " · off the chart, shown at the edge" : ""}</title></circle>`; });
   if (cfg.trail) {
     const pts = cfg.trail.map(([a, b]) => ok(a) && ok(b) ? [X(clampAxis(a, x0, x1).v), Y(clampAxis(b, y0, y1).v)] : null);
     const seq = pts.map((p, i) => p ? [p, i] : null).filter(Boolean);
@@ -1022,7 +1022,7 @@ function scatter2x2(rows, cfg) {
   if (selDot) { const {r, px, py} = selDot, right = px < L + pw * 0.62, tx = right ? px + 12 : px - 12, tr = r.x >= lx && r.y >= ly;
     // the selected company is drawn last and larger, so it is visible on top of a dense cloud
     g += `<circle class="dot ${tr ? "tr" : "bgd"} sel" data-cik="${r.cik}" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${Math.max(7, 2.5 + 8 * Math.sqrt((r.mc || 0) / mc)).toFixed(1)}"><title>${esc(r.c.ticker || r.c.name)}</title></circle>`;
-    g += `<text class="lbl" x="${tx.toFixed(1)}" y="${(py - 8).toFixed(1)}" text-anchor="${right ? "start" : "end"}">${esc(r.c.ticker || "")} · ${cfg.xs} ${fp(r.x)} · ${cfg.ys} ${fy(r.y)}</text>`; }
+    g += `<text class="lbl" x="${tx.toFixed(1)}" y="${(py - 8).toFixed(1)}" text-anchor="${right ? "start" : "end"}">${esc(r.c.ticker || "")} · ${cfg.xs} ${fx(r.x)} · ${cfg.ys} ${fy(r.y)}</text>`; }
   return `<svg class="mapsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(cfg.label)}">${g}</svg>
   <div class="maplegend"><span><i style="background:var(--teal)"></i>top-right</span><span><i style="background:var(--neutral)"></i>other</span><span>dot size = market value</span><span>dashed outline = off the chart, shown at the edge</span><span>line = the selected company 1–4 quarters back</span></div>`;
 }
@@ -1131,24 +1131,24 @@ function scrGroup(G) {
   const byCik = new Map(rows.map(r => [r.cik, r]));
   const dots = rows.filter(r => ok(r.pts[0][0]) && ok(r.pts[0][1])).map(r => ({...r, x: r.pts[0][0], y: r.pts[0][1]}));
   if (S.sel[G.k] && !dots.some(d => d.cik === S.sel[G.k])) S.sel[G.k] = null;
-  const sel = S.sel[G.k] ? byCik.get(S.sel[G.k]) : null, fy = v => gfy(G, v);
+  const sel = S.sel[G.k] ? byCik.get(S.sel[G.k]) : null, fy = v => gfy(G, v), fx = v => gfx(G, v), fxH = v => gfxH(G, v), fyH = v => gfyH(G, v);
   const left = `${Lst.missing.toLocaleString()} left out (missing a value)`;
   if (!dots.length) { el.innerHTML = `<p class="empty">No company in this Moat Screener after the scope above (${left}). Widen Section 1.</p>`; return; }
   const nTR = dots.filter(d => d.x >= lines[0] && d.y >= lines[1]).length;
-  const chg = (a, b, f) => ok(a) && ok(b) ? (a - b >= 0 ? "+" : "") + f(a - b) : "–";
+  const chg = (a, b, f) => ok(a) && ok(b) ? (t => t === "n.m." ? t : (a - b >= 0 ? "+" : "") + t)(f(a - b)) : "–";
   const side = sel ? (() => { const [x, y] = sel.pts[0], u = _scr.kept.find(k => k.cik === sel.cik);
       return `<div><b>${esc(sel.c.ticker || "")}</b> ${esc(sel.c.name)}</div><div class="small">${esc(sel.c.sic_desc || "")} · ${esc(sectorOf(sel.c.sic))} · ${fusd(sel.mc)}</div>
       <p style="margin:8px 0 6px">${badge(x >= lines[0] && y >= lines[1] ? "GOOD" : "NEUTRAL", quadOf(G, x, y, lines))}</p>
-      <table><thead><tr><th>12 months to</th><th class="r">${G.xs}</th><th class="r">${G.ys}</th></tr></thead><tbody>${sel.pts.map((p, i) => `<tr><td>${i ? "−" + i + "q" : "Now · " + esc(u.r.end)}</td><td class="r">${fp(p[0])}</td><td class="r">${fy(p[1])}</td></tr>`).join("")}</tbody></table>
-      <p class="small" style="margin:6px 0 0">Change over 4 quarters: ${G.xs} ${chg(sel.pts[0][0], sel.pts[4][0], fp)}, ${G.ys} ${chg(sel.pts[0][1], sel.pts[4][1], fy)}</p>
+      <table><thead><tr><th>12 months to</th><th class="r">${G.xs}</th><th class="r">${G.ys}</th></tr></thead><tbody>${sel.pts.map((p, i) => `<tr><td>${i ? "−" + i + "q" : "Now · " + esc(u.r.end)}</td><td class="r">${fxH(p[0])}</td><td class="r">${fyH(p[1])}</td></tr>`).join("")}</tbody></table>
+      <p class="small" style="margin:6px 0 0">Change over 4 quarters: ${G.xs} ${chg(sel.pts[0][0], sel.pts[4][0], gdx(G))}, ${G.ys} ${chg(sel.pts[0][1], sel.pts[4][1], gdy(G))}</p>
       <p style="margin:8px 0 0">${wlButton(sel.cik, false)} <a href="#deepdive/${sel.cik}">Open Deep-Dive</a> · <a href="#" data-clr="1">Clear</a></p>`; })()
     : (() => { const qn = i => dots.filter(d => quadOf(G, d.x, d.y, lines) === G.quads[i]).length;
         return `<p class="eyebrow" style="margin-bottom:8px">Companies by quadrant</p><div class="qgrid"><div><b>${qn(1).toLocaleString()}</b><span>${esc(G.quads[1])}</span></div><div class="tr"><b>${qn(0).toLocaleString()}</b><span>${esc(G.quads[0])}</span></div><div><b>${qn(3).toLocaleString()}</b><span>${esc(G.quads[3])}</span></div><div><b>${qn(2).toLocaleString()}</b><span>${esc(G.quads[2])}</span></div></div>
         <p class="small" style="margin:10px 0 0">${dots.length.toLocaleString()} shown · ${left}. Click a dot, or a company in the lists, to see its values and where it was 1–4 quarters back.</p>`; })();
-  const dtxt = (v, f) => ok(v) ? (v >= 0 ? "+" : "") + f(v) : "–";
+  const dtxt = (v, f) => ok(v) ? (t => t === "n.m." ? t : (v >= 0 ? "+" : "") + t)(f(v)) : "–";
   const tbl = (key, i) => { const a = Lst[key];
-    return `<div class="lcol"><h4>${QLBL[i]} <span class="small">(${a.length})</span></h4><div class="lbox">${a.length ? `<table><colgroup><col style="width:26px"><col><col style="width:62px"><col style="width:66px"><col style="width:66px"></colgroup><thead><tr><th class="r">#</th><th>Company</th><th class="r" title="${esc(G.xl)}">${esc(G.xs)}</th><th class="r" title="${esc(G.yl)}">${esc(G.ys)}</th><th class="r" title="${key === "top" ? "Average percentile rank of X and Y (0–100)" : "Change over the last 4 quarters"}">${key === "top" ? "Pct" : "Δ 4q"}</th></tr></thead><tbody>${a.map((r, j) => `<tr class="click${r.cik === S.sel[G.k] ? " on" : ""}" data-cik="${r.cik}" title="${esc((COMP_BY.get(r.cik) || {}).name || "")} · ${fusd(byCik.get(r.cik).mc)} · click to show it in the chart"><td class="r">${j + 1}</td><td class="nm"><b>${esc((COMP_BY.get(r.cik) || {}).ticker || "")}</b> <span class="small">${esc((COMP_BY.get(r.cik) || {}).name || "")}</span></td><td class="r">${fp(r.x)}</td><td class="r">${fy(r.y)}</td><td class="r">${key === "top" ? Math.round(r.pct) : key === "upY" ? dtxt(r.dy, fy) : dtxt(r.dx, fp)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty" style="padding:10px">None.</p>`}</div></div>`; };
-  el.innerHTML = `<div class="grpgrid"><div style="min-width:0">${scatter2x2(dots, {lines, quads: G.quads, xl: G.xl, yl: G.yl, xs: G.xs, ys: G.ys, pts: G.pts, fy, sel: S.sel[G.k], trail: sel ? sel.pts : null, label: G.n})}</div><div class="sidebox">${side}</div></div>
+    return `<div class="lcol"><h4>${QLBL[i]} <span class="small">(${a.length})</span></h4><div class="lbox">${a.length ? `<table><colgroup><col style="width:26px"><col><col style="width:62px"><col style="width:66px"><col style="width:66px"></colgroup><thead><tr><th class="r">#</th><th>Company</th><th class="r" title="${esc(G.xl)}">${esc(G.xs)}</th><th class="r" title="${esc(G.yl)}">${esc(G.ys)}</th><th class="r" title="${key === "top" ? "Average percentile rank of X and Y (0–100)" : "Change over the last 4 quarters"}">${key === "top" ? "Pct" : "Δ 4q"}</th></tr></thead><tbody>${a.map((r, j) => `<tr class="click${r.cik === S.sel[G.k] ? " on" : ""}" data-cik="${r.cik}" title="${esc((COMP_BY.get(r.cik) || {}).name || "")} · ${fusd(byCik.get(r.cik).mc)} · click to show it in the chart"><td class="r">${j + 1}</td><td class="nm"><b>${esc((COMP_BY.get(r.cik) || {}).ticker || "")}</b> <span class="small">${esc((COMP_BY.get(r.cik) || {}).name || "")}</span></td><td class="r">${fxH(r.x)}</td><td class="r">${fyH(r.y)}</td><td class="r">${key === "top" ? Math.round(r.pct) : key === "upY" ? dtxt(r.dy, gdy(G)) : dtxt(r.dx, gdx(G))}</td></tr>`).join("")}</tbody></table>` : `<p class="empty" style="padding:10px">None.</p>`}</div></div>`; };
+  el.innerHTML = `<div class="grpgrid"><div style="min-width:0">${scatter2x2(dots, {lines, quads: G.quads, xl: G.xl, yl: G.yl, xs: G.xs, ys: G.ys, pts: G.pts, fy, fx, sel: S.sel[G.k], trail: sel ? sel.pts : null, label: G.n})}</div><div class="sidebox">${side}</div></div>
     <div class="lists3">${QKEY.map(tbl).join("")}</div>
     <p class="small" style="margin:8px 0 0">② already right of the X line, below the Y line, Y rose over 4 quarters; ③ already above the Y line, left of the X line, X rose. A company with no point 4 quarters back can be in ① but not ② or ③. Click a company to show it in the chart; its Deep-Dive link is in the box beside the chart.</p>`;
   const c = el.querySelector("[data-clr]"); if (c) c.addEventListener("click", e => { e.preventDefault(); S.sel[G.k] = null; scrGroup(G); });
@@ -1171,7 +1171,7 @@ function scrOverlap() {
     GKEYS.map((g, i) => th(g, "M" + (i + 1), "r mcol", SGROUPS[i].n + ": percentile rank where it qualifies")).join("")}${SUMCOLS.map(([k, n, , , t]) => th(k, n, "r", t)).join("")}</tr></thead><tbody>${
     sorted.map(r => `<tr class="click" data-cik="${r.cik}"><td class="nm"><b>${esc(r.c.ticker || "")}</b> <span class="small">${esc(r.c.name || "")}</span></td><td class="ctr">${wlButton(r.cik, false)}</td><td><a href="#deepdive/${r.cik}">Deep-Dive</a></td><td class="r">${fusd(r.mc)}</td><td class="r">${fpe(r.pe)}</td><td class="r"><b>${r.count}</b></td>${
       GKEYS.map(g => `<td class="r mcol">${r.m[g] !== undefined ? `<span class="mhit">${Math.round(r.m[g])}</span>` : ""}</td>`).join("")}${
-      SUMCOLS.map(([k]) => `<td class="r">${k === "dgm" ? fpt(r[k]) : fp(r[k])}</td>`).join("")}</tr>`).join("")}</tbody></table>`
+      SUMCOLS.map(([k]) => `<td class="r">${k === "dgm" ? fpt(r[k]) : k === "roic" ? froic(r[k]) : fp(r[k])}</td>`).join("")}</tr>`).join("")}</tbody></table>`
     : `<p class="empty">No company in this list in any Moat Screener after the scope.</p>`;
   sizeSumScroll();
 }
@@ -1232,22 +1232,24 @@ function ddContext() {
     QKEY.forEach(q => D.lists[g][q].forEach(r => { (inList[r.cik] = inList[r.cik] || {})[g] = q; })); });
   return (_ddCache = {pct, inList, D});
 }
-function miniQuad(G, pts, lines) {
+function miniQuad(G, pts0, lines) {
   const W = 260, H = 190, L = 40, R = 10, T = 10, B = 30, pw = W - L - R, ph = H - T - B;
+  // ROIC above the display cap is drawn just above 100% (spec 2026-11-05-roic-display-cap.md)
+  const pin = (v, ax) => roicAx(G, ax) && ok(v) ? Math.min(v, ROIC_CAP * 1.05) : v, pts = pts0.map(p => [pin(p[0], "x"), pin(p[1], "y")]);
   const v = pts.filter(p => ok(p[0]) && ok(p[1]));
   if (!v.length) return `<p class="empty small">Not shown: no current value.</p>`;
   const xs = v.map(p => p[0]).concat(lines[0]), ys = v.map(p => p[1]).concat(lines[1]);
   let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   const px = Math.max((x1 - x0) * 0.25, 0.02), py = Math.max((y1 - y0) * 0.25, 0.02); x0 -= px; x1 += px; y0 -= py; y1 += py;
-  const X = a => L + (a - x0) / (x1 - x0) * pw, Y = a => T + ph - (a - y0) / (y1 - y0) * ph, f = a => fp(a, 0);
+  const X = a => L + (a - x0) / (x1 - x0) * pw, Y = a => T + ph - (a - y0) / (y1 - y0) * ph, f = a => fp(a, 0), fxa = a => roicAx(G, "x") && a > ROIC_CAP ? "> 100%" : f(a), fya = a => roicAx(G, "y") && a > ROIC_CAP ? "> 100%" : f(a);
   const seq = pts.map((p, i) => ok(p[0]) && ok(p[1]) ? [X(p[0]), Y(p[1]), i] : null).filter(Boolean).reverse();
   const tr = ok(pts[0][0]) && ok(pts[0][1]) && pts[0][0] >= lines[0] && pts[0][1] >= lines[1];
   return `<svg class="mapsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(G.n)}: company position and 4-quarter trail">
     <rect x="${X(lines[0]).toFixed(1)}" y="${T}" width="${(L + pw - X(lines[0])).toFixed(1)}" height="${Math.max(0, Y(lines[1]) - T).toFixed(1)}" fill="var(--good)" opacity=".08"/>
     <rect x="${L}" y="${T}" width="${pw}" height="${ph}" fill="none" stroke="var(--grid)"/>
     <line x1="${X(lines[0])}" x2="${X(lines[0])}" y1="${T}" y2="${T + ph}" stroke="var(--ink-2)" stroke-dasharray="4 3"/><line x1="${L}" x2="${L + pw}" y1="${Y(lines[1])}" y2="${Y(lines[1])}" stroke="var(--ink-2)" stroke-dasharray="4 3"/>
-    <text x="${L}" y="${H - 14}">${f(x0)}</text><text x="${L + pw}" y="${H - 14}" text-anchor="end">${f(x1)}</text><text x="${L + pw / 2}" y="${H - 2}" text-anchor="middle">${esc(G.xs)}</text>
-    <text x="${L - 4}" y="${T + 8}" text-anchor="end">${G.pts ? fpt(y1) : f(y1)}</text><text x="${L - 4}" y="${T + ph}" text-anchor="end">${G.pts ? fpt(y0) : f(y0)}</text>
+    <text x="${L}" y="${H - 14}">${fxa(x0)}</text><text x="${L + pw}" y="${H - 14}" text-anchor="end">${fxa(x1)}</text><text x="${L + pw / 2}" y="${H - 2}" text-anchor="middle">${esc(G.xs)}</text>
+    <text x="${L - 4}" y="${T + 8}" text-anchor="end">${G.pts ? fpt(y1) : fya(y1)}</text><text x="${L - 4}" y="${T + ph}" text-anchor="end">${G.pts ? fpt(y0) : fya(y0)}</text>
     ${seq.length > 1 ? `<polyline points="${seq.map(([a, b]) => a.toFixed(1) + "," + b.toFixed(1)).join(" ")}" fill="none" stroke="var(--navy)" stroke-width="1.6"/>` : ""}
     ${seq.map(([a, b, i]) => i ? `<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="2.6" fill="var(--paper)" stroke="var(--navy)"/><text x="${(a + 4).toFixed(1)}" y="${(b - 4).toFixed(1)}">−${i}q</text>` : `<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="6" fill="${tr ? "var(--teal)" : "var(--neutral)"}" stroke="var(--ink)"/>`).join("")}</svg>`;
 }
@@ -1275,7 +1277,7 @@ function viewDeep(m) {
       <div><dt>Fiscal year ends</dt><dd>${esc(B.fye || "–")}</dd></div>
       <div><dt>Website</dt><dd>${B.website ? `<a href="https://${esc(B.website)}" target="_blank" rel="noopener">${esc(B.website)}</a>` : `<a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}" target="_blank" rel="noopener">SEC company page</a>`}</dd></div></dl>`;
   const kn = [["Revenue (12 months)", fusd(rev)], ["3-year revenue growth a year", fp(r.g1 && r.g1[0][0])], ["Gross margin", fp(gm)], ["Operating margin (clean)", fp(om)],
-    ["Free cash flow (12 months)", fusd(ok(rev) && ok(fcfm) ? rev * fcfm : null)], ["Clean ROIC", fp(r.g1 && r.g1[0][1])], ["Market value", fusd(mm.mcap)], ["P/E (clean)", fpe(mm.pe)],
+    ["Free cash flow (12 months)", fusd(ok(rev) && ok(fcfm) ? rev * fcfm : null)], ["Clean ROIC", froic(r.g1 && r.g1[0][1])], ["Market value", fusd(mm.mcap)], ["P/E (clean)", fpe(mm.pe)],
     ["EV / clean EBIT", ok(mm.ev_ebit) ? fx(mm.ev_ebit) : "–"], ["Earnings yield", fp(r.g4 && r.g4[0][1])], ["Net debt ÷ EBITDA", r.nc ? "net cash" : ok(r.nd) ? (r.nd >= 999 ? "EBITDA ≤ 0" : fx(r.nd)) : "–"], ["Interest cover", ok(r.ic) ? fx(r.ic) : r.nc ? "net cash" : "not tested"]];
   const cards = SGROUPS.map(G => { const pts = r[G.k] || [[null, null]], L = SCR.meta.lines[G.k], p0 = pts[0], has = ok(p0[0]) && ok(p0[1]);
     const lst = (X.inList[cik] || {})[G.k], pc = X.pct[G.k].get(cik);
@@ -1283,7 +1285,7 @@ function viewDeep(m) {
       ${has ? `<p style="margin:0 0 6px">${badge(p0[0] >= L[0] && p0[1] >= L[1] ? "GOOD" : "NEUTRAL", quadOf(G, p0[0], p0[1], L))} <span class="small">percentile ${Math.round(pc)}${lst ? ` · list ${{top: "①", upY: "②", upX: "③"}[lst]}` : ""}</span></p>` : ""}
       ${miniQuad(G, pts, L)}
       <table class="small"><thead><tr><th></th><th class="r">Now</th><th class="r">−1q</th><th class="r">−2q</th><th class="r">−3q</th><th class="r">−4q</th></tr></thead><tbody>
-      <tr><td>${esc(G.xs)}</td>${pts.map(p => `<td class="r">${fp(p[0])}</td>`).join("")}</tr><tr><td>${esc(G.ys)}</td>${pts.map(p => `<td class="r">${G.pts ? fpt(p[1]) : fp(p[1])}</td>`).join("")}</tr></tbody></table></div>`; }).join("");
+      <tr><td>${esc(G.xs)}</td>${pts.map(p => `<td class="r">${gfxH(G, p[0])}</td>`).join("")}</tr><tr><td>${esc(G.ys)}</td>${pts.map(p => `<td class="r">${gfyH(G, p[1])}</td>`).join("")}</tr></tbody></table></div>`; }).join("");
   m.innerHTML = `${pageHead(`Deep-Dive · ${esc(sectorOf(c.sic))} · ${esc(c.sic_desc || "")}`, `${esc(c.name || "")} <span class="tick">${esc(c.ticker || "")}</span>`, "", `${ddPick(m)}${wlButton(cik)}`)}
   <section class="card cocard"><h2 style="margin-top:0">The company</h2><div class="cbrief">${brief}</div><p class="small" style="margin:14px 0 0">Source: SEC EDGAR (latest 10-K, Item 1 “Business”; company submissions), retrieved ${esc((window.MM_BRIEF || {meta: {}}).meta.retrieved || "")}.</p></section>
   <h2>Key numbers</h2><div class="kpis knum">${kn.map(([l, v]) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`).join("")}</div>
@@ -1428,7 +1430,7 @@ function renderWatchRows() {
       <td><select data-pr="${x.cik}" aria-label="Priority for ${esc(x.c.ticker || "")}">${["", "A", "B", "C"].map(p => `<option value="${p}"${(x.e.priority || "") === p ? " selected" : ""}>${p || "–"}</option>`).join("")}</select></td>
       <td class="wlact"><button type="button" class="btn sm" data-deck="${x.cik}">Pitch deck</button> <a class="btn ghost sm" href="#deepdive/${x.cik}">Deep-Dive</a> <button type="button" class="linkbtn rm" data-wlrm="${x.cik}" title="Remove from the Watchlist">Remove</button></td>
       <td class="r">${fusd(x.mc)}</td><td class="r">${fpe(x.pe)}</td><td class="r"><b>${x.inData ? x.count : "–"}</b></td>${GKEYS.map(g => `<td class="r mcol">${x.m[g] !== undefined ? `<span class="mhit">${Math.round(x.m[g])}</span>` : ""}</td>`).join("")}
-      ${SUMCOLS.map(([k]) => `<td class="r">${k === "dgm" ? fpt(x[k]) : fp(x[k])}</td>`).join("")}<td class="small">${esc(x.e.added || "")}</td></tr>
+      ${SUMCOLS.map(([k]) => `<td class="r">${k === "dgm" ? fpt(x[k]) : k === "roic" ? froic(x[k]) : fp(x[k])}</td>`).join("")}<td class="small">${esc(x.e.added || "")}</td></tr>
       <tr class="noterow"><td colspan="${7 + GKEYS.length + SUMCOLS.length}"><label class="small" for="nt${x.cik}">Note on ${esc(x.c.ticker || x.c.name || "")}: our thinking</label>
         <textarea id="nt${x.cik}" data-note="${x.cik}" rows="4" placeholder="Why we are watching it, what would make us act, open questions…">${esc(x.e.note || "")}</textarea><span class="small" data-st="${x.cik}">${x.e.updated ? "Last saved " + esc(x.e.updated) : ""}</span></td></tr>`).join("")}</tbody></table>`;
   t.querySelectorAll("textarea[data-note]").forEach(a => { a.style.height = "auto"; a.style.height = Math.max(96, a.scrollHeight) + "px"; });
@@ -1440,6 +1442,8 @@ function buildDeck(d) {
   const E = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
   const has = v => v !== null && v !== undefined && isFinite(v), NA = "not available in filings";
   const pc = (v, k = 1) => has(v) ? (v * 100).toFixed(k) + "%" : "–", pt = v => has(v) ? (v * 100).toFixed(1) + " pts" : "–";
+  // clean ROIC above 100% shown as "> 100%" (spec 2026-11-05-roic-display-cap.md); the deck is self-contained, so its own copy
+  const rc = v => has(v) && v > 1 ? "&gt; 100%" : pc(v), rAx = (g, ax) => (g.k === "g1" && ax === "y") || (g.k === "g4" && ax === "x");
   const usd = v => !has(v) ? "–" : Math.abs(v) >= 1e12 ? "$" + (v / 1e12).toFixed(2) + "T" : Math.abs(v) >= 1e9 ? "$" + (v / 1e9).toFixed(1) + "B" : "$" + (v / 1e6).toFixed(0) + "M";
   const xx = v => has(v) ? (v >= 100 ? Math.round(v) : v.toFixed(1)) + "×" : "–";
   const co = d.co || {}, B = d.brief || null, r = d.scr || {}, Q = d.q || null, e = d.entry || {}, M = d.meta || {}, L = d.lines || {}, G = d.groups || [];
@@ -1458,7 +1462,7 @@ function buildDeck(d) {
   const s1 = slide(1, "Investment snapshot", `<h1>${E(co.name || "")}</h1><p class="sub">${E(co.ticker || "")} · ${E(co.sector || "–")} · ${E(co.industry || "–")} · market value ${usd(co.mcap)}</p>
     <div class="row">${prio}<span class="muted">Added to the Watchlist ${E(e.added || "–")}</span></div>
     <blockquote class="thesis">${E(thesis)}</blockquote>
-    <div class="stats">${stat(usd(Q ? last(Q.revenue) : null), "Revenue, 12 months")}${stat(pc(now("g1")[0]), "3-year revenue growth a year")}${stat(pc(now("g1")[1]), "Clean ROIC")}
+    <div class="stats">${stat(usd(Q ? last(Q.revenue) : null), "Revenue, 12 months")}${stat(pc(now("g1")[0]), "3-year revenue growth a year")}${stat(rc(now("g1")[1]), "Clean ROIC")}
       ${stat(xx(co.pe), "P/E (clean)")}${stat(pc(now("g4")[1]), "Earnings yield")}${stat(nMoat + " of 4", "Moat Screeners passed")}</div>
     <div class="cols kp"><div><h2>Why it is on the list</h2>${notes.look.length ? `<ul>${notes.look.slice(0, 3).map(t => `<li>${E(t)}</li>`).join("")}</ul>` : `<p class="na">No strong signal from the four Moat Screeners today.</p>`}</div>
       <div><h2>What to watch</h2>${notes.watch.length ? `<ul>${notes.watch.slice(0, 2).map(t => `<li>${E(t)}</li>`).join("")}</ul>` : `<p>No warning from the risk checks or the 4-quarter trends.</p>`}</div></div>`);
@@ -1473,7 +1477,7 @@ function buildDeck(d) {
       <text x="${l - 4}" y="16" text-anchor="end" class="ax">${usd(mx)}</text></svg><p class="legend"><i style="background:#1F3A5F"></i>Revenue, 12 months <i style="background:#0F7B78"></i>Clean operating margin (${pc(last(om))} latest)</p>`;
   }
   const kt = [["Revenue, 12 months", usd(Q ? back4(Q.revenue) : null), usd(Q ? last(Q.revenue) : null)], ["Gross margin", pc(Q ? back4(Q.gross_margin) : null), pc(Q ? last(Q.gross_margin) : null)],
-    ["Operating margin (clean)", pc(Q ? back4(Q.op_margin) : null), pc(Q ? last(Q.op_margin) : null)], ["Clean ROIC", pc((r.g1 || [])[4] && r.g1[4][1]), pc(now("g1")[1])],
+    ["Operating margin (clean)", pc(Q ? back4(Q.op_margin) : null), pc(Q ? last(Q.op_margin) : null)], ["Clean ROIC", rc((r.g1 || [])[4] && r.g1[4][1]), rc(now("g1")[1])],
     ["3-year revenue growth a year", pc((r.g1 || [])[4] && r.g1[4][0]), pc(now("g1")[0])]];
   const s2 = slide(2, "Business overview", `<div class="cols"><div><h2>What the company does</h2><p class="desc">${B && B.desc ? E(B.desc) : `<span class="na">Business description ${NA}.</span>`}</p>
       <p class="src">${B && B.url ? `Source: latest 10-K, Item 1 (filed ${E(B.filed || "–")}): ${E(B.url)}` : ""}</p>
@@ -1490,7 +1494,7 @@ function buildDeck(d) {
     return `<div class="mq${tr ? " tr" : ""}"><h3>${E(g.n)}</h3><p class="q">${E(g.q)}</p><svg viewBox="0 0 ${W} ${H}" class="quad"><rect x="${X(ln[0]).toFixed(1)}" y="${t}" width="${Math.max(0, l + pw - X(ln[0])).toFixed(1)}" height="${Math.max(0, Y(ln[1]) - t).toFixed(1)}" fill="#2E7D4F" opacity=".12"/>
       <rect x="${l}" y="${t}" width="${pw}" height="${ph}" fill="none" stroke="#E3D3C4"/><line x1="${X(ln[0])}" x2="${X(ln[0])}" y1="${t}" y2="${t + ph}" stroke="#66605A" stroke-dasharray="4 3"/><line x1="${l}" x2="${l + pw}" y1="${Y(ln[1])}" y2="${Y(ln[1])}" stroke="#66605A" stroke-dasharray="4 3"/>
       ${seq.length > 1 ? `<polyline points="${seq.map(([a, b]) => a.toFixed(1) + "," + b.toFixed(1)).join(" ")}" fill="none" stroke="#1F3A5F" stroke-width="1.6"/>` : ""}${seq.map(([a, b, i]) => i ? `<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="2.6" fill="#fff" stroke="#1F3A5F"/>` : `<circle cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="6" fill="${tr ? "#0F7B78" : "#8A847D"}" stroke="#262A33"/>`).join("")}</svg>
-      <p class="mres"><b>${E(q)}</b> · ${E(g.xs)} ${pc(p0[0])} · ${E(g.ys)} ${g.pts ? pt(p0[1]) : pc(p0[1])}</p><p class="small">Percentile ${has((d.pct || {})[g.k]) ? Math.round(d.pct[g.k]) : "–"}${ls ? ` · list ${{top: "① now top-right", upY: "② improving on Y", upX: "③ improving on X"}[ls]}` : ""} · line = last 4 quarters</p></div>`; };
+      <p class="mres"><b>${E(q)}</b> · ${E(g.xs)} ${rAx(g, "x") ? rc(p0[0]) : pc(p0[0])} · ${E(g.ys)} ${rAx(g, "y") ? rc(p0[1]) : g.pts ? pt(p0[1]) : pc(p0[1])}</p><p class="small">Percentile ${has((d.pct || {})[g.k]) ? Math.round(d.pct[g.k]) : "–"}${ls ? ` · list ${{top: "① now top-right", upY: "② improving on Y", upX: "③ improving on X"}[ls]}` : ""} · line = last 4 quarters</p></div>`; };
   const fit = nMoat >= 3 ? "Passes most of the four questions: value creation, runway, pricing power and price point the same way." : nMoat === 2 ? "Passes two of the four questions; the others show where the case still needs work." : nMoat === 1 ? "Passes one question; the case rests on a single angle so far." : "Passes none of the four questions today; on the list for its direction, not its position.";
   const s3 = slide(3, "Moat assessment", `<h2>Four Moat Screeners: ${nMoat} of 4 in the top-right</h2><div class="mq4">${G.map(mq).join("")}</div><p class="fit">${E(fit)}</p>`);
   // 4 · valuation and risk
@@ -1676,7 +1680,7 @@ function viewMethodology(m) {
   <h2 id="ms0">1 · Key concepts</h2>
   <div class="grid2 c2">
     ${def("12-month figures (TTM)", "Every measure uses the last 12 months, built from the latest 10-Q or 10-K: last fiscal year + year to date − the same period a year earlier. Trends compare that figure with the same figure 1–4 quarters earlier (period ends matched within ±20 days).", "TTM = FY + YTD − prior YTD", srcLink("sec"))}
-    ${def("Clean figures", "One-off items the company tags in its filings (impairments, restructuring, litigation, acquisition costs, gains on disposals) are removed, and tax is normalised at 21%. So a single unusual year does not decide the result.", "Clean operating income = operating income + tagged one-offs", null)}
+    ${def("Clean figures", "One-off items the company tags in its filings (impairments, restructuring, litigation, acquisition costs, gains on disposals) are removed, and tax is normalised at 21%. Clean net income (for P/E) also replaces a filed tax rate outside 0–50% (for example a one-time release of a tax valuation allowance) with 21%. So a single unusual year does not decide the result.", "Clean operating income = operating income + tagged one-offs; clean net income = net income + one-offs × 0.79 + one-time tax", null)}
     ${def("Clean ROIC and the 9% cost of capital", "Return on invested capital: after-tax clean operating profit (NOPAT) divided by the capital tied up in the business (equity + debt + leases − excess cash). Value is created only when ROIC is above the cost of capital. We use one 9% for every company, because SEC data has no market inputs for a company-specific WACC.", "ROIC = NOPAT ÷ average invested capital", srcLink("mckinsey"))}
     ${def("Point in time", "Each figure is what the company had filed by then. Restatements are kept with their own filing date, so nothing uses information that was not public yet.", null, null)}
   </div>
@@ -1708,7 +1712,7 @@ function viewMethodology(m) {
   <h2 id="ms6">7 · Definitions</h2>
   <div class="grid2 c3">
     ${def("NOPAT", "Net operating profit after tax: clean operating income × (1 − 21%).", "NOPAT = clean operating income × 0.79", null)}
-    ${def("Invested capital", "Money tied up in the business: equity + debt + finance leases − cash above 2% of revenue.", null, null)}
+    ${def("Invested capital", "Money tied up in the business: equity + debt + finance leases − cash above 2% of revenue. Cash includes short-term investments: the filed total, or else available-for-sale plus held-to-maturity securities.", null, null)}
     ${def("EV (enterprise value)", "What buying the whole business would cost: market value + debt − cash.", "EV = market value + debt − cash", null)}
     ${def("Earnings yield", "Clean operating income as a share of EV: the inverse of EV/EBIT. Higher = cheaper.", "Clean operating income ÷ EV", srcLink("greenblatt"))}
     ${def("Reinvestment rate", "Share of NOPAT put back into the business as new capital over the last 4 quarters.", "(IC now − IC 4 quarters ago) ÷ NOPAT", srcLink("mauboussin"))}

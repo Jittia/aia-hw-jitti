@@ -67,6 +67,8 @@ TAGS = [
     "RetainedEarningsAccumulatedDeficit",
     "CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
     "ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent",
+    "AvailableForSaleSecuritiesCurrent", "DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent",
+    "HeldToMaturitySecuritiesCurrent",  # round 31: counted as cash (were missed, e.g. DUOL)
     "AccountsReceivableNetCurrent", "InventoryNet", "PropertyPlantAndEquipmentNet",
     "Goodwill", "IntangibleAssetsNetExcludingGoodwill",
     "LongTermDebt", "LongTermDebtNoncurrent", "LongTermDebtCurrent", "DebtCurrent", "ShortTermBorrowings",
@@ -260,8 +262,11 @@ def leading() -> None:
 
 
 # Calculation check (spec docs/specs/2026-11-04-calculation-check-design.md §7): balances the tool does NOT count but
-# shows next to its inputs, e.g. short-term investments filed as held-to-maturity securities. Not in facts.pkl.
-EXTRA_TAGS = ["DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent"]
+# shows next to its inputs. Not in facts.pkl. Since round 31 held-to-maturity securities are in TAGS; since round 32
+# these are balances for the invested-capital study (src/mm_ic_study.py) only. They stay out of facts.pkl because
+# adding tags there changed which filing ttm_parts picked for 2 companies (a tie-break bug, open).
+EXTRA_TAGS = ["OperatingLeaseLiabilityNoncurrent", "OperatingLeaseLiabilityCurrent", "AccountsPayableCurrent",
+              "AccountsPayableAndAccruedLiabilitiesCurrent", "AccruedLiabilitiesCurrent"]
 
 
 def _extra_rows(cik: int, cf: dict) -> list[tuple]:

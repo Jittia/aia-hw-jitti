@@ -105,6 +105,10 @@ Held-to-maturity securities (e.g. Duolingo $133.0M) are not in the tool's cash l
 show the amount and a what-if (cash, invested capital, ROIC, earnings yield with it counted). Changing the cash
 definition changes every company's results, so it is a separate decision.
 
+**Update 2026-11-05 (round 31):** decided and fixed. Held-to-maturity and available-for-sale lines now count as
+cash when no filed total exists, so the note and the what-if block were removed; the short-term investment row lists
+the tags actually added.
+
 ## 8. Testing
 
 - Python: audit parts add up to the panel's 12-month values for all companies; page finder on small HTML fixtures

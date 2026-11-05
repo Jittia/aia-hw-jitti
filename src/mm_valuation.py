@@ -4,7 +4,8 @@
                  page of the latest 10-K/10-Q (dei:EntityCommonStockSharesOutstanding); when a company does not tag
                  it (e.g. multi-class Alphabet), the diluted weighted-average share count of the latest period
   clean P/E    = market value ÷ clean net income over the last 12 months
-                 (net income + tagged one-off items × (1 − 21%), same clean-up as the Moat Score); none when ≤ 0
+                 (net income + tagged one-off items × (1 − 21%), same clean-up as the Moat Score, and since round 31
+                 a filed tax rate outside 0–50% replaced by 21%: mm_fundamentals.tax_one_off); none when ≤ 0
 Display only: neither number is used in the Moat Score or the Compounder Signal.
 Sanity check: a market value below 0.2% or above 200× of 12-month revenue almost always means a mis-scaled share count
 (diluted shares are sometimes tagged in thousands or millions); both numbers are then hidden and marked `check`.

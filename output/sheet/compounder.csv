@@ -1,26 +1,26 @@
 Candidate rank,Ticker,Company,Industry (SIC),Compounder Signal,Market value ($M),Clean P/E (12 months),Moat Score,On Moat shortlist,ROIC change vs a year earlier (rank),Return on capital added in the last year (rank),Operating margin vs same quarter last year (rank),Revenue growth vs industry (latest quarter) (rank),Revenue-growth acceleration (rank),Peer-rank change over 4 quarters (rank),Free-cash-flow margin change (rank),ROIC rank in industry (rank)
-1,MU,MICRON TECHNOLOGY INC,Semiconductors & Related Devices,98.7,1001000,11.8,83.1,yes,100.0,95.8,100.0,100.0,100.0,100.0,96.0,98.0
-2,STX,Seagate Technology Holdings plc,Computer Storage Devices,93.6,148000,33.7,59.1,,87.5,100.0,89.3,96.8,86.2,100.0,96.8,92.3
-3,MSGE,Madison Square Garden Entertainment Corp.,Services-Miscellaneous Amusement & Recreation,93.2,3857,43.8,66.3,,100.0,,85.7,100.0,100.0,66.7,100.0,100.0
-4,STAA,STAAR SURGICAL CO,Ophthalmic Goods,92.6,1231,320.5,11.0,,96.5,100.0,100.0,99.2,99.2,98.4,96.7,50.9
-5,VSXY,Victoria's Secret & Co.,Retail-Women's Clothing Stores,91.5,7707,20.4,55.3,,85.0,,100.0,85.7,95.2,86.4,90.9,97.5
-6,DINO,HF Sinclair Corp,Pipe Lines (No Natural Gas),91.4,19710,5.5,32.9,,95.0,,93.4,94.6,94.2,98.0,84.6,79.9
-7,INSW,"International Seaways, Inc.",Water Transportation,90.9,5545,8.0,55.1,,90.9,,90.9,100.0,100.0,90.9,72.7,90.9
-8,CRMD,CorMedix Inc.,Pharmaceutical Preparations,90.7,444,2.7,75.4,,100.0,81.1,64.9,97.7,,96.5,96.5,98.2
-9,CGNX,COGNEX CORP,"Industrial Instruments For Measurement, Display, and Control",90.5,9446,54.0,39.9,,100.0,,100.0,81.8,70.0,100.0,90.9,90.9
-10,URGN,UroGen Pharma Ltd.,Pharmaceutical Preparations,90.5,1599,,26.1,,,73.0,93.5,95.3,97.6,92.9,90.6,
-11,ROST,"ROSS STORES, INC.",Retail-Family Clothing Stores,90.4,72920,27.4,61.8,,100.0,,77.8,100.0,90.0,100.0,90.0,75.0
-12,URI,"UNITED RENTALS, INC.","Services-Equipment Rental & Leasing, NEC",90.0,72450,25.0,48.4,,100.0,,100.0,80.0,80.0,100.0,70.0,100.0
-13,FIVE,"FIVE BELOW, INC",Retail-Variety Stores,89.5,13270,21.4,51.3,,100.0,,100.0,100.0,37.5,100.0,88.9,100.0
+1,MU,MICRON TECHNOLOGY INC,Semiconductors & Related Devices,98.7,1001000,11.8,83.0,yes,100.0,95.8,100.0,100.0,100.0,100.0,96.0,97.9
+2,SITM,SITIME Corp,Semiconductors & Related Devices,95.6,13440,458.7,24.0,,,,98.0,98.0,94.0,94.0,94.0,
+3,STX,Seagate Technology Holdings plc,Computer Storage Devices,93.6,148000,33.7,59.0,,87.5,100.0,89.3,96.8,86.2,100.0,96.8,92.3
+4,MSGE,Madison Square Garden Entertainment Corp.,Services-Miscellaneous Amusement & Recreation,93.2,3857,43.8,66.9,,100.0,,85.7,100.0,100.0,66.7,100.0,100.0
+5,STAA,STAAR SURGICAL CO,Ophthalmic Goods,92.8,1231,89.6,11.2,,97.3,100.0,100.0,99.2,99.2,98.4,96.7,51.3
+6,VSXY,Victoria's Secret & Co.,Retail-Women's Clothing Stores,91.5,7707,20.4,55.4,,85.0,,100.0,85.7,95.2,86.4,90.9,97.5
+7,DINO,HF Sinclair Corp,Pipe Lines (No Natural Gas),91.4,19710,5.5,32.8,,95.0,,93.4,94.6,94.2,98.0,84.6,79.9
+8,INSW,"International Seaways, Inc.",Water Transportation,90.9,5545,8.0,54.7,,90.9,,90.9,100.0,100.0,90.9,72.7,90.9
+9,CRMD,CorMedix Inc.,Pharmaceutical Preparations,90.7,444,3.7,76.3,,100.0,81.1,64.9,97.7,,96.5,96.5,98.2
+10,CGNX,COGNEX CORP,"Industrial Instruments For Measurement, Display, and Control",90.5,9446,54.0,40.2,,100.0,,100.0,81.8,70.0,100.0,90.9,90.9
+11,URGN,UroGen Pharma Ltd.,Pharmaceutical Preparations,90.5,1599,,26.1,,,73.0,93.5,95.3,97.6,92.9,90.6,
+12,ROST,"ROSS STORES, INC.",Retail-Family Clothing Stores,90.4,72920,27.4,61.8,,100.0,,77.8,100.0,90.0,100.0,90.0,75.0
+13,URI,"UNITED RENTALS, INC.","Services-Equipment Rental & Leasing, NEC",90.0,72450,25.0,48.3,,100.0,,100.0,80.0,80.0,100.0,70.0,100.0
 14,ATRO,ASTRONICS CORP,"Aircraft Parts & Auxiliary Equipment, NEC",89.3,1917,24.2,76.7,,85.7,100.0,85.7,100.0,100.0,100.0,55.6,87.5
-15,AGX,ARGAN INC,Construction - Special Trade Contractors,89.3,4828,26.9,70.5,,100.0,,75.0,100.0,100.0,62.5,87.5,100.0
+15,AGX,ARGAN INC,Construction - Special Trade Contractors,89.3,4828,26.9,69.8,,100.0,,75.0,100.0,100.0,62.5,87.5,100.0
 16,LITE,Lumentum Holdings Inc.,"Communications Equipment, NEC",89.2,75410,,45.1,,86.7,80.0,93.8,100.0,93.8,100.0,100.0,59.4
-17,FIGS,"FIGS, Inc.",Apparel & Other Finishd Prods of  Fabrics & Similar Matl,88.7,4169,67.3,55.5,,100.0,,100.0,100.0,44.4,100.0,88.9,87.5
-18,AAON,"AAON, INC.",Air-Cond & Warm Air Heatg Equip & Comm & Indl Refrig Equip,88.6,5557,34.9,62.8,,85.7,100.0,100.0,100.0,100.0,75.0,62.5,85.7
-19,LPG,DORIAN LPG LTD.,Deep Sea Foreign Transportation of  Freight,88.3,2329,7.2,53.9,,100.0,,100.0,90.9,90.9,100.0,54.5,81.8
-20,HL,HECLA MINING CO/DE/,Mining & Quarrying of  Nonmetallic Minerals (No Fuels),87.7,9089,27.2,68.8,,100.0,,100.0,100.0,25.0,100.0,100.0,88.9
-21,FTK,FLOTEK INDUSTRIES INC/CN/,Miscellaneous Chemical Products,87.5,918,24.2,74.4,,100.0,100.0,100.0,100.0,100.0,100.0,14.3,85.7
-22,LEGH,Legacy Housing Corp,Mobile Homes,86.5,698,13.6,46.0,,100.0,,100.0,100.0,100.0,72.2,88.9,44.4
-23,GEL,GENESIS ENERGY LP,Pipe Lines (No Natural Gas),86.3,1301,16.5,50.2,,,,59.1,93.0,91.8,89.8,97.5,
-24,STRL,"STERLING INFRASTRUCTURE, INC.",Heavy Construction Other Than Bldg Const - Contractors,85.9,10550,18.7,71.4,,100.0,100.0,62.5,100.0,100.0,100.0,25.0,100.0
-25,MDLZ,"Mondelez International, Inc.",Food and Kindred Products,85.7,82200,18.9,44.9,,90.0,,100.0,100.0,50.0,100.0,80.0,80.0
+17,FIGS,"FIGS, Inc.",Apparel & Other Finishd Prods of  Fabrics & Similar Matl,88.7,4169,67.3,53.3,,100.0,,100.0,100.0,44.4,100.0,88.9,87.5
+18,FIVE,"FIVE BELOW, INC",Retail-Variety Stores,88.7,13270,21.4,51.3,,100.0,,100.0,100.0,37.5,94.4,88.9,100.0
+19,AAON,"AAON, INC.",Air-Cond & Warm Air Heatg Equip & Comm & Indl Refrig Equip,88.6,5557,34.9,62.8,,85.7,100.0,100.0,100.0,100.0,75.0,62.5,85.7
+20,LPG,DORIAN LPG LTD.,Deep Sea Foreign Transportation of  Freight,88.3,2329,7.2,53.9,,100.0,,100.0,90.9,90.9,100.0,54.5,81.8
+21,HL,HECLA MINING CO/DE/,Mining & Quarrying of  Nonmetallic Minerals (No Fuels),87.7,9089,27.2,69.2,,100.0,,100.0,100.0,25.0,100.0,100.0,88.9
+22,FTK,FLOTEK INDUSTRIES INC/CN/,Miscellaneous Chemical Products,87.5,918,36.1,74.4,,100.0,100.0,100.0,100.0,100.0,100.0,14.3,85.7
+23,LEGH,Legacy Housing Corp,Mobile Homes,86.5,698,13.6,46.0,,100.0,,100.0,100.0,100.0,72.2,88.9,44.4
+24,GEL,GENESIS ENERGY LP,Pipe Lines (No Natural Gas),86.3,1301,16.5,50.2,,,,59.1,93.0,91.9,89.8,97.5,
+25,STRL,"STERLING INFRASTRUCTURE, INC.",Heavy Construction Other Than Bldg Const - Contractors,85.9,10550,18.7,71.4,,100.0,100.0,62.5,100.0,100.0,100.0,25.0,100.0

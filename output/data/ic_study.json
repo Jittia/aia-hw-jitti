@@ -1,0 +1,1692 @@
+{
+ "as_of": "2026-11-03",
+ "guard": 0.1,
+ "check_variant_A_equals_published": {
+  "M1": {
+   "published": 269,
+   "variant_A": 269,
+   "same": true
+  },
+  "M2": {
+   "published": 204,
+   "variant_A": 204,
+   "same": true
+  },
+  "M4": {
+   "published": 574,
+   "variant_A": 574,
+   "same": true
+  }
+ },
+ "variants": {
+  "A": {
+   "roic_over_200": 10,
+   "roic_over_100": 28,
+   "roic_missing": 268,
+   "median_roic": 0.0902,
+   "spearman_vs_A": 1.0,
+   "lists": {
+    "M1": {
+     "n": 269,
+     "jaccard_vs_A": 1.0,
+     "added": [],
+     "dropped": []
+    },
+    "M2": {
+     "n": 204,
+     "jaccard_vs_A": 1.0,
+     "added": [],
+     "dropped": []
+    },
+    "M4": {
+     "n": 574,
+     "jaccard_vs_A": 1.0,
+     "added": [],
+     "dropped": []
+    }
+   },
+   "medians_M4": [
+    0.0908,
+    0.046
+   ],
+   "top_roic": [
+    [
+     "DUOL",
+     15.88
+    ],
+    [
+     "MTEX",
+     10.69
+    ],
+    [
+     "PLTR",
+     8.57
+    ],
+    [
+     "EXPE",
+     8.04
+    ],
+    [
+     "MANH",
+     4.96
+    ],
+    [
+     "CRCT",
+     4.03
+    ],
+    [
+     "NTAP",
+     3.76
+    ],
+    [
+     "VEEV",
+     2.96
+    ],
+    [
+     "AGX",
+     2.43
+    ],
+    [
+     "PTON",
+     2.0
+    ]
+   ],
+   "roic_fell_by_a_third": {
+    "n": 0,
+    "industries": {}
+   },
+   "guard_dropped": null,
+   "DUOL": 15.8823
+  },
+  "A+G": {
+   "roic_over_200": 0,
+   "roic_over_100": 10,
+   "roic_missing": 329,
+   "median_roic": 0.0887,
+   "spearman_vs_A": 1.0,
+   "lists": {
+    "M1": {
+     "n": 255,
+     "jaccard_vs_A": 0.948,
+     "added": [],
+     "dropped": [
+      "AGX",
+      "AVPT",
+      "DUOL",
+      "EVER",
+      "HOUR",
+      "LEU",
+      "LQDT",
+      "MCK",
+      "NAGE",
+      "PLTR",
+      "ROKU",
+      "TEAM",
+      "TSSI",
+      "VEEV"
+     ]
+    },
+    "M2": {
+     "n": 204,
+     "jaccard_vs_A": 1.0,
+     "added": [],
+     "dropped": []
+    },
+    "M4": {
+     "n": 553,
+     "jaccard_vs_A": 0.95,
+     "added": [
+      "CRK",
+      "CXT",
+      "DV",
+      "XYL"
+     ],
+     "dropped": [
+      "ACM",
+      "ALRM",
+      "BBY",
+      "CAH",
+      "COR",
+      "CRCT",
+      "EFX",
+      "EVER",
+      "EXPD",
+      "EXPE",
+      "FOSL",
+      "IMMR",
+      "KFRC",
+      "KMB",
+      "MCK",
+      "MTEX",
+      "NAGE",
+      "NSSC",
+      "NTAP",
+      "NYT",
+      "PTON",
+      "TSSI",
+      "UBER",
+      "UIS",
+      "WKC"
+     ]
+    }
+   },
+   "medians_M4": [
+    0.0902,
+    0.0466
+   ],
+   "top_roic": [
+    [
+     "ANET",
+     1.85
+    ],
+    [
+     "SEZL",
+     1.6
+    ],
+    [
+     "NATH",
+     1.32
+    ],
+    [
+     "LMAT",
+     1.26
+    ],
+    [
+     "APP",
+     1.14
+    ],
+    [
+     "COLL",
+     1.12
+    ],
+    [
+     "POWL",
+     1.09
+    ],
+    [
+     "BKE",
+     1.07
+    ],
+    [
+     "CARG",
+     1.06
+    ],
+    [
+     "NVDA",
+     1.04
+    ]
+   ],
+   "roic_fell_by_a_third": {
+    "n": 0,
+    "industries": {}
+   },
+   "guard_dropped": {
+    "M1": [
+     "AGX",
+     "AVPT",
+     "DUOL",
+     "EVER",
+     "HOUR",
+     "LEU",
+     "LQDT",
+     "MCK",
+     "NAGE",
+     "PLTR",
+     "ROKU",
+     "TEAM",
+     "TSSI",
+     "VEEV"
+    ],
+    "M4": [
+     "ACM",
+     "ALRM",
+     "BBY",
+     "CAH",
+     "COR",
+     "CRCT",
+     "EFX",
+     "EVER",
+     "EXPD",
+     "EXPE",
+     "FOSL",
+     "IMMR",
+     "KFRC",
+     "KMB",
+     "MCK",
+     "MTEX",
+     "NAGE",
+     "NSSC",
+     "NTAP",
+     "NYT",
+     "PTON",
+     "TSSI",
+     "UBER",
+     "UIS",
+     "WKC"
+    ]
+   },
+   "DUOL": "n.m."
+  },
+  "B": {
+   "roic_over_200": 9,
+   "roic_over_100": 20,
+   "roic_missing": 253,
+   "median_roic": 0.0795,
+   "spearman_vs_A": 0.9892,
+   "lists": {
+    "M1": {
+     "n": 249,
+     "jaccard_vs_A": 0.904,
+     "added": [
+      "APPN",
+      "MEDP",
+      "TENB"
+     ],
+     "dropped": [
+      "BROS",
+      "CACI",
+      "CAVA",
+      "CCL",
+      "CCO",
+      "CCOI",
+      "CDRE",
+      "CHEF",
+      "DOCN",
+      "DV",
+      "GOGO",
+      "HNI",
+      "KN",
+      "LINC",
+      "LIVE",
+      "LTH",
+      "NOW",
+      "PNTG",
+      "RTX",
+      "SGI",
+      "USPH",
+      "UTI",
+      "WYNN"
+     ]
+    },
+    "M2": {
+     "n": 200,
+     "jaccard_vs_A": 0.906,
+     "added": [
+      "CAKE",
+      "DDOG",
+      "FCX",
+      "SFM",
+      "TER",
+      "TXRH",
+      "WHR",
+      "YETI"
+     ],
+     "dropped": [
+      "ARLO",
+      "CDNS",
+      "KALU",
+      "KRT",
+      "LFVN",
+      "NGVC",
+      "NHC",
+      "PARR",
+      "TSSI",
+      "WLY",
+      "XYZ",
+      "YEXT"
+     ]
+    },
+    "M4": {
+     "n": 576,
+     "jaccard_vs_A": 0.917,
+     "added": [
+      "ADT",
+      "ALTO",
+      "CRK",
+      "CXT",
+      "DV",
+      "EE",
+      "ESAB",
+      "ET",
+      "FSTR",
+      "GRNT",
+      "HCC",
+      "KE",
+      "KEX",
+      "LEGH",
+      "LW",
+      "LXFR",
+      "MTW",
+      "ORLY",
+      "PANL",
+      "PM",
+      "PRGS",
+      "REZI",
+      "ST",
+      "TRU",
+      "UGI",
+      "XYL"
+     ],
+     "dropped": [
+      "AAP",
+      "BNED",
+      "CAL",
+      "CCOI",
+      "DBI",
+      "DG",
+      "ETD",
+      "FND",
+      "FOSL",
+      "LINC",
+      "LIVE",
+      "LKQ",
+      "LOCO",
+      "LOVE",
+      "LTH",
+      "MGM",
+      "PVH",
+      "SGI",
+      "SITE",
+      "SVV",
+      "USPH",
+      "VFC",
+      "VLGEA",
+      "VNCE"
+     ]
+    }
+   },
+   "medians_M4": [
+    0.0811,
+    0.0456
+   ],
+   "top_roic": [
+    [
+     "PLTR",
+     4.45
+    ],
+    [
+     "EXPE",
+     4.09
+    ],
+    [
+     "MEDP",
+     3.12
+    ],
+    [
+     "NTAP",
+     2.73
+    ],
+    [
+     "CRCT",
+     2.57
+    ],
+    [
+     "AGX",
+     2.43
+    ],
+    [
+     "MANH",
+     2.38
+    ],
+    [
+     "TENB",
+     2.17
+    ],
+    [
+     "VEEV",
+     2.07
+    ],
+    [
+     "ANET",
+     1.85
+    ]
+   ],
+   "roic_fell_by_a_third": {
+    "n": 113,
+    "industries": {
+     "Retail-Eating  Places": 18,
+     "Services-Prepackaged Software": 8,
+     "Retail-Family Clothing Stores": 6,
+     "Retail-Variety Stores": 4,
+     "Retail-Shoe Stores": 4,
+     "Retail-Apparel & Accessory Stores": 4,
+     "Retail-Grocery Stores": 4,
+     "Retail-Auto & Home Supply Stores": 3
+    }
+   },
+   "guard_dropped": null,
+   "DUOL": 1.2499
+  },
+  "B+G": {
+   "roic_over_200": 1,
+   "roic_over_100": 8,
+   "roic_missing": 301,
+   "median_roic": 0.0787,
+   "spearman_vs_A": 0.9886,
+   "lists": {
+    "M1": {
+     "n": 237,
+     "jaccard_vs_A": 0.881,
+     "added": [],
+     "dropped": [
+      "AGX",
+      "BROS",
+      "CACI",
+      "CAVA",
+      "CCL",
+      "CCO",
+      "CCOI",
+      "CDRE",
+      "CHEF",
+      "DOCN",
+      "DUOL",
+      "DV",
+      "EVER",
+      "GOGO",
+      "HNI",
+      "HOUR",
+      "KN",
+      "LEU",
+      "LINC",
+      "LIVE",
+      "LQDT",
+      "LTH",
+      "MCK",
+      "NOW",
+      "PLTR",
+      "PNTG",
+      "RTX",
+      "SGI",
+      "TEAM",
+      "USPH",
+      "UTI",
+      "WYNN"
+     ]
+    },
+    "M2": {
+     "n": 200,
+     "jaccard_vs_A": 0.906,
+     "added": [
+      "CAKE",
+      "DDOG",
+      "FCX",
+      "SFM",
+      "TER",
+      "TXRH",
+      "WHR",
+      "YETI"
+     ],
+     "dropped": [
+      "ARLO",
+      "CDNS",
+      "KALU",
+      "KRT",
+      "LFVN",
+      "NGVC",
+      "NHC",
+      "PARR",
+      "TSSI",
+      "WLY",
+      "XYZ",
+      "YEXT"
+     ]
+    },
+    "M4": {
+     "n": 565,
+     "jaccard_vs_A": 0.892,
+     "added": [
+      "ACU",
+      "ADT",
+      "ALTO",
+      "CRK",
+      "CXT",
+      "DV",
+      "EE",
+      "EIX",
+      "ESAB",
+      "ET",
+      "FSTR",
+      "GRNT",
+      "HCC",
+      "KE",
+      "KEX",
+      "LEGH",
+      "LW",
+      "LXFR",
+      "MAT",
+      "MTW",
+      "PANL",
+      "PRGS",
+      "REZI",
+      "SCSC",
+      "ST",
+      "TRU",
+      "UGI",
+      "XYL"
+     ],
+     "dropped": [
+      "AAP",
+      "BNED",
+      "CAH",
+      "CAL",
+      "CCOI",
+      "COR",
+      "CRCT",
+      "DBI",
+      "DG",
+      "EFX",
+      "ETD",
+      "EVER",
+      "EXPE",
+      "FND",
+      "FOSL",
+      "IMMR",
+      "KMB",
+      "LINC",
+      "LIVE",
+      "LOCO",
+      "LOVE",
+      "LTH",
+      "MCK",
+      "MGM",
+      "MTEX",
+      "NSSC",
+      "NTAP",
+      "PVH",
+      "SGI",
+      "SITE",
+      "SVV",
+      "UIS",
+      "USPH",
+      "VFC",
+      "VLGEA",
+      "VNCE",
+      "WKC"
+     ]
+    }
+   },
+   "medians_M4": [
+    0.0796,
+    0.0461
+   ],
+   "top_roic": [
+    [
+     "VEEV",
+     2.07
+    ],
+    [
+     "ANET",
+     1.85
+    ],
+    [
+     "SEZL",
+     1.58
+    ],
+    [
+     "APP",
+     1.14
+    ],
+    [
+     "POWL",
+     1.08
+    ],
+    [
+     "NATH",
+     1.07
+    ],
+    [
+     "COLL",
+     1.06
+    ],
+    [
+     "NVDA",
+     1.01
+    ],
+    [
+     "MU",
+     0.96
+    ],
+    [
+     "ETSY",
+     0.95
+    ]
+   ],
+   "roic_fell_by_a_third": {
+    "n": 104,
+    "industries": {
+     "Retail-Eating  Places": 18,
+     "Retail-Family Clothing Stores": 6,
+     "Retail-Grocery Stores": 4,
+     "Retail-Variety Stores": 4,
+     "Retail-Apparel & Accessory Stores": 4,
+     "Services-Prepackaged Software": 4,
+     "Retail-Shoe Stores": 4,
+     "Retail-Retail Stores, NEC": 3
+    }
+   },
+   "guard_dropped": {
+    "M1": [
+     "AGX",
+     "BROS",
+     "CACI",
+     "CAVA",
+     "CCL",
+     "CCO",
+     "CCOI",
+     "CDRE",
+     "CHEF",
+     "DOCN",
+     "DUOL",
+     "DV",
+     "EVER",
+     "GOGO",
+     "HNI",
+     "HOUR",
+     "KN",
+     "LEU",
+     "LINC",
+     "LIVE",
+     "LQDT",
+     "LTH",
+     "MCK",
+     "NOW",
+     "PLTR",
+     "PNTG",
+     "RTX",
+     "SGI",
+     "TEAM",
+     "USPH",
+     "UTI",
+     "WYNN"
+    ],
+    "M4": [
+     "AAP",
+     "BNED",
+     "CAH",
+     "CAL",
+     "CCOI",
+     "COR",
+     "CRCT",
+     "DBI",
+     "DG",
+     "EFX",
+     "ETD",
+     "EVER",
+     "EXPE",
+     "FND",
+     "FOSL",
+     "IMMR",
+     "KMB",
+     "LINC",
+     "LIVE",
+     "LOCO",
+     "LOVE",
+     "LTH",
+     "MCK",
+     "MGM",
+     "MTEX",
+     "NSSC",
+     "NTAP",
+     "PVH",
+     "SGI",
+     "SITE",
+     "SVV",
+     "UIS",
+     "USPH",
+     "VFC",
+     "VLGEA",
+     "VNCE",
+     "WKC"
+    ]
+   },
+   "DUOL": "n.m."
+  },
+  "C": {
+   "roic_over_200": 9,
+   "roic_over_100": 18,
+   "roic_missing": 261,
+   "median_roic": 0.088,
+   "spearman_vs_A": 0.9995,
+   "lists": {
+    "M1": {
+     "n": 264,
+     "jaccard_vs_A": 0.967,
+     "added": [
+      "APPN",
+      "MEDP"
+     ],
+     "dropped": [
+      "CDRE",
+      "DV",
+      "KN",
+      "PRVA",
+      "QNST",
+      "RTX",
+      "XYL"
+     ]
+    },
+    "M2": {
+     "n": 212,
+     "jaccard_vs_A": 0.926,
+     "added": [
+      "BKH",
+      "CHEF",
+      "CLMB",
+      "DELL",
+      "DGII",
+      "DRS",
+      "EVER",
+      "IBEX",
+      "LINC",
+      "PPC",
+      "TER",
+      "VATE"
+     ],
+     "dropped": [
+      "LFVN",
+      "NHC",
+      "TMDX",
+      "TSSI"
+     ]
+    },
+    "M4": {
+     "n": 578,
+     "jaccard_vs_A": 0.983,
+     "added": [
+      "ADT",
+      "CRK",
+      "CXT",
+      "FSTR",
+      "ORLY",
+      "PM",
+      "XYL"
+     ],
+     "dropped": [
+      "TRIP",
+      "UFPI",
+      "VLGEA"
+     ]
+    }
+   },
+   "medians_M4": [
+    0.0882,
+    0.0457
+   ],
+   "top_roic": [
+    [
+     "MEDP",
+     6.49
+    ],
+    [
+     "PLTR",
+     5.38
+    ],
+    [
+     "LZ",
+     4.33
+    ],
+    [
+     "DUOL",
+     3.24
+    ],
+    [
+     "EXPE",
+     2.94
+    ],
+    [
+     "MANH",
+     2.87
+    ],
+    [
+     "NTAP",
+     2.52
+    ],
+    [
+     "VEEV",
+     2.2
+    ],
+    [
+     "CRCT",
+     2.01
+    ],
+    [
+     "ANET",
+     1.62
+    ]
+   ],
+   "roic_fell_by_a_third": {
+    "n": 15,
+    "industries": {
+     "Services-Prepackaged Software": 5,
+     "Special Industry Machinery, NEC": 1,
+     "Medicinal Chemicals & Botanical Products": 1,
+     "Transportation Services": 1,
+     "Services-Amusement & Recreation Services": 1,
+     "Services-Management Consulting Services": 1,
+     "Sporting & Athletic Goods, NEC": 1,
+     "Watches, Clocks, Clockwork Operated Devices/Parts": 1
+    }
+   },
+   "guard_dropped": null,
+   "DUOL": 3.243
+  },
+  "D": {
+   "roic_over_200": 4,
+   "roic_over_100": 21,
+   "roic_missing": 251,
+   "median_roic": 0.0883,
+   "spearman_vs_A": 0.9935,
+   "lists": {
+    "M1": {
+     "n": 268,
+     "jaccard_vs_A": 0.939,
+     "added": [
+      "ABNB",
+      "BKNG",
+      "DDOG",
+      "FTNT",
+      "MEDP",
+      "SYM",
+      "TENB",
+      "YOU"
+     ],
+     "dropped": [
+      "CCL",
+      "DOCN",
+      "FRSH",
+      "LEU",
+      "NOW",
+      "QNST",
+      "RTX",
+      "UTI",
+      "WYNN"
+     ]
+    },
+    "M2": {
+     "n": 214,
+     "jaccard_vs_A": 0.817,
+     "added": [
+      "ADSK",
+      "AMC",
+      "ARTNA",
+      "AVPT",
+      "BKH",
+      "BWXT",
+      "COST",
+      "DASH",
+      "DDOG",
+      "DELL",
+      "DGII",
+      "EGHT",
+      "HII",
+      "LINC",
+      "LIND",
+      "MDU",
+      "MEDP",
+      "MELI",
+      "NFLX",
+      "PD",
+      "PEGA",
+      "RPD",
+      "SAH",
+      "VATE",
+      "XERS",
+      "ZVRA"
+     ],
+     "dropped": [
+      "BA",
+      "CDNS",
+      "EME",
+      "KALU",
+      "KRT",
+      "LUV",
+      "NGVC",
+      "OKTA",
+      "OMCL",
+      "PARR",
+      "PPL",
+      "QTWO",
+      "STRL",
+      "TCMD",
+      "XYZ",
+      "YEXT"
+     ]
+    },
+    "M4": {
+     "n": 586,
+     "jaccard_vs_A": 0.927,
+     "added": [
+      "ADT",
+      "ALTO",
+      "APD",
+      "BKNG",
+      "CRK",
+      "CXT",
+      "DRVN",
+      "DV",
+      "FSTR",
+      "GRMN",
+      "KE",
+      "LIVN",
+      "LSTR",
+      "LXFR",
+      "MAN",
+      "MAT",
+      "MTW",
+      "NSC",
+      "ORLY",
+      "PM",
+      "RLGT",
+      "RMNI",
+      "ST",
+      "TDC",
+      "TRGP",
+      "TTMI",
+      "XYL",
+      "ZUMZ"
+     ],
+     "dropped": [
+      "LUV",
+      "MGRC",
+      "MHO",
+      "MTEX",
+      "MTN",
+      "NTCT",
+      "PRG",
+      "SABR",
+      "TNL",
+      "TOL",
+      "TRIP",
+      "TRN",
+      "UAL",
+      "UPBD",
+      "WU",
+      "WYNN"
+     ]
+    }
+   },
+   "medians_M4": [
+    0.0897,
+    0.0448
+   ],
+   "top_roic": [
+    [
+     "MSGS",
+     10.26
+    ],
+    [
+     "BL",
+     9.6
+    ],
+    [
+     "PLTR",
+     8.44
+    ],
+    [
+     "ANET",
+     2.05
+    ],
+    [
+     "FTNT",
+     1.76
+    ],
+    [
+     "SEZL",
+     1.74
+    ],
+    [
+     "NATH",
+     1.61
+    ],
+    [
+     "AGX",
+     1.57
+    ],
+    [
+     "LMAT",
+     1.4
+    ],
+    [
+     "EVER",
+     1.39
+    ]
+   ],
+   "roic_fell_by_a_third": {
+    "n": 43,
+    "industries": {
+     "Services-Prepackaged Software": 13,
+     "Services-Business Services, NEC": 4,
+     "Services-Computer Processing & Data Preparation": 3,
+     "Transportation Services": 2,
+     "Retail-Eating & Drinking Places": 1,
+     "Sporting & Athletic Goods, NEC": 1,
+     "Services-Advertising Agencies": 1,
+     "Crude Petroleum & Natural Gas": 1
+    }
+   },
+   "guard_dropped": null,
+   "DUOL": 0.4589
+  },
+  "E": {
+   "roic_over_200": 1,
+   "roic_over_100": 6,
+   "roic_missing": 156,
+   "median_roic": 0.0581,
+   "spearman_vs_A": 0.9393,
+   "lists": {
+    "M1": {
+     "n": 206,
+     "jaccard_vs_A": 0.684,
+     "added": [
+      "ABNB",
+      "ALNY",
+      "ANAB",
+      "BKNG",
+      "CVLT",
+      "FTNT",
+      "LQDA",
+      "MEDP",
+      "PTCT",
+      "RSI",
+      "USAC",
+      "YOU",
+      "ZVRA"
+     ],
+     "dropped": [
+      "ACMR",
+      "ADUS",
+      "AVPT",
+      "BROS",
+      "BSX",
+      "CACI",
+      "CAVA",
+      "CCL",
+      "CCO",
+      "CCOI",
+      "CDRE",
+      "CHRD",
+      "COLL",
+      "CPAY",
+      "DASH",
+      "DKS",
+      "DOCN",
+      "DRS",
+      "DT",
+      "DV",
+      "ENSG",
+      "EVTC",
+      "FIVN",
+      "FRSH",
+      "GD",
+      "GOGO",
+      "GVA",
+      "GWRE",
+      "HNI",
+      "HUBS",
+      "ITT",
+      "KN",
+      "LEU",
+      "LINC",
+      "LIND",
+      "LIVE",
+      "LIVN",
+      "LTH",
+      "MELI",
+      "NGS",
+      "NHC",
+      "NOW",
+      "OKE",
+      "ORCL",
+      "P",
+      "PATH",
+      "PAYO",
+      "PCTY",
+      "PNTG",
+      "PRTH",
+      "PRVA",
+      "QNST",
+      "QSR",
+      "QTWO",
+      "RBC",
+      "RMR",
+      "ROAD",
+      "RTX",
+      "SEI",
+      "SGI",
+      "SKYW",
+      "SMP",
+      "SON",
+      "SPSC",
+      "TBLA",
+      "TEAM",
+      "TMDX",
+      "TPC",
+      "TSSI",
+      "UBER",
+      "USPH",
+      "UTI",
+      "VVV",
+      "WDAY",
+      "WYNN",
+      "XYL"
+     ]
+    },
+    "M2": {
+     "n": 226,
+     "jaccard_vs_A": 0.541,
+     "added": [
+      "ADSK",
+      "AGX",
+      "ANET",
+      "ANF",
+      "APPN",
+      "AVA",
+      "AVPT",
+      "BILL",
+      "CAKE",
+      "CELH",
+      "CEPL",
+      "CMRC",
+      "COST",
+      "CRAI",
+      "CVLT",
+      "DASH",
+      "DGII",
+      "DRS",
+      "DT",
+      "EMBC",
+      "EXPE",
+      "FCX",
+      "FFIV",
+      "FLYW",
+      "GLW",
+      "GVA",
+      "GWRE",
+      "HII",
+      "HUBS",
+      "IRDM",
+      "LDOS",
+      "LIND",
+      "LQDA",
+      "MAMA",
+      "MEDP",
+      "MIR",
+      "MSGE",
+      "NFG",
+      "NGS",
+      "NTAP",
+      "NXT",
+      "PAHC",
+      "PAYC",
+      "PCTY",
+      "PD",
+      "PEGA",
+      "PENG",
+      "PINS",
+      "POWL",
+      "PPC",
+      "PSIX",
+      "RAMP",
+      "RCL",
+      "RPD",
+      "RSG",
+      "RSI",
+      "SAH",
+      "SFM",
+      "SITM",
+      "SYM",
+      "TER",
+      "TXRH",
+      "UCTT",
+      "UHS",
+      "URI",
+      "USAC",
+      "VRT",
+      "WING",
+      "WK",
+      "XERS",
+      "YETI",
+      "YOU",
+      "YUM",
+      "ZG",
+      "ZVRA"
+     ],
+     "dropped": [
+      "ADMA",
+      "AEP",
+      "ALRM",
+      "AME",
+      "AMKR",
+      "AMSC",
+      "AVGO",
+      "AVO",
+      "BA",
+      "BDL",
+      "BROS",
+      "CDNS",
+      "COLL",
+      "DOCN",
+      "DUK",
+      "DXCM",
+      "ENSG",
+      "ETR",
+      "EXC",
+      "GHM",
+      "GRPN",
+      "HRMY",
+      "IQV",
+      "IR",
+      "KRT",
+      "LFVN",
+      "LUV",
+      "MNKD",
+      "NCNO",
+      "NGVC",
+      "NHC",
+      "OKTA",
+      "OMC",
+      "OMCL",
+      "OPLN",
+      "ORCL",
+      "OSIS",
+      "PPL",
+      "PRTH",
+      "PRVA",
+      "QTWO",
+      "RAIL",
+      "SEB",
+      "TCMD",
+      "TEVA",
+      "TMDX",
+      "TSSI",
+      "VST",
+      "WHD",
+      "WLY",
+      "WM",
+      "XYL",
+      "YEXT"
+     ]
+    },
+    "M4": {
+     "n": 628,
+     "jaccard_vs_A": 0.768,
+     "added": [
+      "ACU",
+      "ADT",
+      "ALNY",
+      "ALTO",
+      "AMPH",
+      "ANAB",
+      "APD",
+      "APTV",
+      "ARLP",
+      "ARMK",
+      "AVT",
+      "BHE",
+      "BKNG",
+      "CAPL",
+      "CARS",
+      "CQP",
+      "CRK",
+      "CRM",
+      "CXT",
+      "DBX",
+      "DRVN",
+      "DV",
+      "EE",
+      "EPD",
+      "ESAB",
+      "ET",
+      "FSTR",
+      "GEL",
+      "GLP",
+      "GME",
+      "GPRE",
+      "GRMN",
+      "GRNT",
+      "GTES",
+      "HAIN",
+      "HCC",
+      "HELE",
+      "HESM",
+      "HLLY",
+      "HOUR",
+      "IRWD",
+      "JBI",
+      "KE",
+      "KEX",
+      "KGS",
+      "KRP",
+      "KWR",
+      "LEGH",
+      "LIVN",
+      "LQDA",
+      "LSTR",
+      "LW",
+      "LXFR",
+      "LXU",
+      "LYTS",
+      "MAT",
+      "MG",
+      "MKTW",
+      "MMLP",
+      "MPLX",
+      "MUX",
+      "NGL",
+      "NSC",
+      "NUS",
+      "OPRX",
+      "ORLY",
+      "PANL",
+      "PATK",
+      "PBH",
+      "PM",
+      "PRGS",
+      "RELL",
+      "REZI",
+      "RLGT",
+      "RMNI",
+      "ROCK",
+      "RPRX",
+      "RSI",
+      "SCSC",
+      "SGU",
+      "SHLS",
+      "SMPL",
+      "SONO",
+      "SPB",
+      "SPH",
+      "ST",
+      "SXT",
+      "TDC",
+      "THRM",
+      "TRGP",
+      "TRU",
+      "TTMI",
+      "UAN",
+      "UGI",
+      "USAC",
+      "VREX",
+      "VRSK",
+      "VVX",
+      "WES",
+      "WLDN",
+      "WLKP",
+      "WMK",
+      "WSC",
+      "XYL",
+      "YUM",
+      "ZVRA"
+     ],
+     "dropped": [
+      "AAP",
+      "AKAM",
+      "AVA",
+      "BNED",
+      "CAL",
+      "CCOI",
+      "CNTY",
+      "DAL",
+      "DBI",
+      "ED",
+      "FC",
+      "FND",
+      "FOSL",
+      "GM",
+      "IMMR",
+      "LAD",
+      "LIVE",
+      "LKQ",
+      "LOVE",
+      "LTH",
+      "LUV",
+      "LZB",
+      "MGM",
+      "MGRC",
+      "MHO",
+      "MLKN",
+      "MPAA",
+      "NGS",
+      "NSIT",
+      "NTCT",
+      "OPLN",
+      "PAYO",
+      "PKOH",
+      "PRG",
+      "PRTH",
+      "RDNW",
+      "RMR",
+      "SCI",
+      "SVV",
+      "T",
+      "TDS",
+      "TNL",
+      "TOL",
+      "TRIP",
+      "TRN",
+      "UAL",
+      "UPBD",
+      "USPH",
+      "VLGEA",
+      "VNCE",
+      "WEX",
+      "WU"
+     ]
+    }
+   },
+   "medians_M4": [
+    0.0588,
+    0.0444
+   ],
+   "top_roic": [
+    [
+     "ANAB",
+     4.53
+    ],
+    [
+     "PLTR",
+     1.42
+    ],
+    [
+     "NATH",
+     1.15
+    ],
+    [
+     "EVER",
+     1.09
+    ],
+    [
+     "APP",
+     1.09
+    ],
+    [
+     "ZVRA",
+     1.01
+    ],
+    [
+     "NVDA",
+     0.99
+    ],
+    [
+     "VRSN",
+     0.87
+    ],
+    [
+     "MU",
+     0.81
+    ],
+    [
+     "UI",
+     0.81
+    ]
+   ],
+   "roic_fell_by_a_third": {
+    "n": 482,
+    "industries": {
+     "Services-Prepackaged Software": 35,
+     "Services-Business Services, NEC": 22,
+     "Retail-Eating  Places": 22,
+     "Services-Computer Processing & Data Preparation": 14,
+     "Pharmaceutical Preparations": 11,
+     "Semiconductors & Related Devices": 10,
+     "Services-Computer Programming, Data Processing, Etc.": 8,
+     "Electric Services": 7
+    }
+   },
+   "guard_dropped": null,
+   "DUOL": 0.1496
+  },
+  "_negative_equity": {
+   "n": 169,
+   "names": [
+    "AAL",
+    "ABBV",
+    "ACH",
+    "AGEN",
+    "ALTG",
+    "AMC",
+    "AMTX",
+    "APPN",
+    "ARRY",
+    "ASPS",
+    "ATEC",
+    "AZO",
+    "BBIO",
+    "BBWI",
+    "BCRX",
+    "BHC",
+    "BKD",
+    "BKNG",
+    "BLND",
+    "BOX",
+    "BOXL",
+    "BRBR",
+    "BTMD",
+    "CAH",
+    "CAR",
+    "CC",
+    "CCO",
+    "CCOI",
+    "CDLX",
+    "CEPL",
+    "CHPT",
+    "CIRC",
+    "CLX",
+    "CMPR",
+    "CNTY",
+    "COKE",
+    "CTEV",
+    "CURV",
+    "CYH",
+    "DBX"
+   ],
+   "in_M1_or_M4_A": [
+    "AZO",
+    "BBWI",
+    "BRBR",
+    "BTMD",
+    "CAH",
+    "CCO",
+    "CCOI",
+    "CMPR",
+    "CNTY",
+    "COKE",
+    "DELL",
+    "DPZ",
+    "DVA",
+    "EMBC",
+    "ETSY",
+    "FICO",
+    "GDDY",
+    "GRND",
+    "HLF",
+    "HPQ",
+    "INSE",
+    "IT",
+    "LIND",
+    "LOW",
+    "LVS",
+    "MAS",
+    "MCD",
+    "MCK",
+    "MO",
+    "MSCI",
+    "MTCH",
+    "MTEX",
+    "NATH",
+    "OTIS",
+    "PAAI",
+    "PLNT",
+    "PMTS",
+    "PRKS",
+    "PRTH",
+    "PTON",
+    "PZZA",
+    "RDNW",
+    "SABR",
+    "SMG",
+    "TDG",
+    "TNL",
+    "UIS",
+    "VATE",
+    "WING",
+    "WYNN",
+    "XERS"
+   ],
+   "in_M1_or_M4_A+G": [
+    "AZO",
+    "BBWI",
+    "BRBR",
+    "BTMD",
+    "CCO",
+    "CCOI",
+    "CMPR",
+    "CNTY",
+    "COKE",
+    "DELL",
+    "DPZ",
+    "DVA",
+    "EMBC",
+    "ETSY",
+    "FICO",
+    "GDDY",
+    "GRND",
+    "HLF",
+    "HPQ",
+    "INSE",
+    "IT",
+    "LIND",
+    "LOW",
+    "LVS",
+    "MAS",
+    "MCD",
+    "MO",
+    "MSCI",
+    "MTCH",
+    "NATH",
+    "OTIS",
+    "PAAI",
+    "PLNT",
+    "PMTS",
+    "PRKS",
+    "PRTH",
+    "PZZA",
+    "RDNW",
+    "SABR",
+    "SMG",
+    "TDG",
+    "TNL",
+    "VATE",
+    "WING",
+    "WYNN",
+    "XERS"
+   ]
+  },
+  "_coverage": {
+   "companies": 1870,
+   "op_lease_filed": 1557,
+   "op_lease_from_split_tags_only": 839,
+   "payables_filed": 1738
+  }
+ }
+}

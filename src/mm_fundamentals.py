@@ -7,6 +7,8 @@ Canonical metrics (first tag present wins; see TAG_PRIORITY), then the clean-up:
   one-offs   = impairments + restructuring + litigation + acquisition costs − gains on disposals (where tagged)
   clean OI   = operating income + one-offs
   NOPAT      = clean OI × (1 − tax rate)                       (one constant rate, settings.yaml)
+  clean NI   = net income + one-offs × (1 − tax rate) + one-time tax (filed rate outside 0–50% → normal rate)
+  cash       = cash + short-term investments (filed total, else available-for-sale + held-to-maturity lines)
   invested capital (IC) = equity + debt (incl. finance leases) − excess cash (cash above 2% of revenue)
   clean ROIC = NOPAT ÷ average IC of this and last year
 and the ratios used by the risk gate and the five themes. Every derived value keeps the filing of its revenue fact
@@ -53,7 +55,6 @@ TAG_PRIORITY: dict[str, list[str]] = {
     "equity_nci": ["StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest", "StockholdersEquity"],
     "retained": ["RetainedEarningsAccumulatedDeficit"],
     "cash_tag": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
-    "st_invest": ["ShortTermInvestments", "MarketableSecuritiesCurrent", "AvailableForSaleSecuritiesDebtSecuritiesCurrent"],
     "receivables": ["AccountsReceivableNetCurrent"],
     "ppe": ["PropertyPlantAndEquipmentNet"],
     "goodwill": ["Goodwill"],
@@ -64,6 +65,15 @@ TAG_PRIORITY: dict[str, list[str]] = {
     "shares": ["WeightedAverageNumberOfDilutedSharesOutstanding"],
     "op_lease": ["OperatingLeaseLiability"],
 }
+# Short-term investments (round 31): a filed total wins; without one, available-for-sale and held-to-maturity lines are
+# added (DUOL files only held-to-maturity securities, $104M at FY2025, which the old first-tag list missed).
+ST_TOTAL = ["ShortTermInvestments", "MarketableSecuritiesCurrent"]
+ST_AFS = ["AvailableForSaleSecuritiesDebtSecuritiesCurrent", "AvailableForSaleSecuritiesCurrent"]
+ST_HTM = ["DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent", "HeldToMaturitySecuritiesCurrent"]
+ST_TAGS = ST_TOTAL + ST_AFS + ST_HTM
+# One-time tax (round 31): a filed tax rate outside 0–50% of pre-tax income (valuation-allowance release or build,
+# tax-law charges) is replaced by the normal rate in clean net income. On a loss only a benefit above 50% counts.
+TAX_RATE_MAX = 0.50
 # Tags used as parts of sums (not a priority list): kept as raw columns.
 RAW = ["GeneralAndAdministrativeExpense", "SellingAndMarketingExpense", "Depreciation", "AmortizationOfIntangibleAssets",
        "GoodwillImpairmentLoss", "AssetImpairmentCharges", "ImpairmentOfLongLivedAssetsHeldForUse",
@@ -72,7 +82,7 @@ RAW = ["GeneralAndAdministrativeExpense", "SellingAndMarketingExpense", "Depreci
        "LongTermDebt", "LongTermDebtNoncurrent", "LongTermDebtCurrent", "DebtCurrent", "ShortTermBorrowings",
        "CommercialPaper", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsCurrent",
        "FinanceLeaseLiability", "FinanceLeaseLiabilityNoncurrent", "FinanceLeaseLiabilityCurrent",
-       "CapitalLeaseObligations"]
+       "CapitalLeaseObligations"] + ST_TAGS
 REVENUE_TAGS = TAG_PRIORITY["revenue"]
 ANNUAL_FORMS = {"10-K", "10-K/A", "10-KT", "10-KT/A"}
 
@@ -220,6 +230,20 @@ def scoring_table(facts: pd.DataFrame, as_of: str | pd.Timestamp | None = None, 
     return (s, cand.drop(columns="row")) if with_quarters else s
 
 
+def short_term_investments(w: pd.DataFrame) -> pd.Series:
+    """Filed total (ST_TOTAL) if any, else available-for-sale + held-to-maturity lines (missing if none filed)."""
+    return _first(w, ST_TOTAL).fillna(_sum_any(_first(w, ST_AFS), _first(w, ST_HTM)))
+
+
+def tax_one_off(pretax: pd.Series, tax: pd.Series, tax_rate: float) -> pd.Series:
+    """Filed tax − normal tax (tax_rate × pre-tax) when the filed rate is outside 0–TAX_RATE_MAX, else 0.
+    Negative = a one-time benefit that raised net income. Added to net income it gives net income at the normal rate."""
+    rate = tax / pretax.where(pretax != 0)
+    on_profit = (pretax > 0) & ((rate < 0) | (rate > TAX_RATE_MAX))
+    on_loss = (pretax < 0) & (tax < 0) & (rate > TAX_RATE_MAX)  # benefit larger than half the loss
+    return (tax - tax_rate * pretax).where(on_profit | on_loss, 0.0).fillna(0.0)
+
+
 def _derive(w: pd.DataFrame, tax_rate: float, excess_cash_pct: float) -> pd.DataFrame:
     """Raw tag columns indexed by (cik, period end) → canonical values and the clean-up (no year-on-year ratios)."""
     d = pd.DataFrame(index=w.index)
@@ -246,7 +270,8 @@ def _derive(w: pd.DataFrame, tax_rate: float, excess_cash_pct: float) -> pd.Data
     d["oi_check_gap"] = gap / d["op_income"].abs()  # share of operating income ...
     d.loc[gap < 0.01 * d["revenue"], "oi_check_gap"] = 0.0  # ... ignored when under 1% of revenue
     d["nopat"] = d["clean_oi"] * (1 - tax_rate)
-    d["clean_ni"] = d["net_income"] + d["one_offs"] * (1 - tax_rate)
+    d["tax_one_off"] = tax_one_off(d["pretax"], d["tax"], tax_rate)
+    d["clean_ni"] = d["net_income"] + d["one_offs"] * (1 - tax_rate) + d["tax_one_off"]
 
     ltd_split = _sum_any(_col(w, "LongTermDebtNoncurrent"), _col(w, "LongTermDebtCurrent").fillna(_col(w, "DebtCurrent")))
     ltd_cl = _sum_any(_col(w, "LongTermDebtAndCapitalLeaseObligations"), _col(w, "LongTermDebtAndCapitalLeaseObligationsCurrent"))
@@ -261,6 +286,7 @@ def _derive(w: pd.DataFrame, tax_rate: float, excess_cash_pct: float) -> pd.Data
     d["debt"] = _sum_any(ltd, st, fin_lease).fillna(0.0)
     d["debt_reported"] = ltd.notna() | st.notna()
 
+    d["st_invest"] = short_term_investments(w)
     d["cash"] = _sum_any(d.pop("cash_tag"), d["st_invest"])
     d["excess_cash"] = (d["cash"].fillna(0) - excess_cash_pct * d["revenue"]).clip(lower=0)
     d["liabilities"] = d.pop("liab_tag").fillna(d["liab_equity"] - d["equity_nci"])

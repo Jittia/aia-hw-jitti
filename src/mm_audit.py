@@ -19,16 +19,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from mm_fundamentals import ANNUAL_FORMS, POINT_TAGS, REVENUE_TAGS, TAG_PRIORITY, _derive
+from mm_fundamentals import ANNUAL_FORMS, POINT_TAGS, REVENUE_TAGS, ST_AFS, ST_HTM, ST_TOTAL, TAG_PRIORITY, _derive
 
 ROOT = Path(__file__).resolve().parent.parent
-HTM = "DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent"
 SHARES = "WeightedAverageNumberOfDilutedSharesOutstanding"
 # points at which each input is read by a measure (spec §2): everything now; past points only for growth, invested
-# capital (q4, q12), NOPAT 12 quarters back, gross-margin change (q4) and the held-to-maturity what-if (q4)
+# capital (q4, q12), NOPAT 12 quarters back and gross-margin change (q4)
 NEED = {"revenue": ("now", "q4", "q12"), "gross_profit": ("now", "q4"), "op_income": ("now", "q4", "q12"),
         "oneoffs": ("now", "q4", "q12"), "equity": ("now", "q4", "q12"), "cash": ("now", "q4", "q12"),
-        "st_invest": ("now", "q4", "q12"), "debt": ("now", "q4", "q12"), "htm": ("now", "q4")}
+        "st_invest": ("now", "q4", "q12"), "debt": ("now", "q4", "q12")}
 SHARDS = 16
 BLOCKS = ("revenue", "gross_profit", "op_income", "one_offs", "clean_oi", "nopat", "da", "ebitda", "cfo", "interest",
           "equity", "cash", "excess_cash", "debt", "ic")
@@ -134,6 +133,16 @@ def debt_parts(w: dict, parts: dict) -> list[dict]:
     return [_comp(w, parts, t, 1, t in used) for t in cand if g(t) is not None]
 
 
+def st_invest_parts(w: dict, parts: dict) -> list[dict]:
+    """Every short-term investment tag present, `used` exactly as mm_fundamentals.short_term_investments builds it:
+    the first filed total, else the first available-for-sale tag + the first held-to-maturity tag."""
+    g = lambda t: w.get(t) if t in w and pd.notna(w[t]) else None  # noqa: E731
+    first = lambda tags: next((t for t in tags if g(t) is not None), None)  # noqa: E731
+    total = first(ST_TOTAL)
+    used = {total} if total else {t for t in (first(ST_AFS), first(ST_HTM)) if t}
+    return [_comp(w, parts, t, 1, t in used) for t in ST_TOTAL + ST_AFS + ST_HTM if g(t) is not None]
+
+
 def oneoff_parts(w: dict, parts: dict) -> list[dict]:
     """Impairment (the largest of three ways it is tagged), restructuring, litigation, deal costs, less asset-sale gains,
     `used` exactly as _derive builds `one_offs`."""
@@ -175,7 +184,7 @@ def items_at(w: dict, parts: dict, d: pd.Series) -> dict:
     da_tag = _first(w, TAG_PRIORITY["da_tag"])
     da = [_comp(w, parts, da_tag)] if da_tag else \
         [_comp(w, parts, t) for t in ("Depreciation", "AmortizationOfIntangibleAssets") if _first(w, [t])]
-    one = {k: _first(w, TAG_PRIORITY[k]) for k in ("op_income", "cfo", "interest", "equity", "cash_tag", "st_invest")}
+    one = {k: _first(w, TAG_PRIORITY[k]) for k in ("op_income", "cfo", "interest", "equity", "cash_tag")}
     return {
         "revenue": {"value": v("revenue"), "comps": [_comp(w, parts, rev)] if rev else []},
         "gross_profit": {"value": v("gross_profit"), "comps": gp},
@@ -186,10 +195,8 @@ def items_at(w: dict, parts: dict, d: pd.Series) -> dict:
         "interest": {"value": v("interest"), "comps": [_comp(w, parts, one["interest"], abs_=True)]},
         "equity": {"value": v("equity"), "comps": [_comp(w, parts, one["equity"])]},
         "cash": {"value": _f(w.get(one["cash_tag"])) if one["cash_tag"] else None, "comps": [_comp(w, parts, one["cash_tag"])]},
-        "st_invest": {"value": _f(w.get(one["st_invest"])) if one["st_invest"] else None,
-                      "comps": [_comp(w, parts, one["st_invest"])]},
+        "st_invest": {"value": v("st_invest"), "comps": st_invest_parts(w, parts)},
         "debt": {"value": v("debt"), "comps": debt_parts(w, parts)},
-        "htm": {"value": _f(w.get(HTM)), "comps": [_comp(w, parts, HTM, used=False)] if HTM in w else []},
         # diluted average share count: the market-value fallback when no cover-page count is filed
         "shares": {"value": _f(w.get(SHARES)), "comps": [_comp(w, parts, SHARES)] if SHARES in w else []},
     }
@@ -347,11 +354,6 @@ def panel_and_records(as_of: str, live: dict | None = None, ciks: set | None = N
     parts = ttm_parts(k)
     ka = k[k["form"].isin(ANNUAL_FORMS) & (k["kind"] == "A")]
     flow_tags = {True: set(parts["tag"].astype(str)), False: set(ka["tag"].astype(str))}  # {is_ttm: tags that are flows}
-    extra = ROOT / "data" / "cache" / "mm" / "extra_facts.pkl"  # shown-only balances (mm_extract.py extra)
-    if extra.exists():
-        e = pd.read_pickle(extra)
-        k = pd.concat([k[k["cik"].isin(ciks)].astype({"tag": str, "kind": str, "form": str}),
-                       known_as_of(e[e["cik"].isin(ciks)], as_of)], ignore_index=True)
     k = k[k["cik"].isin(ciks)]
     parts = parts[parts["cik"].isin(ciks)]
     kg, pg, ng = dict(tuple(k.groupby("cik"))), dict(tuple(parts.groupby("cik"))), dict(tuple(panel.groupby("cik")))
@@ -385,7 +387,7 @@ def compact(rec: dict, pages: dict | None = None) -> dict:
         return [p["kind"], _n(p["val"]), fi.get(p["accn"]), p["start"], p["end"], pg]
     it = {name: {pt: [_n(v["value"]), [[c["tag"], c["sign"], int(c["used"]), _n(c["value"]),
                                          [part(p, c["tag"]) for p in c["parts"]]]
-                                        for c in v["comps"] if c["used"] or name == "htm"]]
+                                        for c in v["comps"] if c["used"]]]
                  for pt, v in by_pt.items() if pt in NEED.get(name, ("now",))} for name, by_pt in rec["items"].items()}
     m = dict(rec["mkt"]) if rec.get("mkt") else None
     if m and m.get("cover_accn"):

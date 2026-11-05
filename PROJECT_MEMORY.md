@@ -48,6 +48,13 @@
 - When a control has no effect in the current view, disable it and say why on screen; a control that silently does nothing looks like a bug.
 - Before any new code multiplies a price by a share count, find the existing rule on splits and apply it; Yahoo history is split- and dividend-adjusted, SEC share counts are as filed.
 - A "yesterday's close" must exclude bars dated on the run date (they can be intraday).
+- Short-term investments = the filed total (ShortTermInvestments, MarketableSecuritiesCurrent), else available-for-sale + held-to-maturity lines; when a company's cash looks low against its 10-K, look for another securities tag before blaming the data.
+- Clean net income must remove one-time *tax* items too: a filed tax rate outside 0–50% (valuation-allowance release, tax-law charge) is replaced by 21%; pre-tax one-offs alone are not enough.
+- When re-running mm_run to test a methodology fix on a later day, keep the earlier daily closes (`MM_REUSE_DAILY=1` on the saved `prices_daily.pkl`); a fresh download mixes a price update into the before/after comparison.
+- To wait for a background process, watch its PID (`kill -0 <pid>`); `pgrep -f <name>` inside a watcher matches the watcher's own command line and never ends.
+- Never scale a "too small to be meaningful" guard on invested capital by revenue: distributors (MCK, CAH, COR) run on capital of 1–2% of revenue and are real businesses, not data errors.
+- Operating leases are filed as current + non-current lines by more than half the companies (839 of 1,557); read the split tags, not only `OperatingLeaseLiability`.
+- Show a ratio whose denominator can approach zero (clean ROIC) through one capped formatter, and keep exact values in data, sorting and the Calculation check; never cap the stored number.
 - On one screen, every number derived from price (market value, P/E, EV, gap) must come from the same price and date.
 - Cross-check the OperatingIncomeLoss tag against revenue − CostsAndExpenses; some filers tag a segment total.
 - Fingerprint settings and scoring code before a validation run, and report every variant tried, including results against the hypothesis.
@@ -370,3 +377,32 @@
 - **สาเหตุ:** The PDF was created but not committed or pushed (Jitti chose "Not now" for the save), so it existed only on this Mac.
 - **แก้อย่างไร:** `/save` (round 30) committed and pushed it; the public links were checked after the push.
 - **ลองวิธีไหนแล้วไม่เวิร์ก:** Nothing. While checking sources for the guide, several Investor.gov glossary addresses returned status 200 with an empty page; only pages that contain the definition are cited.
+
+### 2026-11-05 · DUOL ROIC and P/E differed from GuruFocus: two bugs found
+
+- **เจออะไร:** Jitti compared DUOL's clean ROIC (FY2025 55.6%) with GuruFocus's, which was about a third of ours (their figure is licensed data, so it is not quoted here). Most of the gap is method (invested capital: equity + debt − excess cash vs GuruFocus's total assets − payables; their cash buffer; operating leases in debt; their effective tax rate), but two items were bugs: (1) DUOL files its short-term investments only as held-to-maturity securities ($104M at FY2025), a tag the tool did not read, so cash was too low; (2) clean net income still contained DUOL's $232M one-time tax benefit (valuation-allowance release), so clean P/E was 16 instead of about 41.
+- **สาเหตุ:** (1) The short-term investment list took the first of three tags and had no held-to-maturity tag; the 2026-11-04 Calculation check had shown the amount as "not counted" and left the decision for later. (2) The clean-up removed only pre-tax one-offs; tax one-offs went straight into net income.
+- **แก้อย่างไร:** Round 31. Cash now adds the filed total, else available-for-sale + held-to-maturity (old and new tags; 412 companies gained cash in some year). Clean net income replaces a filed tax rate outside 0–50% with 21% (11.4% of company-years; the 2017 tax-reform year stands out with 771). Re-run on the same Nov 3 closes: Screener lists M1–M3 unchanged, M4 lost CRK; P/E changed for 175 companies (e.g. LYFT 2.2 → 1,343, DUOL 16 → 41); v1.1 shortlist changed 3 names (in HLT, USLM, DECK; out GFF, YOU, NVDA). The track record (track_record/*.json) is frozen and was not touched. DUOL's 12-month ROIC rose from 92% to 1,588% because average invested capital fell to $7.8M: correct under our formula, but it shows the near-zero-capital problem (10 companies above 200%), left as a separate method decision.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** The first re-run downloaded fresh prices (Nov 4) and showed 1,329 P/E changes and 18 M4 changes, mostly price moves; the Nov 3 closes were rebuilt from Yahoo (DUOL $128.00 matches the earlier run) and the run repeated with `MM_REUSE_DAILY=1`.
+
+### 2026-11-05 · Invested-capital study: no variant passed all three rules set in advance
+
+- **เจออะไร:** `src/mm_ic_study.py` (output/data/ic_study.json) tried 7 definitions of invested capital on the Screener as of 2026-11-03. Variant A (current) reproduced the published lists exactly (269 / 204 / 574). The rules written before the run: (1) at most 2 companies above 200% ROIC, (2) lists ≥ 80% the same and ROIC rank correlation ≥ 0.90, (3) the "not meaningful" guard drops at most 5 companies from M1 or M4.
+- **สาเหตุ:** Results: the guard (average IC < 10% of revenue) removed every outlier but dropped 14 companies from M1 and 25 from M4, among them drug distributors (MCK, CAH, COR) whose capital is small next to their very large revenue: fails rule 3. Operating leases (B) kept lists 90–92% the same, and the companies hit hardest were restaurants and retailers as expected, but 9 outliers remained (rule 1). The 5% cash buffer (C) and GuruFocus-style cash (D) left 9 and 4 outliers. The GuruFocus-like definition (E) removed outliers but changed lists the most (M2 only 54% the same) and cut the ROIC of 35 software companies by more than a third, the prepaid-revenue penalty expected. Companies with negative equity were mostly not a problem: 51 sit in M1/M4 and 46 stay with the guard, because their debt keeps invested capital positive.
+- **แก้อย่างไร:** Nothing adopted; the study is reported as run and the rules were not changed after seeing the results. Any new guard (e.g. a display cap) is a new test written down first.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** The revenue-scaled guard (see above).
+
+### 2026-11-05 · Adding unrelated tags to facts.pkl changed two companies' 12-month figures (open bug)
+
+- **เจออะไร:** After 5 balance tags were added to facts.pkl for the study (leases, payables), the all-company audit test failed: CIK 730272 gained four 12-month points and CIK 1077688 used a different filing for two points (for 2025-08-03 the original 2025 filing instead of the 2026 restatement). Facts for every existing tag were identical.
+- **สาเหตุ:** Not fully traced. The likely cause is a tie in `ttm_parts` (merge_asof "nearest" matching, keyed on tag codes from `pd.factorize`): the order of tags changes which candidate wins when two are equally near.
+- **แก้อย่างไร:** For now: facts.pkl restored to the round 31 file (byte-identical), study tags moved to extra_facts.pkl (`mm_extract.py extra`). The tie-break itself still needs a fix and a rule (prefer the latest filing on ties) plus a test that adding a tag never changes other values.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Adding study-only tags straight to TAGS.
+
+### 2026-11-05 · Clean ROIC display cap: passed all five rules
+
+- **เจออะไร:** After round 31 DUOL's clean ROIC showed as 1,588% (28 companies above 100%), a precise-looking number that mostly reflects invested capital near zero.
+- **สาเหตุ:** The ratio's denominator (average invested capital) can be tiny; the round-32 study showed a guard that blanks ROIC also removes real businesses (distributors), so only the display changes.
+- **แก้อย่างไร:** Round 33 (spec docs/specs/2026-11-05-roic-display-cap.md, rules written first). Above 100% the page shows "> 100%" with the exact value on hover; Deep-Dive mini charts draw it just above 100%; a ROIC change larger than 100 points shows "n.m."; the Calculation check keeps the exact value with a note. Checked: 33 data files byte-identical (no list, rank or score changed), sorting by ROIC uses the true order, all tests pass, no console errors; in the browser DUOL shows "> 100%" everywhere except the audit table.
+- **ลองวิธีไหนแล้วไม่เวิร์ก:** Using the page's global formatters inside `buildDeck` broke 5 deck tests: the deck is built as a self-contained file (the tests run it alone in Node), so it got its own copy of the cap. Return on new capital (Group 2 Y, e.g. PLTR 358%) is left uncapped by design.
+

@@ -1519,3 +1519,115 @@ check , why others can't open from the Github Repo ?
 - **ขั้นต่อไป:**
   - Possibly show the latest 8-K (date, items, link) in the Deep-Dive.
   - Read the instructor's comments in Issues.
+
+## รอบ 31 · 2026-11-05 · DUOL ROIC vs GuruFocus: two bugs fixed (held-to-maturity cash, one-time tax)
+
+- **ทำอะไร:**
+  - **Compared DUOL's FY2025 clean ROIC with GuruFocus** (read in Chrome, not stored in the repo) and traced the gap. Most of it is method: invested capital built from equity + debt − excess cash vs GuruFocus's total assets − payables, plus their cash buffer, operating leases in debt and effective tax rate.
+  - **Compared 24 indicators side by side** (income statement, invested capital, risk gate, valuation), each with the type of gap: definition, tagging, tax, timing or bug. Only revenue, FCF and D&A matched exactly.
+  - **Fixed bug 1: short-term investments filed as held-to-maturity or available-for-sale securities now count as cash.** Rule: the filed total wins; without one, the AFS and HTM lines are added. 5 tags added to `src/mm_extract.py` and `src/mm_fundamentals.py`. The Calculation check (`src/mm_audit.py`, page) now lists these tags instead of the old "not counted" note and what-if block.
+  - **Fixed bug 2: clean net income now removes one-time tax items.** A filed tax rate outside 0–50% is replaced by 21% (`tax_one_off`). NOPAT and ROIC keep the flat 21%.
+  - **Tests:** 13 new tests in `tests/test_moat.py`; DUOL fixtures and locked values updated in `tests/test_audit.py`.
+  - **Re-ran** extraction, `mm_run.py` (on the same Nov 3 closes) and `mm_sheet_payload.py`. Methodology text updated on the page and in `src/mm_valuation.py`.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · Claude in Chrome (GuruFocus pages) · built-in browser (page check)
+- **Prompt ที่ใช้:**
+
+```text
+I have question of DUOL ROIC calculation as you did in our Moat Momentum vs ROIC calculated by Gurufocus.  You can access GF in Chrome extension.   Go to review and comback to explain to me root cause of the difference
+```
+
+```text
+This is good opportunity to verify how we calculated in each parameter vs other source.  Let's start with GuruFocus.   They use neutral data from FactSet which is not exact as EDGAR report.   I want you to suggest how we can compare the calculation condition based on real fundamental valuation, unique industry specific or special tagging, tax rate approach. Compare side by side in table of each indicator, then suggest me next step.
+```
+
+```text
+Fix the 2 bugs first
+```
+
+- **ผลที่ได้:**
+  - **DUOL:** cash at June 2026 is now $1,313.9M, equal to the reference figure to the thousand. Clean P/E is 41 instead of 16.
+  - **Coverage:** 412 companies gained cash in some year. The tax rule touches 11.4% of company-years; 2017 (US tax reform) stands out with 771.
+  - **Effect on today's outputs:** Screener lists M1–M3 unchanged; M4 lost CRK. P/E changed for 175 companies (e.g. LYFT 2.2 → 1,343). The v1.1 shortlist changed 3 names (in HLT, USLM, DECK; out GFF, YOU, NVDA). The frozen track record was not touched.
+  - **Side effect, left for later:** DUOL's 12-month ROIC rose from 92% to 1,588%, because average invested capital fell to $7.8M.
+  - **Checks:** all 216 tests pass.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti:**
+    - Chat in English from now on; repo files keep the AGENTS.md format.
+    - Fix the two bugs first (the option recommended: a small change that is clearly better), before building a wider cross-check.
+  - **Claude's choices:**
+    - **Tax normalised only outside 0–50%:** normal low-tax companies keep their real rate. Loss years are changed only for a benefit above half the loss, so loss-makers paying a little tax each year are not flagged.
+    - **The first re-run was redone on Nov 3 prices:** it had downloaded Nov 4 prices, which mixed price moves into the comparison (1,329 P/E changes instead of 175).
+    - **GuruFocus values are kept out of the repo:** licensed data (spec §3).
+- **ขั้นต่อไป:** Decide how to treat invested capital near zero; private GuruFocus cross-check on about 30 tickers.
+
+## รอบ 32 · 2026-11-05 · Invested-capital study: 7 definitions, rules fixed before the run
+
+- **ทำอะไร:**
+  - **Explained the pros and cons** of our invested capital (equity + debt − excess cash) vs GuruFocus's (assets − payables − excess cash), with a recommendation and watch-outs.
+  - **New `src/mm_ic_study.py`** (results in `output/data/ic_study.json`): 7 variants on the Screener as of 2026-11-03.
+    - A: current; A+G: current with a "not meaningful" guard (average IC < 10% of revenue).
+    - B: + operating leases; B+G: with the guard.
+    - C: 5% cash buffer; D: GuruFocus-style cash buffer; E: GuruFocus-like formula from SEC tags.
+  - **Pass rules written into the script before the run:** at most 2 companies above 200% ROIC; lists at least 80% the same and rank correlation ≥ 0.90; the guard drops at most 5 companies from M1 or M4.
+  - **5 balance tags for the study** (lease and payables lines) go to `extra_facts.pkl` via `mm_extract.py extra`, not into `facts.pkl`. Reason: see the bug below.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5
+- **Prompt ที่ใช้:**
+
+```text
+based on your observation, Explain pro/con of current vs GF for invested-capital.  What you think we shall do and the watch out of that direction
+```
+
+```text
+Run the test
+```
+
+- **ผลที่ได้:**
+  - **Validation:** variant A reproduced the published lists exactly (269 / 204 / 574), so the study code matches the dashboard.
+  - **No variant passed all three rules, so nothing was adopted.**
+    - The guard removed all outliers but dropped 14 companies from M1 and 25 from M4, including drug distributors (MCK, CAH, COR) whose capital is small next to very large revenue.
+    - Leases kept lists 90–92% the same and hit mostly restaurants and retailers, but left 9 outliers.
+    - The GuruFocus-like formula changed lists the most (M2 only 54% the same) and cut ROIC by more than a third for 35 software companies.
+    - Negative equity was mostly not a problem: 46 of 51 such companies stay in the lists, because their debt keeps invested capital positive.
+  - **Data coverage:** 839 of the 1,557 companies with operating leases file them only as current and non-current lines.
+  - **Bug found:** adding unrelated tags to `facts.pkl` changed the 12-month figures of 2 companies (a tie in `ttm_parts`). `facts.pkl` was restored byte-for-byte; the fix runs in a separate session.
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti:** run the sensitivity test before changing the method.
+  - **Claude's choices:**
+    - **Rules fixed before the run and not changed after the results:** the repo rule "fix the success test before looking at results".
+    - **Study tags kept out of `facts.pkl`:** published outputs stay exactly as they were.
+- **ขั้นต่อไป:** Test a display cap for ROIC; operating leases only as a full change (ROIC, EV and leverage together).
+
+## รอบ 33 · 2026-11-05 · Clean ROIC above 100% shown as "> 100%"
+
+- **ทำอะไร:**
+  - **Rules written first** in `docs/specs/2026-11-05-roic-display-cap.md`.
+  - **Page change only** (`output/moat_momentum.html`):
+    - clean ROIC above 100% shows "> 100%" with the exact value and reason on hover, in all tables, cards, the Deep-Dive and the deck;
+    - Deep-Dive mini charts draw it just above 100%;
+    - a ROIC change larger than 100 points shows "n.m.";
+    - the Calculation check keeps the exact value, with a note.
+  - **Data unchanged:** no Python or data change.
+- **เครื่องมือ / model:** Claude Code desktop · Opus 5.5 · built-in browser (page check)
+- **Prompt ที่ใช้:**
+
+```text
+Test the display cap
+```
+
+- **ผลที่ได้:**
+  - **All 5 rules passed:**
+    - 33 data files byte-identical, so no list, rank or score changed;
+    - one formatter for every ROIC display;
+    - sorting by ROIC keeps the true order;
+    - all 216 tests pass;
+    - in the browser DUOL shows "> 100%" everywhere except the audit table, with no console errors.
+  - **Not capped by design:** return on new capital (Group 2 Y, e.g. PLTR 358%).
+- **ตัดสินใจอะไร และเพราะอะไร:**
+  - **Jitti:** test the display cap (the option recommended after round 32: it fixes the misleading number without changing any list).
+  - **Claude's choices:**
+    - **Cap at 100%:** the study showed that most values above it come from invested capital near zero.
+    - **The deck builder got its own copy of the cap:** it is a self-contained file. Using the page's shared formatter broke 5 deck tests.
+- **ขั้นต่อไป:**
+  - Review and merge the tie-break fix from its own session.
+  - Decide whether operating leases become a full methodology change (v1.3).
+  - Private GuruFocus cross-check.

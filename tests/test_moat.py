@@ -197,5 +197,84 @@ class SpotCheckValues(unittest.TestCase):
         self.assertGreater(d.loc[2024, "oi_check_gap"], 0.10)  # (1,157.3 − 956.8) ÷ 1,157.3 = 17%
 
 
+def derive_one(**tags) -> pd.Series:
+    """One company-year straight through _derive: revenue 1000 plus the given raw tags."""
+    from mm_fundamentals import _derive
+    row = {"revenue": 1000.0, "revenue_tag": "Revenues", "accn": "A1", "filed": pd.Timestamp("2026-02-01"),
+           "fy_start": pd.Timestamp("2025-01-01"), "OperatingIncomeLoss": 100.0, "StockholdersEquity": 500.0,
+           "CashAndCashEquivalentsAtCarryingValue": 100.0} | tags
+    w = pd.DataFrame([row], index=pd.MultiIndex.from_tuples([(1, pd.Timestamp("2025-12-31"))], names=["cik", "end"]))
+    return _derive(w, 0.21, 0.02).iloc[0]
+
+
+HTM = "DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent"
+
+
+class ShortTermInvestments(unittest.TestCase):
+    """Round 31: short-term investments filed as held-to-maturity securities count as cash (DUOL $104M was missed)."""
+
+    def test_htm_only_counts_as_cash(self):
+        d = derive_one(**{HTM: 50.0})
+        self.assertAlmostEqual(d["cash"], 150.0)
+        self.assertAlmostEqual(d["ic"], 500 - (150 - 20))
+
+    def test_old_htm_tag(self):
+        self.assertAlmostEqual(derive_one(HeldToMaturitySecuritiesCurrent=30.0)["cash"], 130.0)
+
+    def test_total_tag_wins_no_double_count(self):
+        # a filed total of short-term investments already contains its parts
+        d = derive_one(ShortTermInvestments=80.0, **{HTM: 50.0})
+        self.assertAlmostEqual(d["st_invest"], 80.0)
+
+    def test_afs_and_htm_lines_are_added(self):
+        d = derive_one(AvailableForSaleSecuritiesDebtSecuritiesCurrent=40.0, **{HTM: 50.0})
+        self.assertAlmostEqual(d["st_invest"], 90.0)
+
+    def test_old_afs_tag(self):
+        self.assertAlmostEqual(derive_one(AvailableForSaleSecuritiesCurrent=25.0)["st_invest"], 25.0)
+
+
+PRETAX = "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest"
+
+
+class OneTimeTax(unittest.TestCase):
+    """Round 31: a tax rate outside 0–50% (e.g. a valuation-allowance release) is replaced by the normal 21% in
+    clean net income, so a one-time tax gain does not make P/E look cheap (DUOL FY2025: −127% rate, $232M benefit)."""
+
+    def ni(self, pretax, tax):
+        return derive_one(**{PRETAX: pretax, "IncomeTaxExpenseBenefit": tax, "NetIncomeLoss": pretax - tax})
+
+    def test_normal_rate_untouched(self):
+        d = self.ni(100.0, 25.0)
+        self.assertAlmostEqual(d["tax_one_off"], 0.0)
+        self.assertAlmostEqual(d["clean_ni"], 75.0)
+
+    def test_tax_benefit_on_profit_is_removed(self):
+        d = self.ni(100.0, -50.0)  # net income 150 thanks to a 50 benefit
+        self.assertAlmostEqual(d["tax_one_off"], -71.0)  # −50 filed vs +21 normal
+        self.assertAlmostEqual(d["clean_ni"], 79.0)
+
+    def test_duol_fy2025(self):
+        d = self.ni(182.410e6, -231.655e6)
+        self.assertAlmostEqual(d["clean_ni"] / 1e6, 182.410 * 0.79, places=3)
+
+    def test_rate_above_50_percent_is_a_one_off_charge(self):
+        self.assertAlmostEqual(self.ni(100.0, 60.0)["clean_ni"], 79.0)
+
+    def test_large_benefit_on_a_loss(self):
+        self.assertAlmostEqual(self.ni(-100.0, -80.0)["clean_ni"], -79.0)
+
+    def test_small_tax_on_a_loss_untouched(self):
+        # loss-makers with a full valuation allowance pay a little tax every year: not a one-off
+        self.assertAlmostEqual(self.ni(-100.0, 2.0)["clean_ni"], -102.0)
+
+    def test_missing_tax_untouched(self):
+        d = derive_one(**{PRETAX: 100.0, "NetIncomeLoss": 70.0})
+        self.assertAlmostEqual(d["clean_ni"], 70.0)
+
+    def test_nopat_still_flat_rate(self):
+        self.assertAlmostEqual(self.ni(100.0, -50.0)["nopat"], 100 * 0.79)
+
+
 if __name__ == "__main__":
     unittest.main()

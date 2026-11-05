@@ -21,13 +21,10 @@ def duol_known() -> pd.DataFrame:
 
 
 class ExtraFacts(unittest.TestCase):
-    def test_extra_rows_reads_htm_instants(self):
-        from mm_extract import _extra_rows
-        cf = {"facts": {"us-gaap": {"DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent": {"units": {"USD": [
-            {"end": "2026-06-30", "val": 132979000, "filed": "2026-08-06", "form": "10-Q", "accn": "0001628280-26-053603"},
-            {"end": "2026-06-30", "val": 1, "filed": "2026-08-06", "form": "8-K", "accn": "x"}]}}}}}
-        self.assertEqual(_extra_rows(1562088, cf), [(1562088, "DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent",
-                                                     "I", None, "2026-06-30", 132979000.0, "2026-08-06", "10-Q", "0001628280-26-053603")])
+    def test_htm_is_extracted_with_the_counted_tags(self):  # round 31: no longer a shown-only extra
+        from mm_extract import EXTRA_TAGS, TAGS
+        self.assertIn("DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent", TAGS)
+        self.assertNotIn("DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent", EXTRA_TAGS)
 
 
 class TtmParts(unittest.TestCase):
@@ -57,7 +54,7 @@ def duol_record():
     from mm_fundamentals import ttm_parts
     from mm_quarterly import ttm_panel
     facts = pd.read_pickle(FIX / "duol_facts.pkl")
-    k = pd.concat([duol_known(), known_as_of(pd.read_pickle(FIX / "duol_extra.pkl"), "2026-11-03")], ignore_index=True)
+    k = duol_known()
     panel = ttm_panel(facts, "2026-11-03", 0.21, 0.02)
     return company_record(DUOL, k, ttm_parts(k), panel[panel["filed"] <= "2026-11-03"], DUOL_LIVE)
 
@@ -86,7 +83,10 @@ class Record(unittest.TestCase):
         self.assertEqual(it["equity"]["q12"]["value"], 596405000)
         self.assertEqual(it["cash"]["now"]["value"], 1180887000)
         self.assertEqual(it["debt"]["now"]["value"], 0)
-        self.assertEqual(it["htm"]["now"]["value"], 132979000)  # shown, never used in a measure (spec §7)
+        self.assertEqual(it["st_invest"]["now"]["value"], 132979000)  # held-to-maturity, counted since round 31
+        self.assertEqual([c["tag"] for c in it["st_invest"]["now"]["comps"] if c["used"]],
+                         ["DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent"])
+        self.assertNotIn("htm", it)
         self.assertIsNone(it["interest"]["now"]["value"])
         self.assertEqual(self.rec["mkt"]["shares_src"], "diluted")
         sh = it["shares"]["now"]["comps"][0]
@@ -96,8 +96,9 @@ class Record(unittest.TestCase):
     def test_blocks_equal_panel(self):  # the record re-derives exactly what the dashboard used
         b = self.rec["blocks"]
         self.assertEqual(b["now"]["clean_oi"], 157085000)
-        self.assertAlmostEqual(b["now"]["ic"], 251755040, 0)
-        self.assertAlmostEqual(b["q4"]["ic"], 18503040, 0)
+        # round 31: held-to-maturity securities now count as cash (now $133.0M, a year back $121.7M), so IC falls by them
+        self.assertAlmostEqual(b["now"]["ic"], 251755040 - 132979000, 0)
+        self.assertAlmostEqual(b["q4"]["ic"], 18503040 - 121652000, 0)
         self.assertAlmostEqual(b["q12"]["ic"], -73412220, 0)
         self.assertEqual(self.rec["check"], [])
 
@@ -122,12 +123,13 @@ class Recompute(unittest.TestCase):
         from mm_audit import recompute
         m = recompute(duol_record())
         self.assertAlmostEqual(m["g1"][0], 0.3730, 4)
-        self.assertAlmostEqual(m["g1"][1], 0.9184, 4)
-        self.assertAlmostEqual(m["g2"][0], 1.8796, 4)
-        self.assertAlmostEqual(m["g2"][1], 0.5072, 4)
+        # round 31 (held-to-maturity counted as cash): average IC falls to $7.8M, so ROIC jumps from 91.84% to 1,588%
+        self.assertAlmostEqual(m["g1"][1], 124097150 / ((118776040 - 103148960) / 2), 4)
+        self.assertAlmostEqual(m["g2"][0], 1.7883, 4)
+        self.assertAlmostEqual(m["g2"][1], 0.8582, 4)
         self.assertAlmostEqual(m["g3"][1], 0.0067, 4)
         self.assertAlmostEqual(m["g4"][1], 0.0300, 4)
-        self.assertAlmostEqual(m["nd"], -6.83, 2)
+        self.assertAlmostEqual(m["nd"], -7.60, 2)
         self.assertIsNone(m["ic"])
         self.assertIsNone(m["cd"])
 
@@ -152,7 +154,7 @@ class Recompute(unittest.TestCase):
         self.assertEqual(set(c["it"]["da"]), {"now"})
         self.assertEqual(set(c["it"]["gross_profit"]), {"now", "q4"})
         self.assertEqual(set(c["it"]["equity"]), {"now", "q4", "q12"})
-        unused = [cm for name, bp in c["it"].items() if name != "htm" for x in bp.values() for cm in x[1] if not cm[2]]
+        unused = [cm for name, bp in c["it"].items() for x in bp.values() for cm in x[1] if not cm[2]]
         self.assertEqual(unused, [])
 
     def test_export_shards(self):  # spec §5: over budget -> split by CIK, the page loads the part it needs
